@@ -1,0 +1,152 @@
+// @ts-nocheck
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+
+// API Configuration
+// Utiliser le backend en ligne pour la production
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:8000/api' : 'https://backend-soutenance-1et0.onrender.com/api');
+
+// Create axios instance
+const apiClient: AxiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 30000,
+});
+
+// Request interceptor - Add auth token
+apiClient.interceptors.request.use(
+  (config: InternalAxiosRequestConfig) => {
+    const token = localStorage.getItem('auth_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error: AxiosError) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor - Handle errors
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as any;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('refresh_token');
+
+      if (refreshToken) {
+        try {
+          const response = await axios.post(`${API_BASE_URL}${endpoints.refreshToken}`, {
+            refresh: refreshToken,
+          });
+          const { access } = response.data;
+          localStorage.setItem('auth_token', access);
+          
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${access}`;
+          }
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          // Refresh token failed, clear everything
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+        }
+      } else {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Generic API methods
+export const api = {
+  get: <T>(url: string, params?: Record<string, unknown>) =>
+    apiClient.get<T>(url, { params }).then((res) => res.data),
+  
+  post: <T>(url: string, data?: unknown) =>
+    apiClient.post<T>(url, data).then((res) => res.data),
+  
+  put: <T>(url: string, data?: unknown) =>
+    apiClient.put<T>(url, data).then((res) => res.data),
+  
+  patch: <T>(url: string, data?: unknown) =>
+    apiClient.patch<T>(url, data).then((res) => res.data),
+  
+  delete: <T>(url: string) =>
+    apiClient.delete<T>(url).then((res) => res.data),
+};
+
+// API endpoints
+export const endpoints = {
+  // Auth
+  login: '/token/',
+  register: '/accounts/register/',
+  logout: '/token/logout/',
+  refreshToken: '/token/refresh/',
+  me: '/accounts/users/me/',
+
+  // Users & Staff
+  users: '/accounts/patients/',
+  medecins: '/accounts/medecins/',
+  medecinsImport: '/accounts/medecins/import/',
+  medecinsImportTemplate: '/accounts/medecins/import-template/',
+  laborantins: '/accounts/laborantins/',
+  patients: '/accounts/patients/',
+  adminHopitaux: '/accounts/admin-hopitaux/',
+  utilisateurs: '/accounts/users/',
+  
+  userDetail: (id: number) => `/accounts/patients/${id}/`,
+  medecinDetail: (id: number) => `/accounts/medecins/${id}/`,
+  laborantinDetail: (id: number) => `/accounts/laborantins/${id}/`,
+
+  // Hospitals & Services
+  hopitaux: '/hopitaux/',
+  hopitalDetail: (id: number) => `/hopitaux/${id}/`,
+  hopitalServices: (id: number) => `/hopitaux/${id}/services/`,
+  hopitalServicesProprietaire: '/hopitaux/mes-services/',
+  mesServices: '/hopitaux/mes-services/',
+  hopitalStatistiques: '/hopitaux/statistiques/',
+  hopitalPatients: '/hopitaux/patients/',
+  superAdminStats: '/hopitaux/statistiques/',
+  demandesServices: '/demandes/',
+  createDemandeService: (hopitalId: number) => `/hopitaux/${hopitalId}/demandes/`,
+  validerDemande: (id: number) => `/demandes/${id}/valider/`,
+  refuserDemande: (id: number) => `/demandes/${id}/refuser/`,
+  servicesGlobaux: '/services/', // Tous les services dispos
+  
+  // Appointments (Rendez-vous)
+  rendezVous: '/rendezvous/',
+  rendezVousDetail: (id: number) => `/rendezvous/${id}/`,
+  medecinDisponibilites: (id: number) => `/medecins/${id}/disponibilites/`,
+  // Patient Intake (Pré-enregistrement avant consultation)
+  preEnregistrement: (rdvId: number) => `/rendezvous/${rdvId}/preenregistrement/`,
+  
+  // Medical Results
+  resultats: '/resultats/',
+  resultatDetail: (id: number) => `/resultats/${id}/`,
+  demandesAnalyse: '/resultats/demandes/',
+  ouvrirAnalyse: (id: number) => `/resultats/demandes/${id}/ouvrir/`,
+  cloturerAnalyse: (id: number) => `/resultats/demandes/${id}/cloturer/`,
+  getResultatByCode: (code: string) => `/resultats/acces/${code}/`,
+
+  // Messaging & Notifications
+  conversations: '/conversations/',
+  messages: '/messages/',
+  notifications: '/notifications/',
+  markAllRead: '/notifications/mark-all-read/',
+  chatbot: '/chatbot/message/',
+  chatbotSessions: '/chatbot/sessions/',
+  chatbotHistory: (id?: number) => id ? `/chatbot/history/${id}/` : '/chatbot/history/',
+};
+
+export default apiClient;

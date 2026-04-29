@@ -1,0 +1,285 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/theme/app_colors.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class ResponsiveShellLayout extends StatelessWidget {
+  final Widget child;
+  final int selectedIndex;
+  final ValueChanged<int> onDestinationSelected;
+  final Color indicatorColor;
+  final List<NavigationDestination> destinations;
+  final bool useTopMenuOnWeb;
+
+  const ResponsiveShellLayout({
+    super.key,
+    required this.child,
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+    required this.indicatorColor,
+    required this.destinations,
+    this.useTopMenuOnWeb = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1100;
+        final isDesktop = constraints.maxWidth >= 1100;
+
+        if (isMobile) {
+          final state = GoRouterState.of(context);
+          final pathSegments = state.uri.pathSegments;
+          final location = state.matchedLocation;
+          
+          // Hide shell AppBar if we are deep in a sub-route (more than 2 segments)
+          // OR if we are on a messagerie route (which has its own custom header)
+          final showAppBar = pathSegments.length <= 2 && !location.contains('messagerie');
+
+          return Scaffold(
+            appBar: showAppBar 
+              ? AppBar(
+                  backgroundColor: AppColors.surface,
+                  elevation: 0,
+                  centerTitle: true,
+                  title: Text(
+                    'HOPITEL',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.primary,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary),
+                      onPressed: () => onDestinationSelected(-1),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                )
+              : null,
+            body: child,
+            bottomNavigationBar: NavigationBarTheme(
+              data: NavigationBarThemeData(
+                labelTextStyle: WidgetStateProperty.all(
+                  GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500),
+                ),
+                indicatorColor: indicatorColor,
+                indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: NavigationBar(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: onDestinationSelected,
+                labelBehavior: destinations.length > 5 
+                    ? NavigationDestinationLabelBehavior.onlyShowSelected 
+                    : NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: destinations,
+                backgroundColor: AppColors.surface,
+                surfaceTintColor: Colors.transparent,
+                elevation: 10,
+                height: 70,
+              ),
+            ),
+          );
+        }
+
+        if (isTablet) {
+           return Scaffold(
+            body: Row(
+              children: [
+                NavigationRail(
+                  selectedIndex: selectedIndex,
+                  onDestinationSelected: onDestinationSelected,
+                  labelType: NavigationRailLabelType.all,
+                  indicatorColor: indicatorColor,
+                  backgroundColor: AppColors.surface,
+                  minWidth: 80,
+                  selectedLabelTextStyle: GoogleFonts.poppins(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                  unselectedLabelTextStyle: GoogleFonts.poppins(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                  destinations: destinations.map((d) {
+                    return NavigationRailDestination(
+                      icon: d.icon,
+                      selectedIcon: _getEffectiveIcon(d, true),
+                      label: Text(d.label),
+                    );
+                  }).toList(),
+                ),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(child: child),
+              ],
+            ),
+          );
+        }
+
+        // Web / Desktop
+        if (useTopMenuOnWeb) {
+          return Scaffold(
+            appBar: PreferredSize(
+              preferredSize: const Size.fromHeight(70),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
+                    child: Row(
+                      children: [
+                        Text(
+                          'HOPITEL',
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(width: 48),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: destinations.asMap().entries.map((entry) {
+                                final isSelected = selectedIndex == entry.key;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  child: TextButton(
+                                    onPressed: () => onDestinationSelected(entry.key),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: isSelected ? AppColors.primary : AppColors.textSecondary,
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      entry.value.label,
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                        const CircleAvatar(
+                          radius: 18,
+                          backgroundColor: AppColors.primary,
+                          child: Icon(Icons.person, color: Colors.white, size: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            body: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: child,
+              ),
+            ),
+          );
+        }
+
+        // Side Menu for Desktop (Large Screens)
+        return Scaffold(
+          body: Row(
+            children: [
+              Container(
+                width: 260,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  border: Border(right: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 48),
+                    Text(
+                      'Hopitel',
+                      style: GoogleFonts.poppins(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 48),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: destinations.length,
+                        itemBuilder: (context, index) {
+                          final d = destinations[index];
+                          final isSelected = selectedIndex == index;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: ListTile(
+                              onTap: () => onDestinationSelected(index),
+                              leading: _getEffectiveIcon(d, isSelected),
+                              title: Text(
+                                d.label,
+                                style: GoogleFonts.poppins(
+                                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              selected: isSelected,
+                              selectedTileColor: AppColors.primary.withOpacity(0.08),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: child,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _getEffectiveIcon(NavigationDestination d, bool isSelected) {
+    final widget = isSelected && d.selectedIcon != null ? d.selectedIcon! : d.icon;
+    if (widget is Icon) {
+      return Icon(
+        widget.icon,
+        color: isSelected ? AppColors.primary : AppColors.textSecondary,
+      );
+    }
+    return widget;
+  }
+}

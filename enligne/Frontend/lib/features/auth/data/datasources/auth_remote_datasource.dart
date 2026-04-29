@@ -1,0 +1,76 @@
+import 'package:dio/dio.dart';
+
+import '../../../../core/constants/api_constants.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../../../core/network/dio_client.dart';
+import '../models/login_response.dart';
+import '../models/user_model.dart';
+
+class AuthRemoteDatasource {
+  final DioClient _client;
+
+  AuthRemoteDatasource(this._client);
+
+  /// Connexion avec email et mot de passe
+  Future<LoginResponse> login(String email, String password) async {
+    try {
+      final response = await _client.post(
+        ApiConstants.login,
+        data: {'email': email, 'password': password},
+      );
+      return LoginResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Inscription patient
+  Future<void> register(Map<String, dynamic> data) async {
+    try {
+      await _client.post(ApiConstants.register, data: data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Demande de réinitialisation de mot de passe
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      await _client.post(ApiConstants.requestPasswordReset, data: {'email': email});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Confirmation de réinitialisation de mot de passe
+  Future<void> resetPasswordConfirm(String token, String newPassword, String confirmPassword) async {
+    try {
+      await _client.post(
+        ApiConstants.resetPasswordConfirm,
+        data: {'token': token, 'new_password': newPassword, 'confirm_password': confirmPassword},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Récupérer le profil de l'utilisateur connecté
+  Future<UserModel> getMe() async {
+    try {
+      final response = await _client.get(ApiConstants.userMe);
+      return UserModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Mettre à jour le profil
+  Future<UserModel> updateMe(Map<String, dynamic> data) async {
+    try {
+      final response = await _client.patch(ApiConstants.userMe, data: data);
+      return UserModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+}

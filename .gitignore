@@ -1,0 +1,17 @@
+# Node
+node_modules/
+dist/
+
+# Flutter
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Python / Django
+__pycache__/
+*.pyc
+db.sqlite3
+media/
+.env
