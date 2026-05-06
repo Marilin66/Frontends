@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Activity, LogIn, UserPlus, Phone, Hospital, Bot, HeartPulse, FlaskConical } from 'lucide-react';
+import { Activity, LogIn, UserPlus, Phone, Building2, Bot, HeartPulse, FlaskConical } from 'lucide-react';
 
 /**
  * Layout léger pour les pages publiques (sans authentification requise).
@@ -44,7 +44,7 @@ export function PublicLayout() {
               to="/hospitals"
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-all"
             >
-              <Hospital className="w-4 h-4" /> Hôpitaux
+              <Building2 className="w-4 h-4" /> Hôpitaux
             </Link>
             <Link
               to="/emergency"
@@ -105,7 +105,7 @@ export function PublicLayout() {
         {/* Liens publics — mobile scroll */}
         <div className="md:hidden flex items-center gap-1 px-4 pb-2 overflow-x-auto no-scrollbar text-xs font-medium text-slate-600">
           <Link to="/hospitals" className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 whitespace-nowrap">
-            <Hospital className="w-3.5 h-3.5" /> Hôpitaux
+            <Building2 className="w-3.5 h-3.5" /> Hôpitaux
           </Link>
           <Link to="/emergency" className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 whitespace-nowrap">
             <Phone className="w-3.5 h-3.5" /> Urgences

@@ -10,7 +10,7 @@ import {
   BrainCircuit,
   AlertCircle,
   ShieldCheck,
-  Hospital,
+  Building2,
   Phone,
   LogIn,
 } from 'lucide-react';
