@@ -126,7 +126,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error: any) {
       let message = 'Identifiants invalides ou erreur serveur';
       if (!error.response) {
-        message = 'Impossible de contacter le serveur (vérifiez que le backend est lancé)';
+        message = 'Le serveur démarre, veuillez patienter 30 secondes et réessayer…';
       } else if (error.response.status === 401) {
         message = 'Email ou mot de passe incorrect';
       } else if (error.response.status === 404) {

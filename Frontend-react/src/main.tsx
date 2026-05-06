@@ -47,6 +47,11 @@ class ErrorBoundary extends React.Component<
 
 const rootElement = document.getElementById('root');
 
+// Ping silencieux pour réveiller le backend Render (free tier se met en veille)
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-soutenance-1et0.onrender.com/api';
+fetch(`${API_URL}/token/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+  .catch(() => {}); // Silencieux — juste pour réveiller le serveur
+
 if (!rootElement) {
   document.body.innerHTML = '<h1 style="color:red;padding:20px">Erreur : #root introuvable</h1>';
 } else {

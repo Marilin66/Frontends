@@ -12,7 +12,7 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 60000, // 60s — le backend Render free tier peut prendre 30-60s à se réveiller
 });
 
 // Request interceptor - Add auth token
