@@ -19,13 +19,13 @@ class ConversationModel {
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
     return ConversationModel(
-      id: json['id'] as int,
-      consultation: json['consultation'] as int,
+      id: json['id'] as int? ?? 0,
+      consultation: json['consultation'] as int? ?? 0,
       patientNom: json['patient_nom'] as String? ?? '',
       medecinNom: json['medecin_nom'] as String? ?? '',
       dernierMessage: json['dernier_message'] as String? ?? '',
       dateDernierMessage: json['date_dernier_message'] != null
-          ? DateTime.parse(json['date_dernier_message'] as String)
+          ? (DateTime.tryParse(json['date_dernier_message'].toString()) ?? DateTime.now())
           : DateTime.now(),
       messagesNonLus: json['messages_non_lus'] as int? ?? 0,
     );

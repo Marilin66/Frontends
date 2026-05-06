@@ -47,7 +47,11 @@ class PatientRemoteDatasource {
   Future<RendezVousModel> createRendezvous(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.rendezvous, data: data);
-      return RendezVousModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) {
+        throw const FormatException('Réponse inattendue du serveur');
+      }
+      return RendezVousModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -210,7 +214,11 @@ class PatientRemoteDatasource {
   Future<UserModel> updateProfile(Map<String, dynamic> data) async {
     try {
       final response = await _client.patch(ApiConstants.userMe, data: data);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) {
+        throw const FormatException('Réponse inattendue du serveur');
+      }
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -251,7 +259,10 @@ class PatientRemoteDatasource {
       final response = await _client.get(
         '${ApiConstants.rendezvous}$rendezvousId/preenregistrement/',
       );
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null) return null;
+      if (responseData is! Map<String, dynamic>) return null;
+      return responseData;
     } on DioException catch (e) {
       // 404 = pas encore de pré-enregistrement → retourner null (mode création)
       if (e.response?.statusCode == 404) return null;
@@ -269,7 +280,9 @@ class PatientRemoteDatasource {
         '${ApiConstants.rendezvous}$rendezvousId/preenregistrement/',
         data: data,
       );
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -285,7 +298,9 @@ class PatientRemoteDatasource {
         '${ApiConstants.rendezvous}$rendezvousId/preenregistrement/',
         data: data,
       );
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

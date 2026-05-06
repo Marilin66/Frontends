@@ -19,10 +19,10 @@ class NotificationModel {
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
     return NotificationModel(
-      id: json['id'] as int,
-      type: json['type'] as String,
+      id: json['id'] as int? ?? 0,
+      type: json['type'] as String? ?? '',
       typeDisplay: json['type_display'] as String? ?? '',
-      message: json['message'] as String,
+      message: json['message'] as String? ?? '',
       lu: json['lu'] as bool? ?? false,
       dateEnvoi: json['date_envoi'] as String? ?? '',
       lien: json['lien'] as String? ?? '',

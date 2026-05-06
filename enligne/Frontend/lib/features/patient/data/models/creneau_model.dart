@@ -52,9 +52,9 @@ class CreneauModel {
   factory CreneauModel.fromJson(Map<String, dynamic> json) {
     return CreneauModel(
       id: json['id'] ?? 0,
-      date: json['date'] as String,
-      heureDebut: json['heure_debut'] as String,
-      heureFin: json['heure_fin'] as String,
+      date: json['date'] as String? ?? '',
+      heureDebut: json['heure_debut'] as String? ?? '',
+      heureFin: json['heure_fin'] as String? ?? '',
     );
   }
 

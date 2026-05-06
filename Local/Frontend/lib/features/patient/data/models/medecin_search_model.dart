@@ -32,7 +32,7 @@ class MedecinServiceModel {
   /// Factory constructor pour créer une instance à partir d'un JSON.
   factory MedecinServiceModel.fromJson(Map<String, dynamic> json) {
     return MedecinServiceModel(
-      service: json['service'] as int,
+      service: json['service'] as int? ?? 0,
       serviceNom: json['service_nom'] as String? ?? '',
     );
   }
@@ -159,7 +159,7 @@ class MedecinSearchModel {
   /// en liste de [MedecinServiceModel].
   factory MedecinSearchModel.fromJson(Map<String, dynamic> json) {
     return MedecinSearchModel(
-      id: json['id'] as int,
+      id: json['id'] as int? ?? 0,
       email: json['email'] as String? ?? '',
       firstName: json['first_name'] as String? ?? '',
       lastName: json['last_name'] as String? ?? '',

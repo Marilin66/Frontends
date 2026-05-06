@@ -16,7 +16,9 @@ final _intakeProvider = FutureProvider.family<Map<String, dynamic>?, int>((ref, 
   final client = ref.read(dioClientProvider);
   try {
     final response = await client.get('${ApiConstants.rendezvous}$rdvId/preenregistrement/');
-    return response.data as Map<String, dynamic>;
+    final responseData = response.data;
+    if (responseData == null || responseData is! Map<String, dynamic>) return null;
+    return responseData;
   } on DioException catch (e) {
     if (e.response?.statusCode == 404) return null;
     throw ApiException.fromDioError(e);

@@ -28,7 +28,11 @@ class ChatbotRemoteDatasource {
         ApiConstants.chatbotMessage,
         data: {'message': question},
       );
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        return {'response': 'Réponse invalide du serveur'};
+      }
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

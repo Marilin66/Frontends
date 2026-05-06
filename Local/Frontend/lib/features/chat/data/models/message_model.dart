@@ -25,14 +25,14 @@ class MessageModel {
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
     return MessageModel(
-      id: json['id'] as int,
-      consultation: json['consultation'] as int,
-      expediteur: json['expediteur'] as int,
+      id: json['id'] as int? ?? 0,
+      consultation: json['consultation'] as int? ?? 0,
+      expediteur: json['expediteur'] as int? ?? 0,
       expediteurNom: json['expediteur_nom'] as String? ?? '',
-      destinataire: json['destinataire'] as int,
+      destinataire: json['destinataire'] as int? ?? 0,
       destinataireNom: json['destinataire_nom'] as String? ?? '',
       contenu: json['contenu'] as String? ?? '',
-      dateEnvoi: DateTime.parse(json['date_envoi'] as String),
+      dateEnvoi: DateTime.tryParse(json['date_envoi']?.toString() ?? '') ?? DateTime.now(),
       lu: json['lu'] as bool? ?? false,
       pieceJointe: json['piece_jointe'] as String?,
     );

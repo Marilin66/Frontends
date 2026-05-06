@@ -76,7 +76,9 @@ class MessagerieRemoteDatasource {
           'contenu': contenu,
         }..removeWhere((key, value) => value == null),
       );
-      return MessageModel.fromJson(response.data as Map<String, dynamic>);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return MessageModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -101,7 +103,9 @@ class MessagerieRemoteDatasource {
         ApiConstants.messages,
         data: formData,
       );
-      return MessageModel.fromJson(response.data as Map<String, dynamic>);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return MessageModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

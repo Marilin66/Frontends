@@ -15,7 +15,11 @@ final patientConsultationDetailProvider =
   final client = ref.read(dioClientProvider);
   final response =
       await client.get('${ApiConstants.consultations}$consultationId/');
-  return response.data as Map<String, dynamic>;
+  final responseData = response.data;
+  if (responseData == null || responseData is! Map<String, dynamic>) {
+    throw Exception('Données de consultation invalides');
+  }
+  return responseData;
 });
 
 // ── Screen ───────────────────────────────────────────────────────────────────

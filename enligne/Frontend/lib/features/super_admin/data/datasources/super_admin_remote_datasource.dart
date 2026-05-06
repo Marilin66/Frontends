@@ -18,7 +18,9 @@ class SuperAdminRemoteDatasource {
   Future<Map<String, dynamic>> getGlobalStats() async {
     try {
       final response = await _client.get(ApiConstants.hopitalStats);
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -94,7 +96,9 @@ class SuperAdminRemoteDatasource {
   Future<HopitalModel> createHopital(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.hopitaux, data: data);
-      return HopitalModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return HopitalModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -110,7 +114,9 @@ class SuperAdminRemoteDatasource {
         '${ApiConstants.hopitaux}$id/',
         data: data,
       );
-      return HopitalModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return HopitalModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -185,7 +191,9 @@ class SuperAdminRemoteDatasource {
   Future<ServiceModel> createService(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.services, data: data);
-      return ServiceModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return ServiceModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -205,7 +213,9 @@ class SuperAdminRemoteDatasource {
     try {
       final response =
           await _client.patch('${ApiConstants.services}$id/', data: data);
-      return ServiceModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return ServiceModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

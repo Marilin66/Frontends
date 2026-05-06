@@ -29,20 +29,20 @@ class DisponibiliteModel {
 
   factory DisponibiliteModel.fromJson(Map<String, dynamic> json) {
     return DisponibiliteModel(
-      id: json['id'] as int,
-      medecin: json['medecin'] as int,
+      id: json['id'] as int? ?? 0,
+      medecin: json['medecin'] as int? ?? 0,
       medecinNom: json['medecin_nom'] as String? ?? '',
       type: json['type'] as String? ?? '',
       typeDisplay: json['type_display'] as String? ?? '',
       jourSemaine: json['jour_semaine'] as int?,
       jourSemaineDisplay: json['jour_semaine_display'] as String?,
       dateSpecifique: json['date_specifique'] != null
-          ? DateTime.parse(json['date_specifique'] as String)
+          ? DateTime.tryParse(json['date_specifique'].toString())
           : null,
       heureDebut: json['heure_debut'] as String? ?? '',
       heureFin: json['heure_fin'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? true,
-      dateCreation: DateTime.parse(json['date_creation'] as String),
+      dateCreation: DateTime.tryParse(json['date_creation']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 
@@ -117,7 +117,7 @@ class CreneauModel {
 
   factory CreneauModel.fromJson(Map<String, dynamic> json) {
     return CreneauModel(
-      date: DateTime.parse(json['date'] as String),
+      date: DateTime.tryParse(json['date']?.toString() ?? '') ?? DateTime.now(),
       heureDebut: json['heure_debut'] as String? ?? '',
       heureFin: json['heure_fin'] as String? ?? '',
     );

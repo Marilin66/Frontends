@@ -23,15 +23,15 @@ class ConsultationModel {
 
   factory ConsultationModel.fromJson(Map<String, dynamic> json) {
     return ConsultationModel(
-      rendezVousId: json['rendez_vous_id'] as int,
+      rendezVousId: json['rendez_vous_id'] as int? ?? 0,
       patientNom: json['patient_nom'] as String? ?? '',
       medecinNom: json['medecin_nom'] as String? ?? '',
-      dateRdv: DateTime.parse(json['date_rdv'] as String),
+      dateRdv: DateTime.tryParse(json['date_rdv']?.toString() ?? '') ?? DateTime.now(),
       motif: json['motif'] as String? ?? '',
       compteRendu: json['compte_rendu'] as String? ?? '',
       diagnostic: json['diagnostic'] as String? ?? '',
       prescription: json['prescription'] as String? ?? '',
-      dateConsultation: DateTime.parse(json['date_consultation'] as String),
+      dateConsultation: DateTime.tryParse(json['date_consultation']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 

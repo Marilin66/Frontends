@@ -57,7 +57,9 @@ class MedecinRemoteDatasource {
   Future<int?> terminerRendezvous(int id) async {
     try {
       final response = await _client.post('${ApiConstants.rendezvous}$id/terminer/');
-      return response.data['id'] as int?;
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) return null;
+      return responseData['id'] as int?;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -68,7 +70,9 @@ class MedecinRemoteDatasource {
       final response = await _client.get(
         '${ApiConstants.consultations}$rendezVousId/',
       );
-      return ConsultationModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return ConsultationModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -86,7 +90,9 @@ class MedecinRemoteDatasource {
           ...data,
         },
       );
-      return ConsultationModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return ConsultationModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -101,7 +107,9 @@ class MedecinRemoteDatasource {
         '${ApiConstants.consultations}$rendezVousId/',
         data: data,
       );
-      return ConsultationModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return ConsultationModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -128,7 +136,9 @@ class MedecinRemoteDatasource {
         ApiConstants.disponibilites,
         data: data,
       );
-      return DisponibiliteModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return DisponibiliteModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -145,7 +155,9 @@ class MedecinRemoteDatasource {
   Future<UserModel> getProfile() async {
     try {
       final response = await _client.get(ApiConstants.userMe);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -154,7 +166,9 @@ class MedecinRemoteDatasource {
   Future<UserModel> updateProfile(Map<String, dynamic> data) async {
     try {
       final response = await _client.patch(ApiConstants.userMe, data: data);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

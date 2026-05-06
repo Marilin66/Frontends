@@ -18,7 +18,9 @@ class AuthRemoteDatasource {
         ApiConstants.login,
         data: {'email': email, 'password': password},
       );
-      return LoginResponse.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return LoginResponse.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -58,7 +60,9 @@ class AuthRemoteDatasource {
   Future<UserModel> getMe() async {
     try {
       final response = await _client.get(ApiConstants.userMe);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -68,7 +72,9 @@ class AuthRemoteDatasource {
   Future<UserModel> updateMe(Map<String, dynamic> data) async {
     try {
       final response = await _client.patch(ApiConstants.userMe, data: data);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

@@ -17,12 +17,12 @@ class ServiceModel {
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     return ServiceModel(
-      id: json['id'] as int,
-      nom: json['nom'] as String,
+      id: json['id'] as int? ?? 0,
+      nom: json['nom'] as String? ?? '',
       description: json['description'] as String? ?? '',
       icone: json['icone'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? true,
-      dateCreation: json['date_creation'] as String,
+      dateCreation: json['date_creation'] as String? ?? '',
     );
   }
 

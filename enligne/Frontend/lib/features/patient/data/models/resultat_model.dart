@@ -34,7 +34,7 @@ class MedecinPartageModel {
   /// partagés contenue dans la réponse du résultat.
   factory MedecinPartageModel.fromJson(Map<String, dynamic> json) {
     return MedecinPartageModel(
-      id: json['id'] as int,
+      id: json['id'] as int? ?? 0,
       nom: json['nom'] as String? ?? '',
     );
   }
@@ -123,8 +123,8 @@ class ResultatModel {
   /// [MedecinPartageModel] via un mapping de chaque élément JSON.
   factory ResultatModel.fromJson(Map<String, dynamic> json) {
     return ResultatModel(
-      id: json['id'] as int,
-      patient: json['patient'] as int,
+      id: json['id'] as int? ?? 0,
+      patient: json['patient'] as int? ?? 0,
       patientNom: json['patient_nom'] as String? ?? '',
       laborantin: json['laborantin'] as int?,
       laborantinNom: json['laborantin_nom'] as String?,

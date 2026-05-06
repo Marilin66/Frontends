@@ -50,12 +50,12 @@ class HopitalServiceModel {
   /// en cas de donnée manquante dans la réponse API.
   factory HopitalServiceModel.fromJson(Map<String, dynamic> json) {
     return HopitalServiceModel(
-      id: json['id'] as int,
-      nom: json['nom'] as String,
+      id: json['id'] as int? ?? 0,
+      nom: json['nom'] as String? ?? '',
       description: json['description'] as String? ?? '',
       icone: json['icone'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? true,
-      dateCreation: json['date_creation'] as String,
+      dateCreation: json['date_creation'] as String? ?? '',
     );
   }
 
@@ -149,8 +149,8 @@ class HopitalSearchModel {
   /// JSON vers un objet [HopitalServiceModel].
   factory HopitalSearchModel.fromJson(Map<String, dynamic> json) {
     return HopitalSearchModel(
-      id: json['id'] as int,
-      nom: json['nom'] as String,
+      id: json['id'] as int? ?? 0,
+      nom: json['nom'] as String? ?? '',
       adresse: json['adresse'] as String? ?? '',
       ville: json['ville'] as String? ?? '',
       telephone: json['telephone'] as String? ?? '',
@@ -161,7 +161,7 @@ class HopitalSearchModel {
       latitude: _parseNum(json['latitude'])?.toDouble(),
       longitude: _parseNum(json['longitude'])?.toDouble(),
       isActive: json['is_active'] as bool? ?? true,
-      dateCreation: json['date_creation'] as String,
+      dateCreation: json['date_creation'] as String? ?? '',
       services: (json['services'] as List<dynamic>?)
               ?.map((e) =>
                   HopitalServiceModel.fromJson(e as Map<String, dynamic>))

@@ -33,7 +33,7 @@ class MedecinModel {
 
   factory MedecinModel.fromJson(Map<String, dynamic> json) {
     return MedecinModel(
-      userId: json['user_id'] as int,
+      userId: json['user_id'] as int? ?? 0,
       email: json['email'] as String? ?? '',
       firstName: json['first_name'] as String? ?? '',
       lastName: json['last_name'] as String? ?? '',

@@ -47,7 +47,9 @@ class PatientRemoteDatasource {
   Future<RendezVousModel> createRendezvous(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.rendezvous, data: data);
-      return RendezVousModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return RendezVousModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -210,7 +212,9 @@ class PatientRemoteDatasource {
   Future<UserModel> updateProfile(Map<String, dynamic> data) async {
     try {
       final response = await _client.patch(ApiConstants.userMe, data: data);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -251,15 +255,15 @@ class PatientRemoteDatasource {
       final response = await _client.get(
         '${ApiConstants.rendezvous}$rendezvousId/preenregistrement/',
       );
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) return null;
+      return responseData;
     } on DioException catch (e) {
-      // 404 = pas encore de pré-enregistrement → retourner null (mode création)
       if (e.response?.statusCode == 404) return null;
       throw ApiException.fromDioError(e);
     }
   }
 
-  /// Crée un nouveau formulaire de pré-consultation (POST).
   Future<Map<String, dynamic>> createPreEnregistrement(
     int rendezvousId,
     Map<String, dynamic> data,
@@ -269,13 +273,14 @@ class PatientRemoteDatasource {
         '${ApiConstants.rendezvous}$rendezvousId/preenregistrement/',
         data: data,
       );
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
-  /// Met à jour un formulaire de pré-consultation existant (PUT).
   Future<Map<String, dynamic>> updatePreEnregistrement(
     int rendezvousId,
     Map<String, dynamic> data,
@@ -285,7 +290,9 @@ class PatientRemoteDatasource {
         '${ApiConstants.rendezvous}$rendezvousId/preenregistrement/',
         data: data,
       );
-      return response.data as Map<String, dynamic>;
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

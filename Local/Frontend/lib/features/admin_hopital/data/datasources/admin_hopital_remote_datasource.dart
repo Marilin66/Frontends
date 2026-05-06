@@ -15,7 +15,9 @@ class AdminHopitalRemoteDatasource {
   Future<UserModel> getProfile() async {
     try {
       final response = await _client.get(ApiConstants.userMe);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -24,7 +26,9 @@ class AdminHopitalRemoteDatasource {
   Future<UserModel> updateProfile(Map<String, dynamic> data) async {
     try {
       final response = await _client.patch(ApiConstants.userMe, data: data);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -46,7 +50,9 @@ class AdminHopitalRemoteDatasource {
   Future<UserModel> createMedecin(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.medecins, data: data);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -85,7 +91,9 @@ class AdminHopitalRemoteDatasource {
   Future<UserModel> createLaborantin(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.laborantins, data: data);
-      return UserModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return UserModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -155,7 +163,9 @@ class AdminHopitalRemoteDatasource {
   Future<Map<String, dynamic>> getDashboardStats() async {
     try {
       final response = await _client.get('${ApiConstants.hopitaux}statistiques/');
-      return response.data;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

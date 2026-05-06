@@ -29,7 +29,9 @@ class LaborantinRemoteDatasource {
   Future<ResultatModel> uploadResult(FormData formData) async {
     try {
       final response = await _client.upload(ApiConstants.resultats, formData: formData);
-      return ResultatModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return ResultatModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -55,7 +57,9 @@ class LaborantinRemoteDatasource {
   Future<DemandeAnalyseModel> creerDemande(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.analyses, data: data);
-      return DemandeAnalyseModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return DemandeAnalyseModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -67,7 +71,9 @@ class LaborantinRemoteDatasource {
         '${ApiConstants.analyses}$id/cloturer/',
         formData: formData,
       );
-      return response.data;
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

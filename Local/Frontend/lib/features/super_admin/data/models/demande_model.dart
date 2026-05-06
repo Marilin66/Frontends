@@ -29,17 +29,17 @@ class DemandeModel {
 
   factory DemandeModel.fromJson(Map<String, dynamic> json) {
     return DemandeModel(
-      id: json['id'] as int,
-      hopital: json['hopital'] as int,
+      id: json['id'] as int? ?? 0,
+      hopital: json['hopital'] as int? ?? 0,
       hopitalNom: json['hopital_nom'] as String? ?? 'Inconnu',
       serviceExistant: json['service_existant'] as int?,
       serviceExistantNom: json['service_existant_nom'] as String?,
       nomNouveauService: json['nom_nouveau_service'] as String?,
       descriptionNouveauService: json['description_nouveau_service'] as String?,
       statut: json['statut'] as String? ?? 'en_attente',
-      dateDemande: json['date_demande'] as String,
+      dateDemande: json['date_demande'] as String? ?? '',
       dateTraitement: json['date_traitement'] as String?,
-      demandePar: json['demande_par'] as int,
+      demandePar: json['demande_par'] as int? ?? 0,
       demandeParNom: json['demande_par_nom'] as String? ?? 'Inconnu',
     );
   }

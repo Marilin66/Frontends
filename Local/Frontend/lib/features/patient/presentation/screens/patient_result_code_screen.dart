@@ -35,8 +35,16 @@ class _PatientResultCodeScreenState extends ConsumerState<PatientResultCodeScree
     try {
       final client = ref.read(dioClientProvider);
       final response = await client.get('${ApiConstants.resultatsAccesCode}$code/');
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) {
+        setState(() {
+          _error = 'Code invalide ou résultat introuvable.';
+          _isLoading = false;
+        });
+        return;
+      }
       setState(() {
-        _result = response.data as Map<String, dynamic>;
+        _result = responseData;
         _isLoading = false;
       });
     } catch (e) {

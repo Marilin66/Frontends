@@ -16,7 +16,9 @@ final _resultatByCodeProvider =
   try {
     final client = ref.read(dioClientProvider);
     final response = await client.get('${ApiConstants.resultatsAccesCode}$code/');
-    return response.data as Map<String, dynamic>;
+    final responseData = response.data;
+    if (responseData == null || responseData is! Map<String, dynamic>) return null;
+    return responseData;
   } catch (_) {
     return null;
   }

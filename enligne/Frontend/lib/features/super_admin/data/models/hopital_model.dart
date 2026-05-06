@@ -31,8 +31,8 @@ class HopitalModel {
 
   factory HopitalModel.fromJson(Map<String, dynamic> json) {
     return HopitalModel(
-      id: json['id'] as int,
-      nom: json['nom'] as String,
+      id: json['id'] as int? ?? 0,
+      nom: json['nom'] as String? ?? '',
       adresse: json['adresse'] as String? ?? '',
       ville: json['ville'] as String? ?? '',
       telephone: json['telephone'] as String? ?? '',
@@ -43,7 +43,7 @@ class HopitalModel {
       latitude: double.tryParse(json['latitude']?.toString() ?? ''),
       longitude: double.tryParse(json['longitude']?.toString() ?? ''),
       isActive: json['is_active'] as bool? ?? true,
-      dateCreation: json['date_creation'] as String,
+      dateCreation: json['date_creation'] as String? ?? '',
     );
   }
 
@@ -115,7 +115,7 @@ class HopitalServiceModel {
 
   factory HopitalServiceModel.fromJson(Map<String, dynamic> json) {
     return HopitalServiceModel(
-      id: json['id'] as int,
+      id: json['id'] as int? ?? 0,
       hopital: json['hopital'] as int? ?? 0,
       service: json['service'] as int? ?? 0,
       serviceNom: json['service_nom'] as String? ?? '',

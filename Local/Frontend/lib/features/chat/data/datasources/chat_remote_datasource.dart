@@ -14,7 +14,15 @@ class ChatRemoteDatasource {
   Future<List<ConversationModel>> getConversations() async {
     try {
       final response = await _client.get(ApiConstants.conversations);
-      final results = response.data['results'] as List<dynamic>;
+      final data = response.data;
+      List<dynamic> results;
+      if (data is Map<String, dynamic> && data.containsKey('results')) {
+        results = data['results'] as List<dynamic>;
+      } else if (data is List) {
+        results = data;
+      } else {
+        results = [];
+      }
       return results
           .map((e) => ConversationModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -29,7 +37,15 @@ class ChatRemoteDatasource {
         ApiConstants.messages,
         queryParameters: {'conversation': conversationId},
       );
-      final results = response.data['results'] as List<dynamic>;
+      final data = response.data;
+      List<dynamic> results;
+      if (data is Map<String, dynamic> && data.containsKey('results')) {
+        results = data['results'] as List<dynamic>;
+      } else if (data is List) {
+        results = data;
+      } else {
+        results = [];
+      }
       return results
           .map((e) => MessageModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -52,7 +68,9 @@ class ChatRemoteDatasource {
           'contenu': contenu,
         },
       );
-      return MessageModel.fromJson(response.data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return MessageModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

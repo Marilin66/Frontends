@@ -99,13 +99,13 @@ class RendezVousModel {
   /// valeur par défaut en cas de valeur nulle dans le JSON.
   factory RendezVousModel.fromJson(Map<String, dynamic> json) {
     return RendezVousModel(
-      id: json['id'] as int,
-      patient: json['patient'] as int,
+      id: json['id'] as int? ?? 0,
+      patient: json['patient'] as int? ?? 0,
       patientNom: json['patient_nom'] as String? ?? '',
-      medecin: json['medecin'] as int,
+      medecin: json['medecin'] as int? ?? 0,
       medecinNom: json['medecin_nom'] as String? ?? '',
       medecinSpecialite: json['medecin_specialite'] as String? ?? '',
-      dateHeure: json['date_heure'] as String,
+      dateHeure: json['date_heure'] as String? ?? '',
       duree: json['duree'] as int? ?? 30,
       motif: json['motif'] as String? ?? '',
       statut: json['statut'] as String? ?? 'planifie',
