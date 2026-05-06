@@ -80,8 +80,8 @@ export default function AdminStaffPage() {
   const fetchStaff = async () => {
     try {
       setIsLoading(true);
-      const data = await api.get<{ results: Laborantin[] }>(endpoints.laborantins);
-      setStaff(data.results || []);
+      const data: any = await api.get(endpoints.laborantins);
+      setStaff(Array.isArray(data) ? data : data.results || []);
     } catch (error) {
       console.error('Erreur:', error);
     } finally {

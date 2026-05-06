@@ -32,7 +32,7 @@ class FluidCard extends StatelessWidget {
         boxShadow: hasShadow
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),

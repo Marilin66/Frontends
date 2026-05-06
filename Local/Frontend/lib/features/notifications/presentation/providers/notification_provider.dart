@@ -117,8 +117,6 @@ final filteredNotificationProvider = Provider<AsyncValue<List<NotificationModel>
         return notifs.where((n) => n.type.toLowerCase().contains('resultat')).toList();
       case NotificationFilter.messages:
         return notifs.where((n) => n.type.toLowerCase().contains('message')).toList();
-      default:
-        return notifs;
     }
   });
 });

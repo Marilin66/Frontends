@@ -3,21 +3,58 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-console.log('Mounting Hopitel App...');
+// Error Boundary pour capturer les erreurs runtime
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: Error | null }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('=== REACT ERROR ===', error);
+    console.error('Component stack:', info.componentStack);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ padding: '20px', fontFamily: 'monospace', background: '#fff0f0', minHeight: '100vh' }}>
+          <h1 style={{ color: 'red' }}>Erreur React</h1>
+          <pre style={{ background: '#fee', padding: '10px', borderRadius: '8px', overflow: 'auto' }}>
+            {this.state.error.message}
+            {'\n\n'}
+            {this.state.error.stack}
+          </pre>
+          <button
+            onClick={() => this.setState({ error: null })}
+            style={{ marginTop: '10px', padding: '8px 16px', cursor: 'pointer' }}
+          >
+            Réessayer
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const rootElement = document.getElementById('root');
 
 if (!rootElement) {
-  document.body.innerHTML = '<h1>Erreur : Élément #root non trouvé</h1>';
+  document.body.innerHTML = '<h1 style="color:red;padding:20px">Erreur : #root introuvable</h1>';
 } else {
-  try {
-    ReactDOM.createRoot(rootElement).render(
-      <React.StrictMode>
+  ReactDOM.createRoot(rootElement).render(
+    <React.StrictMode>
+      <ErrorBoundary>
         <App />
-      </React.StrictMode>
-    );
-    console.log('App mounted successfully');
-  } catch (err: any) {
-    console.error('Mounting Error:', err);
-    rootElement.innerHTML = `<h1 style="color:red; padding:20px;">Erreur de rendu React : ${err?.message || 'Erreur inconnue'}</h1>`;
-  }
+      </ErrorBoundary>
+    </React.StrictMode>
+  );
 }

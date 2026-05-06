@@ -151,7 +151,7 @@ export default function EditProfilePage() {
                 Suivant <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <Button onClick={() => navigate('/profile')} variant="success" className="rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-xs shadow-xl shadow-success/20">
+              <Button onClick={() => navigate('/patient/profile')} variant="success" className="rounded-2xl h-14 px-8 font-black uppercase tracking-widest text-xs shadow-xl shadow-success/20">
                 Enregistrer le profil <Save className="w-4 h-4 ml-2" />
               </Button>
             )}

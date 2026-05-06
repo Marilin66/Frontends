@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
 
-import 'package:esante_app/core/network/dio_client.dart';
-import 'package:esante_app/core/constants/app_constants.dart';
-import 'package:esante_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:esante_app/features/auth/data/models/user_model.dart';
+import 'package:hopitel_app/core/network/dio_client.dart';
+import 'package:hopitel_app/core/constants/app_constants.dart';
+import 'package:hopitel_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:hopitel_app/features/auth/data/models/user_model.dart';
 
 class MockDioClient extends Mock implements DioClient {}
 

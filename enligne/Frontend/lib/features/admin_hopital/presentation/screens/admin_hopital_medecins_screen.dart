@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -48,7 +48,7 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.medecin.withOpacity(0.1),
+                    backgroundColor: AppColors.medecin.withValues(alpha: 0.1),
                     child: const Icon(Icons.person, color: AppColors.medecin),
                   ),
                   title: Text(m.fullName, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),

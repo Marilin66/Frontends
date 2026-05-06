@@ -1,11 +1,11 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:dio/dio.dart';
-import 'package:esante_app/core/network/dio_client.dart';
-import 'package:esante_app/core/constants/api_constants.dart';
-import 'package:esante_app/features/patient/data/datasources/patient_remote_datasource.dart';
-import 'package:esante_app/features/patient/data/models/rendezvous_model.dart';
-import 'package:esante_app/features/patient/data/models/resultat_model.dart';
+import 'package:hopitel_app/core/network/dio_client.dart';
+import 'package:hopitel_app/core/constants/api_constants.dart';
+import 'package:hopitel_app/features/patient/data/datasources/patient_remote_datasource.dart';
+import 'package:hopitel_app/features/patient/data/models/rendezvous_model.dart';
+import 'package:hopitel_app/features/patient/data/models/resultat_model.dart';
 
 class MockDioClient extends Mock implements DioClient {}
 

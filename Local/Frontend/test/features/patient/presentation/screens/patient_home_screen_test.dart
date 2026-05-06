@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:esante_app/features/patient/presentation/screens/patient_home_screen.dart';
-import 'package:esante_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:esante_app/features/auth/data/models/user_model.dart';
+import 'package:hopitel_app/features/patient/presentation/screens/patient_home_screen.dart';
+import 'package:hopitel_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:hopitel_app/features/auth/data/models/user_model.dart';
 
 
 void main() {

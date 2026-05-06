@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -42,7 +42,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  shadows: [Shadow(color: Colors.black.withOpacity(0.5), blurRadius: 4)],
+                  shadows: [Shadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 4)],
                 ),
               ),
               background: service.serviceImage != null && service.serviceImage!.isNotEmpty
@@ -55,14 +55,14 @@ class ServiceDetailScreen extends ConsumerWidget {
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
-                                colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+                                colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
                               ),
                             ),
                           ),
                       ],
                     )
                   : Container(
-                      color: AppColors.primary.withOpacity(0.8),
+                      color: AppColors.primary.withValues(alpha: 0.8),
                       child: const Center(
                         child: Icon(Icons.medical_services, size: 80, color: Colors.white24),
                       ),
@@ -81,9 +81,9 @@ class ServiceDetailScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -130,7 +130,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                         border: Border.all(color: Colors.grey.shade200),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: Colors.black.withValues(alpha: 0.03),
                             blurRadius: 10, offset: const Offset(0, 4),
                           ),
                         ],
@@ -246,7 +246,7 @@ class ServiceDetailScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -270,9 +270,9 @@ class ServiceDetailScreen extends ConsumerWidget {
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 2),
                   ),
                   child: Center(
                     child: Text(

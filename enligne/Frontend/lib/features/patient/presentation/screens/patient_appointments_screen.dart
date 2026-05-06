@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -109,12 +109,12 @@ class PatientAppointmentsContent extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withValues(alpha: 0.05),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
                           ],
-                          border: Border.all(color: statusColor.withOpacity(0.1), width: 1),
+                          border: Border.all(color: statusColor.withValues(alpha: 0.1), width: 1),
                         ),
                         child: Column(
                           children: [
@@ -126,7 +126,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: statusColor.withOpacity(0.1),
+                                      color: statusColor.withValues(alpha: 0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(Icons.event_note, color: statusColor, size: 24),
@@ -152,7 +152,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: statusColor.withOpacity(0.1),
+                                                color: statusColor.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(8),
                                               ),
                                               child: Text(
@@ -202,7 +202,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                           Container(
                                             padding: const EdgeInsets.all(12),
                                             decoration: BoxDecoration(
-                                              color: AppColors.error.withOpacity(0.05),
+                                              color: AppColors.error.withValues(alpha: 0.05),
                                               borderRadius: BorderRadius.circular(12),
                                             ),
                                             child: Column(
@@ -221,7 +221,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                                   rdv.commentaireAnnulation,
                                                   style: GoogleFonts.poppins(
                                                     fontSize: 12,
-                                                    color: AppColors.error.withOpacity(0.8),
+                                                    color: AppColors.error.withValues(alpha: 0.8),
                                                   ),
                                                 ),
                                               ],
@@ -241,7 +241,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: Colors.teal.withOpacity(0.06),
+                                  color: Colors.teal.withValues(alpha: 0.06),
                                   borderRadius: rdv.hasConsultation && rdv.consultationId != null
                                       ? BorderRadius.zero
                                       : const BorderRadius.only(
@@ -276,7 +276,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: Colors.teal.withOpacity(0.05),
+                                  color: Colors.teal.withValues(alpha: 0.05),
                                   borderRadius: rdv.hasConsultation && rdv.consultationId != null
                                       ? BorderRadius.zero
                                       : const BorderRadius.only(
@@ -319,12 +319,36 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                   ],
                                 ),
                               ),
-                            // ── Bouton Conversation ───────────────────────
+                            // ── Bouton Message Direct (RDV confirmé, pas encore de consultation) ──
+                            if (rdv.statut == 'confirme' && !rdv.hasConsultation)
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withValues(alpha: 0.04),
+                                  borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(16),
+                                    bottomRight: Radius.circular(16),
+                                  ),
+                                ),
+                                child: TextButton.icon(
+                                  onPressed: () => context.go('/patient/messagerie/direct/${rdv.medecin}'),
+                                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                                  label: Text(
+                                    'Contacter Dr. ${rdv.medecinNom}',
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.primary,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            // ── Bouton Conversation (consultation créée) ───────────────────────
                             if (rdv.hasConsultation && rdv.consultationId != null)
                               Container(
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.05),
+                                  color: AppColors.primary.withValues(alpha: 0.05),
                                   borderRadius: const BorderRadius.only(
                                     bottomLeft: Radius.circular(16),
                                     bottomRight: Radius.circular(16),
@@ -413,7 +437,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: servicesAsync.when(
               data: (services) => DropdownButtonFormField<int?>(
-                value: selectedServiceId,
+                initialValue: selectedServiceId,
                 decoration: InputDecoration(
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -428,7 +452,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                 onChanged: (val) => _updateFilters(ref, selectedStatut, val),
               ),
               loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (error, stackTrace) => const SizedBox.shrink(),
             ),
           ),
         ],
@@ -456,7 +480,7 @@ class _StatusChip extends StatelessWidget {
       label: Text(label, style: GoogleFonts.poppins(fontSize: 12, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
       selected: isSelected,
       onSelected: (_) => onSelected(),
-      selectedColor: AppColors.primary.withOpacity(0.2),
+      selectedColor: AppColors.primary.withValues(alpha: 0.2),
       labelStyle: TextStyle(color: isSelected ? AppColors.primary : AppColors.textSecondary),
     );
   }

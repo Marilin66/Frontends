@@ -27,7 +27,6 @@ class ResponsiveShellLayout extends StatelessWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
         final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1100;
-        final isDesktop = constraints.maxWidth >= 1100;
 
         if (isMobile) {
           final state = GoRouterState.of(context);
@@ -132,7 +131,7 @@ class ResponsiveShellLayout extends StatelessWidget {
                   color: AppColors.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -211,7 +210,7 @@ class ResponsiveShellLayout extends StatelessWidget {
                 width: 260,
                 decoration: BoxDecoration(
                   color: AppColors.surface,
-                  border: Border(right: BorderSide(color: Colors.grey.withOpacity(0.1))),
+                  border: Border(right: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
                 ),
                 child: Column(
                   children: [
@@ -247,7 +246,7 @@ class ResponsiveShellLayout extends StatelessWidget {
                                 ),
                               ),
                               selected: isSelected,
-                              selectedTileColor: AppColors.primary.withOpacity(0.08),
+                              selectedTileColor: AppColors.primary.withValues(alpha: 0.08),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                           );

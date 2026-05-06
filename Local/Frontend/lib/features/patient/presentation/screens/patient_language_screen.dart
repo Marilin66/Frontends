@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -70,7 +69,7 @@ class _PatientLanguageContentState extends ConsumerState<PatientLanguageContent>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: widget.primaryColor.withOpacity(0.1),
+                  color: widget.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.language, color: widget.primaryColor),
@@ -138,7 +137,7 @@ class _PatientLanguageContentState extends ConsumerState<PatientLanguageContent>
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: widget.primaryColor.withOpacity(0.1),
+                  color: widget.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(Icons.language, color: widget.primaryColor),

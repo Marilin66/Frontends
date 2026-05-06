@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
@@ -12,47 +11,44 @@ import { PageLoader } from '@/components/ui';
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { isLoading, user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (user) {
-        try {
-          const response = await api.get(endpoints.notifications);
-          const results = Array.isArray(response) ? response : response.results || [];
-          setUnreadCount(results.filter((n) => !n.est_lu).length);
-        } catch (error) { console.error('Erreur notifications:', error); }
-      }
-    };
-    fetchNotifications();
+    if (!user) return;
+    api.get(endpoints.notifications)
+      .then((res: any) => {
+        const list = Array.isArray(res) ? res : res.results || [];
+        setUnreadCount(list.filter((n: any) => !n.est_lu).length);
+      })
+      .catch(() => {});
   }, [user]);
 
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="min-h-screen bg-premium-mesh flex overflow-hidden">
-      {/* Sidebar - Fixe sur Desktop, Drawer sur Mobile */}
+    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+      {/* Sidebar desktop fixe */}
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+
+      {/* Zone principale */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header - Plus fin et intégré */}
-        <Header 
-          onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
-          onNotificationsClick={() => navigate('/notifications')} 
-          notificationCount={unreadCount} 
+        <Header
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+          onNotificationsClick={() => navigate('/notifications')}
+          notificationCount={unreadCount}
         />
-        
-        {/* Zone de contenu principale - Scrollable indépendamment */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-10 custom-scrollbar">
-          <div className="max-w-7xl mx-auto">
+
+        {/* Contenu scrollable */}
+        <main className="flex-1 overflow-y-auto custom-scrollbar">
+          {/* Conteneur centré avec max-width large pour le web */}
+          <div className="max-w-screen-xl mx-auto px-6 py-8 lg:px-10 lg:py-10 pb-24 lg:pb-10">
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* Navigation mobile uniquement */}
+      {/* Bottom nav uniquement sur mobile */}
       <BottomNav />
     </div>
   );
@@ -60,16 +56,32 @@ export function AppLayout() {
 
 export function AuthLayout() {
   return (
-    <div className="min-h-screen bg-surface flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-           <img src="/logo.png" alt="Hopitel Logo" className="w-24 h-24 mx-auto mb-4 object-contain" />
-           <h1 className="text-4xl font-bold text-primary tracking-tight">hopitel</h1>
-           <p className="text-xl text-fb-gray mt-2">Gestion Hospitalière Connectée</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center p-4">
+      {/* Décoration de fond */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-100/40 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-indigo-100/30 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-2xl mb-4 shadow-lg shadow-primary/25">
+            <span className="text-white font-bold text-xl">H</span>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">Hopitel</h1>
+          <p className="text-slate-500 text-sm mt-1">Plateforme de santé numérique</p>
         </div>
-        <div className="bg-white p-6 rounded-fb shadow-fb-md border border-fb-divider">
-           <Outlet />
+
+        {/* Card formulaire */}
+        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-200/80 p-8">
+          <Outlet />
         </div>
+
+        {/* Footer */}
+        <p className="text-center text-xs text-slate-400 mt-6">
+          © 2026 Hopitel — République du Bénin
+        </p>
       </div>
     </div>
   );

@@ -73,8 +73,8 @@ export const api = {
   get: <T>(url: string, params?: Record<string, unknown>) =>
     apiClient.get<T>(url, { params }).then((res) => res.data),
   
-  post: <T>(url: string, data?: unknown) =>
-    apiClient.post<T>(url, data).then((res) => res.data),
+  post: <T>(url: string, data?: unknown, config?: Record<string, unknown>) =>
+    apiClient.post<T>(url, data, config).then((res) => res.data),
   
   put: <T>(url: string, data?: unknown) =>
     apiClient.put<T>(url, data).then((res) => res.data),
@@ -94,6 +94,8 @@ export const endpoints = {
   logout: '/token/logout/',
   refreshToken: '/token/refresh/',
   me: '/accounts/users/me/',
+  requestPasswordReset: '/accounts/request-password-reset/',
+  resetPasswordConfirm: '/accounts/reset-password-confirm/',
 
   // Users & Staff
   users: '/accounts/patients/',
@@ -111,6 +113,7 @@ export const endpoints = {
 
   // Hospitals & Services
   hopitaux: '/hopitaux/',
+  hopitauxNearby: '/hopitaux/nearby/',
   hopitalDetail: (id: number) => `/hopitaux/${id}/`,
   hopitalServices: (id: number) => `/hopitaux/${id}/services/`,
   hopitalServicesProprietaire: '/hopitaux/mes-services/',
@@ -127,16 +130,29 @@ export const endpoints = {
   // Appointments (Rendez-vous)
   rendezVous: '/rendezvous/',
   rendezVousDetail: (id: number) => `/rendezvous/${id}/`,
+  confirmerRdv: (id: number) => `/rendezvous/${id}/confirmer/`,
+  refuserRdv: (id: number) => `/rendezvous/${id}/refuser/`,
+  annulerRdv: (id: number) => `/rendezvous/${id}/annuler/`,
+  terminerRdv: (id: number) => `/rendezvous/${id}/terminer/`,
   medecinDisponibilites: (id: number) => `/medecins/${id}/disponibilites/`,
+  medecinCreneaux: (id: number) => `/medecins/${id}/creneaux/`,
+  disponibilites: '/disponibilites/',
+  disponibiliteDetail: (id: number) => `/disponibilites/${id}/`,
   // Patient Intake (Pré-enregistrement avant consultation)
   preEnregistrement: (rdvId: number) => `/rendezvous/${rdvId}/preenregistrement/`,
+  // Consultations
+  consultations: '/consultations/',
+  consultationDetail: (id: number) => `/consultations/${id}/`,
+  cloturerConsultation: (id: number) => `/consultations/${id}/cloturer/`,
   
   // Medical Results
   resultats: '/resultats/',
   resultatDetail: (id: number) => `/resultats/${id}/`,
-  demandesAnalyse: '/resultats/demandes/',
-  ouvrirAnalyse: (id: number) => `/resultats/demandes/${id}/ouvrir/`,
-  cloturerAnalyse: (id: number) => `/resultats/demandes/${id}/cloturer/`,
+  // Analyses (BioTrack)
+  analyses: '/analyses/',
+  demandesAnalyse: '/analyses/',
+  cloturerAnalyse: (id: number) => `/analyses/${id}/cloturer/`,
+  laborantinPatients: '/laborantins/patients/',
   getResultatByCode: (code: string) => `/resultats/acces/${code}/`,
 
   // Messaging & Notifications

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -38,7 +38,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                    colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -63,14 +63,14 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              Icon(Icons.location_on, color: Colors.white.withOpacity(0.9), size: 16),
+                              Icon(Icons.location_on, color: Colors.white.withValues(alpha: 0.9), size: 16),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
                                   widget.hospital['adresse'] ?? 'Adresse non spécifiée',
                                   style: GoogleFonts.poppins(
                                     fontSize: 14,
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                   ),
                                 ),
                               ),
@@ -92,7 +92,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
                 color: AppColors.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -207,7 +207,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.medical_services, size: 40, color: AppColors.primary),
@@ -294,7 +294,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
                               width: 80,
                               height: 80,
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: AppColors.primary.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.person, size: 40, color: AppColors.primary),
@@ -345,7 +345,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -359,7 +359,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.medical_services, color: AppColors.primary, size: 24),
@@ -403,7 +403,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -420,7 +420,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: AppColors.medecin.withOpacity(0.1),
+                  color: AppColors.medecin.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Icon(Icons.person, color: AppColors.medecin, size: 24),
@@ -452,7 +452,7 @@ class _PatientHospitalDetailsContentState extends ConsumerState<PatientHospitalD
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(

@@ -14,20 +14,8 @@ import '../../features/messagerie/presentation/screens/chat_screen.dart';
 import '../../features/core/presentation/screens/edit_profile_screen.dart';
 import '../../features/patient/presentation/screens/patient_shell.dart';
 import '../../features/medecin/presentation/screens/medecin_shell.dart';
-import '../../features/medecin/presentation/screens/medecin_change_password_screen.dart';
-import '../../features/medecin/presentation/screens/medecin_about_screen.dart';
-import '../../features/medecin/presentation/screens/medecin_agenda_screen.dart';
 import '../../features/admin_hopital/presentation/screens/admin_hopital_shell.dart';
-import '../../features/admin_hopital/presentation/screens/admin_hopital_change_password_screen.dart';
-import '../../features/admin_hopital/presentation/screens/admin_hopital_about_screen.dart';
-import '../../features/super_admin/presentation/screens/super_admin_settings_screen.dart';
-import '../../features/super_admin/presentation/screens/super_admin_stats_screen.dart';
-import '../../features/super_admin/presentation/screens/super_admin_change_password_screen.dart';
-import '../../features/super_admin/presentation/screens/super_admin_about_screen.dart';
 import '../../features/super_admin/presentation/screens/super_admin_shell.dart';
-import '../../features/super_admin/presentation/screens/super_admin_home_screen.dart';
-import '../../features/super_admin/presentation/screens/super_admin_hopitaux_screen.dart';
-import '../../features/super_admin/presentation/screens/super_admin_users_screen.dart';
 import '../../features/super_admin/presentation/screens/super_admin_hopital_detail_screen.dart';
 import '../../features/super_admin/data/models/hopital_model.dart' hide HopitalServiceModel;
 import 'package:hopitel_app/features/laborantin/presentation/screens/laborantin_shell.dart';
@@ -38,20 +26,20 @@ import 'package:hopitel_app/features/laborantin/presentation/screens/laborantin_
 import 'package:hopitel_app/features/laborantin/presentation/screens/laborantin_about_screen.dart';
 import 'package:hopitel_app/features/laborantin/presentation/screens/laborantin_change_password_screen.dart';
 import '../../features/chatbot/presentation/screens/patient_chatbot_screen.dart';
-import '../../features/patient/presentation/screens/patient_profile_screen.dart';
-import '../../features/patient/presentation/screens/patient_change_password_screen.dart';
-import '../../features/patient/presentation/screens/patient_about_screen.dart';
-import '../../features/patient/presentation/screens/patient_language_screen.dart';
-import '../../features/patient/presentation/screens/patient_notification_settings_screen.dart';
 import '../../features/patient/presentation/screens/patient_nearby_hospitals_screen.dart';
 import '../../features/patient/presentation/screens/hopital_detail_screen.dart';
 import '../../features/patient/presentation/screens/service_detail_screen.dart';
 import '../../features/patient/presentation/screens/rendezvous_booking_screen.dart';
+import '../../features/patient/presentation/screens/patient_intake_screen.dart';
 import '../../features/patient/presentation/screens/patient_result_code_screen.dart';
 import '../../features/patient/data/models/hopital_search_model.dart' hide HopitalServiceModel;
 import '../../features/admin_hopital/data/models/hopital_service_model.dart';
 import '../../features/patient/data/models/medecin_search_model.dart';
 import '../../features/medecin/presentation/screens/medecin_resultat_patient_screen.dart';
+import '../../features/medecin/presentation/screens/medecin_consultations_screen.dart';
+import '../../features/medecin/presentation/screens/medecin_consultation_detail_screen.dart';
+import '../../features/patient/presentation/screens/patient_consultation_detail_screen.dart';
+import '../../features/patient/presentation/screens/patient_result_share_screen.dart';
 import '../../features/core/presentation/screens/onboarding_screen.dart';
 import '../../features/core/presentation/screens/emergency_numbers_screen.dart';
 import '../../features/core/presentation/screens/health_tips_screen.dart';
@@ -74,7 +62,20 @@ final routerProvider = Provider<GoRouter>((ref) {
   });
 
   // Liste des routes accessibles sans être connecté
-  const publicRoutes = ['/onboarding', '/login', '/register', '/hospitals', '/emergency', '/tips'];
+  const publicRoutes = [
+    '/onboarding',
+    '/login',
+    '/register',
+    '/hospitals',
+    '/emergency',
+    '/tips',
+    '/chatbot',
+    '/nearby',
+    '/result-code',
+    '/privacy',
+    '/terms',
+    '/legal-mentions',
+  ];
 
   return GoRouter(
     initialLocation: '/',
@@ -86,13 +87,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoading = authState.status == AuthStatus.loading ||
           authState.status == AuthStatus.initial;
       final isAuthenticated = authState.status == AuthStatus.authenticated;
-      final isPublicRoute = publicRoutes.contains(state.matchedLocation) || 
-                            state.matchedLocation == '/forgot-password' || 
+      final isPublicRoute = publicRoutes.contains(state.matchedLocation) ||
+                            state.matchedLocation == '/forgot-password' ||
                             state.matchedLocation.startsWith('/reset-password') ||
-                            state.matchedLocation == '/patient/nearby' ||
-                            state.matchedLocation == '/patient/chatbot' || // Permettre l'accès public au chatbot
-                            state.matchedLocation.startsWith('/patient/hopital') ||
-                            state.matchedLocation.startsWith('/patient/service');
+                            state.matchedLocation.startsWith('/hopital/') ||
+                            state.matchedLocation == '/service';
       final isOnSplash = state.matchedLocation == '/';
       final isAuthRoute = state.matchedLocation == '/login' || 
                           state.matchedLocation == '/register' ||
@@ -128,13 +127,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         rolePrefix = '/admin-hopital';
       } else if (role == 'medecin') {
         rolePrefix = '/medecin';
-      } else if (role == 'super_admin' || role == 'admin') {
+      } else if (role == 'super_admin' || role == 'admin_general' || role == 'admin') {
         rolePrefix = '/super-admin';
       } else if (role == 'laborantin') {
         rolePrefix = '/laborantin';
       } else {
         rolePrefix = '/patient';
       }
+
+      // Redirections des anciennes URLs publiques vers les nouvelles
+      if (state.matchedLocation == '/patient/nearby') return '/nearby';
+      if (state.matchedLocation == '/patient/chatbot') return '/chatbot';
+      if (state.matchedLocation.startsWith('/patient/hopital/')) {
+        final rest = state.matchedLocation.replaceFirst('/patient/hopital/', '');
+        return '/hopital/$rest';
+      }
+      if (state.matchedLocation == '/patient/service') return '/service';
 
       if (state.matchedLocation == '/messagerie') return '$rolePrefix/messagerie';
       
@@ -216,6 +224,59 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(
+        path: '/chatbot',
+        pageBuilder: (context, state) => _buildPageWithFadeTransition(
+          state: state,
+          child: const PatientChatbotScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/nearby',
+        pageBuilder: (context, state) => _buildPageWithFadeTransition(
+          state: state,
+          child: const PatientNearbyHospitalsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/hopital/:id',
+        pageBuilder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          final hopital = state.extra as HopitalSearchModel?;
+          return _buildPageWithFadeTransition(
+            state: state,
+            child: HopitalDetailScreen(
+              hopital: hopital,
+              hopitalId: id,
+            ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/service',
+        pageBuilder: (context, state) {
+          final data = state.extra as Map<String, dynamic>;
+          HopitalServiceModel service;
+          if (data['service'] is Map<String, dynamic>) {
+            service = HopitalServiceModel.fromJson(data['service']);
+          } else {
+            service = data['service'] as HopitalServiceModel;
+          }
+          HopitalSearchModel hopital;
+          if (data['hopital'] is Map<String, dynamic>) {
+            hopital = HopitalSearchModel.fromJson(data['hopital']);
+          } else {
+            hopital = data['hopital'] as HopitalSearchModel;
+          }
+          return _buildPageWithFadeTransition(
+            state: state,
+            child: ServiceDetailScreen(
+              service: service,
+              hopital: hopital,
+            ),
+          );
+        },
+      ),
+      GoRoute(
         path: '/privacy',
         pageBuilder: (context, state) => _buildPageWithFadeTransition(
           state: state,
@@ -234,6 +295,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _buildPageWithFadeTransition(
           state: state,
           child: const LegalMentionsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/result-code',
+        pageBuilder: (context, state) => _buildPageWithFadeTransition(
+          state: state,
+          child: const PatientResultCodeScreen(),
         ),
       ),
 
@@ -260,13 +328,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
-            path: '/patient/chatbot',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientChatbotScreen(),
-            ),
-          ),
-          GoRoute(
             path: '/patient/result-code',
             pageBuilder: (context, state) => _buildPageWithFadeTransition(
               state: state,
@@ -274,57 +335,25 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/patient/rdv/:rdvId/intake',
+            pageBuilder: (context, state) {
+              final rdvId = int.parse(state.pathParameters['rdvId']!);
+              final medecinNom = state.uri.queryParameters['medecin'];
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: PatientIntakeScreen(
+                  rendezvousId: rdvId,
+                  medecinNom: medecinNom ?? 'votre médecin',
+                ),
+              );
+            },
+          ),
+          GoRoute(
             path: '/patient/search',
             pageBuilder: (context, state) => _buildPageWithFadeTransition(
               state: state,
               child: const PatientSearchContent(),
             ),
-          ),
-          GoRoute(
-            path: '/patient/nearby',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientNearbyHospitalsScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/patient/hopital/:id',
-            pageBuilder: (context, state) {
-              final id = int.parse(state.pathParameters['id']!);
-              final hopital = state.extra as HopitalSearchModel?;
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: HopitalDetailScreen(
-                  hopital: hopital,
-                  hopitalId: id,
-                ),
-              );
-            },
-          ),
-          GoRoute(
-            path: '/patient/service',
-            pageBuilder: (context, state) {
-              final data = state.extra as Map<String, dynamic>;
-              HopitalServiceModel service;
-              if (data['service'] is Map<String, dynamic>) {
-                service = HopitalServiceModel.fromJson(data['service']);
-              } else {
-                service = data['service'] as HopitalServiceModel;
-              }
-              HopitalSearchModel hopital;
-              if (data['hopital'] is Map<String, dynamic>) {
-                hopital = HopitalSearchModel.fromJson(data['hopital']);
-              } else {
-                hopital = data['hopital'] as HopitalSearchModel;
-              }
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: ServiceDetailScreen(
-                  service: service,
-                  hopital: hopital,
-                ),
-              );
-            },
           ),
           GoRoute(
             path: '/patient/medecin/:id/rendezvous',
@@ -353,6 +382,26 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
               child: const PatientResultsContent(),
             ),
+          ),
+          GoRoute(
+            path: '/patient/consultation/:id',
+            pageBuilder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: PatientConsultationDetailScreen(consultationId: id),
+              );
+            },
+          ),
+          GoRoute(
+            path: '/patient/results/:id/share',
+            pageBuilder: (context, state) {
+              final resultat = state.extra as dynamic;
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: PatientResultShareScreen(resultat: resultat),
+              );
+            },
           ),
           GoRoute(
             path: '/patient/messagerie',
@@ -458,6 +507,23 @@ final routerProvider = Provider<GoRouter>((ref) {
               state: state,
               child: const MedecinResultatPatientScreen(),
             ),
+          ),
+          GoRoute(
+            path: '/medecin/consultations',
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const MedecinConsultationsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: '/medecin/consultations/:id',
+            pageBuilder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: MedecinConsultationDetailScreen(consultationId: id),
+              );
+            },
           ),
           GoRoute(
             path: '/medecin/patients',
@@ -576,6 +642,27 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => _buildPageWithFadeTransition(
               state: state,
               child: const AdminHopitalServicesContent(),
+            ),
+          ),
+          GoRoute(
+            path: '/admin-hopital/demandes',
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const AdminHopitalDemandesContent(),
+            ),
+          ),
+          GoRoute(
+            path: '/admin-hopital/patients',
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const AdminHopitalPatientsContent(),
+            ),
+          ),
+          GoRoute(
+            path: '/admin-hopital/stats',
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const AdminHopitalStatsContent(),
             ),
           ),
           GoRoute(
@@ -698,6 +785,20 @@ final routerProvider = Provider<GoRouter>((ref) {
             pageBuilder: (context, state) => _buildPageWithFadeTransition(
               state: state,
               child: const SuperAdminUsersContent(),
+            ),
+          ),
+          GoRoute(
+            path: '/super-admin/services',
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const SuperAdminServicesContent(),
+            ),
+          ),
+          GoRoute(
+            path: '/super-admin/demandes',
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const SuperAdminDemandesContent(),
             ),
           ),
           GoRoute(

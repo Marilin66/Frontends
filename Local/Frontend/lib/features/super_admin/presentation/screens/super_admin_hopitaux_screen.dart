@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -50,7 +50,7 @@ class SuperAdminHopitauxContent extends ConsumerWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.local_hospital, color: AppColors.primary),
@@ -66,7 +66,7 @@ class SuperAdminHopitauxContent extends ConsumerWidget {
                   subtitle: Text(
                     h.adresse,
                     style: GoogleFonts.poppins(
-                      color: AppColors.textSecondary.withOpacity(0.9), // Slightly darker
+                      color: AppColors.textSecondary.withValues(alpha: 0.9), // Slightly darker
                       fontSize: 13,
                     ),
                   ),

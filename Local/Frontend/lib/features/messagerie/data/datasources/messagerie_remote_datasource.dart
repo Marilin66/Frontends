@@ -35,9 +35,10 @@ class MessagerieRemoteDatasource {
   /// Récupérer les messages (soit par consultationId, soit par destinataireId)
   Future<List<MessageModel>> getMessages({int? consultationId, int? destinataireId}) async {
     try {
-      final queryParams = <String, dynamic>{};
-      if (consultationId != null) queryParams['consultation'] = consultationId;
-      if (destinataireId != null) queryParams['destinataire'] = destinataireId;
+      final queryParams = <String, dynamic>{
+        if (consultationId != null) 'consultation': consultationId,
+        if (destinataireId != null) 'destinataire': destinataireId,
+      };
 
       final response = await _client.get(
         ApiConstants.messages,

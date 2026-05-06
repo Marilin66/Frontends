@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -14,7 +14,6 @@ class MedecinProfileContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(medecinProfileProvider);
 
-    final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -42,7 +41,7 @@ class MedecinProfileContent extends ConsumerWidget {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: AppColors.medecin.withOpacity(0.1),
+                      backgroundColor: AppColors.medecin.withValues(alpha: 0.1),
                       child: const Icon(Icons.medical_services, size: 50, color: AppColors.medecin),
                     ),
                     const SizedBox(height: 16),
@@ -58,7 +57,7 @@ class MedecinProfileContent extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.medecin.withOpacity(0.1),
+                        color: AppColors.medecin.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(

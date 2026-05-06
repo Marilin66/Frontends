@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -52,7 +52,7 @@ class NotificationScreen extends ConsumerWidget {
                     selected: isSelected,
                     onSelected: (_) => ref.read(notificationFilterProvider.notifier).setFilter(filter),
                     backgroundColor: Colors.white,
-                    selectedColor: AppColors.primary.withOpacity(0.1),
+                    selectedColor: AppColors.primary.withValues(alpha: 0.1),
                     checkmarkColor: AppColors.primary,
                     labelStyle: GoogleFonts.poppins(
                       fontSize: 12,
@@ -80,7 +80,7 @@ class NotificationScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.notifications_none, size: 64, color: AppColors.textHint.withOpacity(0.3)),
+                  Icon(Icons.notifications_none, size: 64, color: AppColors.textHint.withValues(alpha: 0.3)),
                   const SizedBox(height: 16),
                   Text(
                     'Aucune notification ${activeFilter == NotificationFilter.all ? "" : "dans cette catégorie"}',
@@ -105,13 +105,13 @@ class NotificationScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
                       border: Border.all(
-                        color: n.lu ? Colors.transparent : AppColors.primary.withOpacity(0.1),
+                        color: n.lu ? Colors.transparent : AppColors.primary.withValues(alpha: 0.1),
                       ),
                     ),
                     child: ListTile(
@@ -119,7 +119,7 @@ class NotificationScreen extends ConsumerWidget {
                       leading: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: _getNotifColor(n.type).withOpacity(0.1),
+                          color: _getNotifColor(n.type).withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(

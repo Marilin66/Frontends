@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,7 +6,6 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 import '../providers/chatbot_provider.dart';
 
@@ -84,7 +83,7 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.smart_toy, size: 20, color: Colors.white),
@@ -127,7 +126,7 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
               color: AppColors.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
@@ -199,8 +198,8 @@ class _ChatBubble extends StatelessWidget {
             borderRadius: BorderRadius.circular(16).copyWith(bottomLeft: const Radius.circular(4)),
           ),
           child: Shimmer.fromColors(
-            baseColor: AppColors.textHint.withOpacity(0.3),
-            highlightColor: AppColors.textHint.withOpacity(0.1),
+            baseColor: AppColors.textHint.withValues(alpha: 0.3),
+            highlightColor: AppColors.textHint.withValues(alpha: 0.1),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -234,7 +233,7 @@ class _ChatBubble extends StatelessWidget {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -292,10 +291,10 @@ class _ActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

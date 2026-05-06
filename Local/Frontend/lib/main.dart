@@ -5,7 +5,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'core/routing/app_router.dart';
 import 'core/theme/app_theme.dart';
-import 'core/widgets/global_ai_bubble.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

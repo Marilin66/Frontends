@@ -184,7 +184,7 @@ class RendezVousModel {
       creeLe: creeLe ?? this.creeLe,
       modifieLe: modifieLe ?? this.modifieLe,
       hasConsultation: hasConsultation ?? this.hasConsultation,
-      consultationId: consultationId ?? this.consultationId,
+      consultationId: consultationId ?? consultationId,
       preEnregistrement: preEnregistrement ?? this.preEnregistrement,
     );
   }

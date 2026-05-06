@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -46,7 +46,7 @@ class SuperAdminUsersContent extends ConsumerWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.adminHopital.withOpacity(0.1),
+                    backgroundColor: AppColors.adminHopital.withValues(alpha: 0.1),
                     child: const Icon(Icons.admin_panel_settings, color: AppColors.adminHopital),
                   ),
                   title: Text('${a['first_name'] ?? ''} ${a['last_name'] ?? ''}', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),

@@ -5,64 +5,73 @@
 @layer base {
   html {
     @apply antialiased scroll-smooth;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
-  
+
   body {
-    @apply bg-surface text-[#1C1E21] font-sans;
+    @apply bg-[#F8FAFC] text-slate-900 font-sans;
     min-height: 100vh;
   }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Scrollbar élégante */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-200 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-slate-300; }
 }
 
 @layer components {
-  /* Style Boutons Facebook */
-  .btn {
-    @apply inline-flex items-center justify-center font-semibold transition-all duration-200 rounded-fb active:scale-95 disabled:opacity-50 whitespace-nowrap px-4;
-    min-height: 36px;
-    font-size: 0.9375rem;
+  .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { @apply bg-slate-200 rounded-full; }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Page header standard */
+  .page-header {
+    @apply mb-8;
+  }
+  .page-title {
+    @apply text-2xl font-bold text-slate-900 tracking-tight;
+  }
+  .page-subtitle {
+    @apply text-sm text-slate-500 mt-1;
   }
 
-  .btn-primary {
-    @apply btn bg-primary text-white hover:bg-[#166FE5];
-  }
-  
-  .btn-secondary {
-    @apply btn bg-[#E4E6EB] text-[#050505] hover:bg-[#D8DADF];
-  }
-
-  /* Cartes style Facebook */
-  .card-fb {
-    @apply bg-white rounded-fb shadow-fb p-4;
-  }
-
-  /* Inputs style Facebook */
-  .input-fb {
-    @apply w-full px-4 py-3 bg-[#F0F2F5] border-none rounded-fb text-[17px] placeholder:text-[#8A8D91] focus:ring-2 focus:ring-primary/20 transition-all outline-none;
-  }
-
-  .label-fb {
-    @apply block font-semibold text-[#65676B] text-[14px] mb-1.5 ml-1;
-  }
-
-  /* Badges */
-  .badge-fb {
-    @apply inline-flex items-center px-2 py-0.5 rounded-full font-semibold text-[12px];
+  /* Stats card */
+  .stat-card {
+    @apply bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-shadow;
   }
 }
 
 @layer utilities {
-  .shadow-fb {
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease-out;
+  }
+  .animate-slide-up {
+    animation: slideUp 0.2s ease-out;
+  }
+  .animate-scale-in {
+    animation: scaleIn 0.15s ease-out;
   }
 
-  .bg-premium-mesh {
-    background-color: #f1f5f9; /* Gris perle très doux */
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(226, 232, 240, 0.5) 0px, transparent 50%),
-      radial-gradient(at 100% 100%, rgba(203, 213, 225, 0.3) 0px, transparent 50%),
-      radial-gradient(at 50% 50%, rgba(248, 250, 252, 1) 0px, transparent 100%);
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-
-  .glass-card {
-    @apply bg-white/80 backdrop-blur-xl border border-white/50 shadow-premium;
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
   }
 }

@@ -1,319 +1,323 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
-import { 
-  Card, 
-  CardHeader, 
-  CardContent, 
-  CardTitle,
-  Avatar, 
-  Badge, 
-  Button, 
-  PageLoader 
-} from '@/components/ui';
-import { 
-  Calendar,
-  FileText,
-  ChevronRight,
-  CheckCircle,
-  Zap,
-  ArrowUpRight,
-  Clock,
-  Activity,
-  Video,
-  Award,
-  Users,
-  XCircle,
-  MoreHorizontal
+import { Avatar, Badge, Button, PageLoader } from '@/components/ui';
+import {
+  Calendar, Users, Clock, CheckCircle, XCircle,
+  ChevronRight, Award, FileText, MessageCircle,
+  Stethoscope, RefreshCw, AlertCircle
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
-interface Appointment {
-  id: number;
-  patient_nom: string;
-  heure: string;
-  date: string;
-  type_consultation?: string;
-  statut: 'en_attente' | 'confirme' | 'annule' | 'termine';
+function statusColor(s: string) {
+  const m: Record<string, string> = {
+    en_attente: 'bg-amber-50 text-amber-700 border-amber-200',
+    confirme:   'bg-blue-50 text-blue-700 border-blue-200',
+    termine:    'bg-emerald-50 text-emerald-700 border-emerald-200',
+    annule:     'bg-slate-100 text-slate-500 border-slate-200',
+    refuse:     'bg-red-50 text-red-600 border-red-200',
+  };
+  return m[s] ?? 'bg-slate-100 text-slate-500 border-slate-200';
 }
 
-interface DoctorStats {
-  total_consultations: number;
-  pending_rdv: number;
-  completed_rdv: number;
-  total_patients: number;
+function statusLabel(s: string) {
+  const m: Record<string, string> = {
+    en_attente: 'En attente', confirme: 'Confirmé',
+    termine: 'Terminé', annule: 'Annulé', refuse: 'Refusé',
+  };
+  return m[s] ?? s;
 }
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1, 
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [stats, setStats] = useState<DoctorStats>({
-    total_consultations: 1280,
-    pending_rdv: 0,
-    completed_rdv: 0,
-    total_patients: 0
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [refuseModal, setRefuseModal] = useState<{ id: number } | null>(null);
+  const [refuseComment, setRefuseComment] = useState('');
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      setIsLoading(true);
-      const [rdvData, statsData] = await Promise.all([
-        api.get<any>(endpoints.rendezVous),
-        api.get<any>(endpoints.hopitalStatistiques) // Réutilise les stats hôpital qui contiennent des infos pertinentes
-      ]);
-      
-      const results = Array.isArray(rdvData) ? rdvData : rdvData.results || [];
-      setAppointments(results);
-      
-      // Calculer des stats locales en attendant un endpoint dédié docteur
-      const pending = results.filter(r => r.statut === 'en_attente').length;
-      const completed = results.filter(r => r.statut === 'termine').length;
-      
-      setStats({
-        total_consultations: 1280 + completed,
-        pending_rdv: pending,
-        completed_rdv: completed,
-        total_patients: Array.from(new Set(results.map(r => r.patient_nom))).length
-      });
-
-    } catch (error) {
-      console.error('Erreur:', error);
-    } finally {
-      setIsLoading(false);
-    }
+      const data: any = await api.get(endpoints.rendezVous);
+      setAppointments(Array.isArray(data) ? data : data.results || []);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const handleUpdateStatus = async (id: number, newStatut: string) => {
+  const handleAction = async (id: number, action: string, extra?: any) => {
+    setActionLoading(id);
     try {
-      setIsLoading(true);
-      await api.patch(endpoints.rendezVousDetail(id), { statut: newStatut });
+      const map: any = {
+        confirmer: endpoints.confirmerRdv(id),
+        refuser:   endpoints.refuserRdv(id),
+        terminer:  endpoints.terminerRdv(id),
+      };
+      await api.post(map[action], extra);
       fetchData();
-    } catch (error: any) {
-      alert("Erreur lors de la mise à jour du statut.");
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { alert('Erreur lors de la mise à jour.'); }
+    finally { setActionLoading(null); }
   };
 
-  const metricCards = [
-    { label: 'RDV en attente', value: stats.pending_rdv, icon: Clock, color: 'primary', trend: 'ACTION_REQ' },
-    { label: 'Patients Uniques', value: stats.total_patients, icon: Users, color: 'slate', trend: 'SYNC' },
-    { label: 'Analyses Labo', value: '12', icon: FileText, color: 'rose', trend: 'RÉCENT' },
-    { label: 'Score Expert', value: '4.9', icon: Award, color: 'amber', trend: 'TOP' },
-  ];
+  const pending   = appointments.filter(a => a.statut === 'en_attente').length;
+  const confirmed = appointments.filter(a => a.statut === 'confirme').length;
+  const done      = appointments.filter(a => a.statut === 'termine').length;
+  const patients  = new Set(appointments.map(a => a.patient_nom)).size;
 
-  if (isLoading && appointments.length === 0) return <PageLoader />;
+  // RDV du jour
+  const today = new Date().toDateString();
+  const todayRdvs = appointments.filter(a => {
+    const d = a.date_heure || a.date;
+    return d && new Date(d).toDateString() === today;
+  });
+
+  if (loading && appointments.length === 0) return <PageLoader />;
 
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8 lg:space-y-12 pb-20"
-    >
-      {/* High-Contrast Clinical Header */}
-      <motion.div variants={itemVariants} className="bg-slate-950 rounded-2xl lg:rounded-3xl p-8 lg:p-12 overflow-hidden shadow-2xl relative">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-[80px] -mr-40 -mt-40" />
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-           <div className="flex items-center gap-6">
-              <div className="relative group">
-                 <Avatar name={user?.last_name} size="lg" className="w-20 h-20 lg:w-24 lg:h-24 border-2 border-white/10 ring-4 ring-white/5 shadow-2xl" />
-                 <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 border-2 border-slate-950 rounded-lg flex items-center justify-center shadow-lg">
-                    <CheckCircle className="w-4 h-4 text-white" />
-                 </div>
-              </div>
-              <div className="text-white">
-                 <h1 className="text-3xl lg:text-4xl font-black tracking-tighter leading-none mb-3 italic uppercase">
-                    Dr. <span className="text-primary">{user?.last_name}</span>
-                 </h1>
-                 <div className="flex flex-wrap items-center gap-3 text-white/40 font-black uppercase tracking-widest text-[9px] italic">
-                    <span className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 text-white"><Clock className="w-3.5 h-3.5" /> OPÉRATIONNEL</span>
-                    <span className="flex items-center gap-2 text-emerald-400"><Activity className="w-3.5 h-3.5" /> MATRIX_CERTIFIED</span>
-                 </div>
-              </div>
-           </div>
-           <div className="flex gap-3">
-              <Link to="/doctor/agenda">
-                 <Button variant="ghost" className="rounded-xl h-12 px-6 bg-white/5 text-white hover:bg-white/10 italic text-[10px] font-black uppercase">MON AGENDA</Button>
-              </Link>
-              <Button className="rounded-xl h-12 px-8 font-black shadow-xl shadow-primary/20 italic text-[10px] uppercase">
-                 VIDÉO-CONSULTATION <Video className="w-4 h-4 ml-2" />
-              </Button>
-           </div>
-        </div>
-      </motion.div>
+    <div className="space-y-6 animate-fade-in">
 
-      {/* Analytics Architecture */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {metricCards.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div key={index} variants={itemVariants}>
-              <Card className="border-4 border-slate-50 bg-white hover:border-primary transition-all p-6 lg:p-8 group shadow-sm">
-                <div className="flex flex-col gap-6">
-                  <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 bg-slate-50 text-slate-950 border-2 border-slate-100 rounded-xl flex items-center justify-center group-hover:bg-slate-950 group-hover:text-white transition-all shadow-inner">
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <Badge variant="outline" className="text-[8px] px-3 font-black italic border-2 border-slate-100">{stat.trend}</Badge>
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Bonjour, Dr. {user?.last_name || user?.first_name} 👋
+          </h1>
+          <p className="text-slate-500 mt-1">Tableau de bord clinique</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={fetchData} leftIcon={<RefreshCw className="w-4 h-4" />}>
+            Actualiser
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/medecin/agenda')} leftIcon={<Calendar className="w-4 h-4" />}>
+            Mon agenda
+          </Button>
+          <Button onClick={() => navigate('/medecin/consultations')} leftIcon={<Stethoscope className="w-4 h-4" />}>
+            Consultations
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Stats ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'En attente',       value: pending,   icon: Clock,         color: 'text-amber-600',   bg: 'bg-amber-50',   href: '/medecin/agenda' },
+          { label: 'Confirmés',        value: confirmed, icon: CheckCircle,   color: 'text-blue-600',    bg: 'bg-blue-50',    href: '/medecin/agenda' },
+          { label: 'Terminés',         value: done,      icon: Award,         color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/medecin/consultations' },
+          { label: 'Patients uniques', value: patients,  icon: Users,         color: 'text-violet-600',  bg: 'bg-violet-50',  href: '/medecin/patients' },
+        ].map((s, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+            onClick={() => navigate(s.href)}
+            className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-card-md transition-all cursor-pointer hover:border-slate-300"
+          >
+            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-4`}>
+              <s.icon className={`w-5 h-5 ${s.color}`} />
+            </div>
+            <p className="text-3xl font-bold text-slate-900">{s.value}</p>
+            <p className="text-sm text-slate-500 mt-1">{s.label}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* ── RDV en attente (actions urgentes) ───────────────────────── */}
+      {pending > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle className="w-4 h-4 text-amber-600" />
+            <span className="text-sm font-semibold text-amber-800">
+              {pending} rendez-vous en attente de confirmation
+            </span>
+          </div>
+          <div className="space-y-2">
+            {appointments.filter(a => a.statut === 'en_attente').slice(0, 3).map((apt: any) => {
+              const dateStr = apt.date_heure || apt.date;
+              return (
+                <div key={apt.id} className="bg-white rounded-xl px-4 py-3 flex items-center gap-3 border border-amber-100">
+                  <Avatar name={apt.patient_nom} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{apt.patient_nom}</p>
+                    <p className="text-xs text-slate-500">
+                      {dateStr ? new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+                      {apt.motif ? ` · ${apt.motif}` : ''}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-4xl lg:text-5xl font-black text-slate-950 tracking-tighter mb-1 uppercase leading-none italic">{stat.value}</p>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">{stat.label}</p>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => { setRefuseModal({ id: apt.id }); setRefuseComment(''); }}
+                      disabled={actionLoading === apt.id}
+                      className="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors disabled:opacity-50"
+                      title="Refuser"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleAction(apt.id, 'confirmer')}
+                      disabled={actionLoading === apt.id}
+                      className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                      title="Confirmer"
+                    >
+                      {actionLoading === apt.id
+                        ? <div className="w-3 h-3 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                        : <CheckCircle className="w-4 h-4" />
+                      }
+                    </button>
                   </div>
                 </div>
-              </Card>
-            </motion.div>
-          );
-        })}
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Tous les RDV ────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-slate-400" />
+            <h2 className="font-semibold text-slate-900">Tous les rendez-vous</h2>
+            <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
+              {appointments.length}
+            </span>
+          </div>
+          <Link to="/medecin/agenda" className="text-sm text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors">
+            Agenda complet <ChevronRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {appointments.length > 0 ? (
+          <div className="divide-y divide-slate-50">
+            {appointments.slice(0, 10).map((apt: any) => {
+              const dateStr = apt.date_heure || apt.date;
+              return (
+                <div key={apt.id} className="flex items-center gap-4 px-6 py-3.5 hover:bg-slate-50 transition-colors">
+                  {/* Date/heure */}
+                  <div className="w-14 text-center shrink-0">
+                    <p className="text-sm font-bold text-slate-900">
+                      {dateStr ? new Date(dateStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {dateStr ? new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : ''}
+                    </p>
+                  </div>
+
+                  <div className="w-px h-8 bg-slate-100 shrink-0" />
+
+                  {/* Patient */}
+                  <Avatar name={apt.patient_nom} size="sm" className="shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 text-sm truncate">{apt.patient_nom}</p>
+                    <p className="text-xs text-slate-400 truncate">{apt.motif || 'Consultation'}</p>
+                  </div>
+
+                  {/* Statut */}
+                  <span className={`text-xs px-2.5 py-1 rounded-full border font-medium shrink-0 ${statusColor(apt.statut)}`}>
+                    {statusLabel(apt.statut)}
+                  </span>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {apt.statut === 'en_attente' && (
+                      <>
+                        <button
+                          onClick={() => { setRefuseModal({ id: apt.id }); setRefuseComment(''); }}
+                          disabled={actionLoading === apt.id}
+                          className="w-8 h-8 bg-red-50 text-red-500 rounded-lg flex items-center justify-center hover:bg-red-100 transition-colors disabled:opacity-50"
+                          title="Refuser"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleAction(apt.id, 'confirmer')}
+                          disabled={actionLoading === apt.id}
+                          className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                          title="Confirmer"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                    {apt.statut === 'confirme' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleAction(apt.id, 'terminer')}
+                        loading={actionLoading === apt.id}
+                      >
+                        Terminer
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="px-6 py-16 text-center">
+            <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-3" />
+            <p className="font-medium text-slate-500">Aucun rendez-vous</p>
+            <p className="text-sm text-slate-400 mt-1">Votre agenda est libre</p>
+          </div>
+        )}
       </div>
 
-      {/* Operational Matrix Viewport */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card className="border-4 border-slate-50 bg-white rounded-[2.5rem] overflow-hidden h-full shadow-premium">
-            <CardHeader className="p-8 lg:p-12 border-b-2 border-slate-50 flex flex-row items-center justify-between bg-slate-50/30">
-              <div>
-                <h3 className="text-xl lg:text-3xl font-black text-slate-950 tracking-tighter uppercase italic flex items-center gap-4 leading-none">
-                  <Calendar className="w-7 h-7 text-primary" />
-                  Flux Patients
-                </h3>
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-3 italic">Indexation chronologique des segments cliniques</p>
+      {/* ── Liens rapides ────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {[
+          { icon: FileText,      label: 'Résultats patients', sub: 'Analyses et bilans',  href: '/medecin/results',    color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { icon: MessageCircle, label: 'Messages',           sub: 'Conversations',        href: '/medecin/messagerie', color: 'text-blue-600',    bg: 'bg-blue-50' },
+          { icon: Stethoscope,   label: 'Consultations',      sub: 'Comptes rendus',       href: '/medecin/consultations', color: 'text-violet-600', bg: 'bg-violet-50' },
+        ].map((item, i) => (
+          <Link key={i} to={item.href}>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-card-md hover:border-slate-300 transition-all group">
+              <div className={`w-10 h-10 ${item.bg} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <item.icon className={`w-5 h-5 ${item.color}`} />
               </div>
-              <Button variant="outline" size="sm" className="h-10 w-10 p-0 rounded-lg border-2"><MoreHorizontal className="w-4 h-4" /></Button>
-            </CardHeader>
-            <CardContent className="p-8 lg:p-12 space-y-6">
-                {appointments.length > 0 ? appointments.map((appointment) => (
-                  <div 
-                    key={appointment.id}
-                    className={`group flex items-center gap-8 p-8 border-4 transition-all rounded-[2rem] relative ${appointment.statut === 'en_attente' ? 'border-primary/10 bg-primary/[0.01]' : 'border-slate-50 bg-white hover:border-slate-100 hover:shadow-xl'}`}
-                  >
-                    <div className="text-center w-24 shrink-0">
-                      <p className="text-3xl font-black text-slate-950 tracking-tighter leading-none">{appointment.heure}</p>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2 italic">{new Date(appointment.date).toLocaleDateString()}</p>
-                    </div>
-                    
-                    <div className="flex items-center gap-6 flex-1 min-w-0 border-l-4 border-slate-100 pl-8">
-                       <Avatar name={appointment.patient_nom} size="lg" className="ring-4 ring-white shadow-xl" />
-                       <div className="min-w-0">
-                          <p className="text-lg lg:text-xl font-black text-slate-950 uppercase tracking-tighter truncate leading-none mb-2">{appointment.patient_nom}</p>
-                          <div className="flex items-center gap-3">
-                             <Badge variant={appointment.statut === 'confirme' ? 'success' : appointment.statut === 'annule' ? 'destructive' : 'warning'} className="text-[9px] font-black italic px-4 py-1 uppercase">{appointment.statut}</Badge>
-                             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic hidden md:block">UID: P-0{appointment.id}X</span>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                       {appointment.statut === 'en_attente' && (
-                         <div className="flex gap-2">
-                           <Button 
-                             onClick={() => handleUpdateStatus(appointment.id, 'confirme')}
-                             className="h-12 w-12 p-0 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg active:scale-95 transition-all"
-                           >
-                             <CheckCircle className="w-5 h-5" />
-                           </Button>
-                           <Button 
-                             onClick={() => handleUpdateStatus(appointment.id, 'annule')}
-                             className="h-12 w-12 p-0 rounded-xl bg-rose-500 hover:bg-rose-600 text-white shadow-lg active:scale-95 transition-all"
-                           >
-                             <XCircle className="w-5 h-5" />
-                           </Button>
-                         </div>
-                       )}
-                       {appointment.statut === 'confirme' && (
-                          <Button 
-                             onClick={() => handleUpdateStatus(appointment.id, 'termine')}
-                             className="h-12 px-6 rounded-xl bg-slate-950 text-white font-black italic text-[10px] shadow-xl hover:bg-primary transition-all uppercase"
-                          >
-                             TERMINER
-                          </Button>
-                       )}
-                       <Button variant="outline" size="sm" className="h-12 w-12 p-0 rounded-xl border-2 text-slate-300 hover:text-slate-950 group-hover:border-slate-300">
-                          <ChevronRight className="w-5 h-5" />
-                       </Button>
-                    </div>
-                  </div>
-                )) : (
-                  <div className="text-center py-32 bg-slate-50/50 rounded-[2.5rem] border-4 border-dashed border-slate-100 overflow-hidden relative">
-                    <Calendar className="w-20 h-20 mx-auto mb-6 text-slate-200" />
-                    <h3 className="text-2xl font-black text-slate-300 uppercase italic tracking-[0.2em]">Agenda Libre</h3>
-                    <p className="text-slate-400 font-bold text-xs uppercase mt-3 italic tracking-widest">Aucune indexation patient</p>
-                  </div>
-                )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Clinical Sidepanels */}
-        <motion.div variants={itemVariants} className="space-y-10">
-          <Card className="border-4 border-slate-950 bg-slate-950 text-white p-10 lg:p-12 overflow-hidden relative group rounded-[3rem] shadow-2xl">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[70px] -mr-32 -mt-32 transition-transform group-hover:scale-125" />
-            <div className="relative z-10 space-y-10">
-               <div className="w-16 h-16 bg-white/10 rounded-[1.5rem] flex items-center justify-center shadow-inner group-hover:rotate-12 transition-transform"><FileText className="w-8 h-8 text-primary" /></div>
-               <div className="space-y-4">
-                  <h4 className="text-4xl font-black tracking-tighter leading-none italic uppercase">ANALYSES <br /><span className="text-white/40 text-2xl font-bold italic uppercase tracking-tight">Vecteur Labo</span></h4>
-                  <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.3em] leading-relaxed italic">
-                    Synchronisation asynchrone des datasets biologiques
-                  </p>
-               </div>
-               <Button className="w-full h-16 rounded-2xl bg-white text-slate-950 font-black text-xs italic shadow-2xl hover:scale-105 active:scale-95 transition-all uppercase tracking-widest">OUVRIR ARCHIVES <ArrowUpRight className="w-5 h-5 ml-3" /></Button>
+              <p className="font-semibold text-slate-900">{item.label}</p>
+              <p className="text-sm text-slate-400 mt-0.5">{item.sub}</p>
             </div>
-          </Card>
-
-          <Card className="border-4 border-slate-50 bg-white p-10 rounded-[3rem] shadow-premium">
-            <div className="flex items-center justify-between mb-10">
-               <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] italic">ALERTES_NODE</h4>
-               <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping shadow-glow-sm" />
-            </div>
-            <div className="space-y-8">
-               {[
-                 { name: "Saliou Diallo", time: "15 min", type: "RÉSUMÉ DISPO", icon: CheckCircle, color: "text-emerald-500" },
-                 { name: "Marie Koffi", time: "2h ago", type: "URGENCE_REQ", icon: Activity, color: "text-rose-500" }
-               ].map((pat, i) => (
-                 <div key={i} className="flex items-center justify-between group cursor-pointer">
-                    <div className="flex items-center gap-5">
-                       <div className="relative">
-                          <Avatar name={pat.name} size="md" className="ring-2 ring-slate-100 group-hover:scale-110 transition-transform shadow-premium" />
-                          <div className={`absolute -bottom-1 -right-1 w-5 h-5 ${pat.color.replace('text', 'bg')} rounded-lg border-2 border-white flex items-center justify-center shadow-lg`}><pat.icon className="w-3 h-3 text-white" /></div>
-                       </div>
-                       <div>
-                          <p className="text-sm font-black text-slate-950 uppercase tracking-tighter italic">{pat.name}</p>
-                          <p className={`text-[8px] font-black uppercase tracking-widest italic ${pat.color}`}>{pat.type}</p>
-                       </div>
-                    </div>
-                    <span className="text-[9px] font-black text-slate-300 italic uppercase">{pat.time}</span>
-                 </div>
-               ))}
-               <Button variant="ghost" className="w-full h-14 rounded-2xl text-primary font-black text-[10px] uppercase tracking-[0.25em] hover:bg-primary/5 mt-6 border-4 border-transparent hover:border-primary/10 italic">VOIR LE FLUX GLOBAL</Button>
-            </div>
-          </Card>
-        </motion.div>
+          </Link>
+        ))}
       </div>
-    </motion.div>
+
+      {/* ── Modal refus ─────────────────────────────────────────────── */}
+      {refuseModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setRefuseModal(null)} />
+          <div className="relative bg-white rounded-2xl shadow-modal w-full max-w-md p-6">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Refuser le rendez-vous</h3>
+            <p className="text-sm text-slate-500 mb-4">Indiquez le motif du refus (optionnel)</p>
+            <textarea
+              rows={3}
+              value={refuseComment}
+              onChange={e => setRefuseComment(e.target.value)}
+              placeholder="Ex: Indisponibilité, urgence..."
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+            />
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setRefuseModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition">
+                Annuler
+              </button>
+              <button
+                onClick={async () => {
+                  await handleAction(refuseModal.id, 'refuser', { commentaire: refuseComment });
+                  setRefuseModal(null);
+                }}
+                disabled={actionLoading === refuseModal.id}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-50"
+              >
+                Confirmer le refus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

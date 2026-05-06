@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,7 +7,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
 import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/shimmer_loading.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 import 'package:hopitel_app/features/super_admin/data/models/service_model.dart';
 import '../../data/models/hopital_search_model.dart';
@@ -80,7 +79,7 @@ class _PatientSearchContentState extends ConsumerState<PatientSearchContent> {
                         'Un établissement, une spécialité...',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -103,7 +102,7 @@ class _PatientSearchContentState extends ConsumerState<PatientSearchContent> {
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -146,7 +145,7 @@ class _PatientSearchContentState extends ConsumerState<PatientSearchContent> {
                         avatar: Icon(Helpers.getServiceIcon(selectedService.icone), size: 16),
                         onDeleted: () => ref.read(hopitauxSearchProvider.notifier).clearFilters(),
                         deleteIconColor: AppColors.error,
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                         side: BorderSide.none,
                         labelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
                       ),
@@ -157,7 +156,7 @@ class _PatientSearchContentState extends ConsumerState<PatientSearchContent> {
                           _searchCtrl.clear();
                           _onSearch();
                         },
-                        backgroundColor: AppColors.secondary.withOpacity(0.1),
+                        backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
                         side: BorderSide.none,
                         labelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
                       ),
@@ -256,7 +255,7 @@ class _PatientSearchContentState extends ConsumerState<PatientSearchContent> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: (isSelected ? AppColors.primary : Colors.black).withOpacity(0.05),
+                  color: (isSelected ? AppColors.primary : Colors.black).withValues(alpha: 0.05),
                   blurRadius: 8, offset: const Offset(0, 4),
                 ),
               ],
@@ -294,11 +293,11 @@ class _PatientSearchContentState extends ConsumerState<PatientSearchContent> {
             Container(
               width: 85, height: 85,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.03),
+                color: AppColors.primary.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(18),
               ),
               child: Center(
-                child: Icon(Icons.business_rounded, color: AppColors.primary.withOpacity(0.3), size: 36),
+                child: Icon(Icons.business_rounded, color: AppColors.primary.withValues(alpha: 0.3), size: 36),
               ),
             ),
             const SizedBox(width: 16),
@@ -346,7 +345,7 @@ class _PatientSearchContentState extends ConsumerState<PatientSearchContent> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.05),
+        color: AppColors.primary.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

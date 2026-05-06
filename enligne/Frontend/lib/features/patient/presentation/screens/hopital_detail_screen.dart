@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -50,7 +50,7 @@ class HopitalDetailScreen extends ConsumerWidget {
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                    colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -124,7 +124,7 @@ class HopitalDetailScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -175,7 +175,7 @@ class HopitalDetailScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: AppColors.primary, size: 20),
@@ -197,14 +197,14 @@ class HopitalDetailScreen extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.textHint.withOpacity(0.1)),
+        border: Border.all(color: AppColors.textHint.withValues(alpha: 0.1)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.info.withOpacity(0.1),
+            color: AppColors.info.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.medical_services_outlined, color: AppColors.info),
@@ -233,7 +233,7 @@ class HopitalDetailScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 40),
         child: Column(
           children: [
-            Icon(Icons.layers_clear_outlined, size: 48, color: AppColors.textHint.withOpacity(0.5)),
+            Icon(Icons.layers_clear_outlined, size: 48, color: AppColors.textHint.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
               message,

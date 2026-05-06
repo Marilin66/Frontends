@@ -154,3 +154,49 @@ class MedecinProfileNotifier extends AsyncNotifier<UserModel?> {
     }
   }
 }
+
+// ─── Consultations List ──────────────────────────────────────────────────────
+
+final medecinConsultationsListProvider =
+    AsyncNotifierProvider<MedecinConsultationsListNotifier, List<ConsultationModel>>(
+  MedecinConsultationsListNotifier.new,
+);
+
+class MedecinConsultationsListNotifier
+    extends AsyncNotifier<List<ConsultationModel>> {
+  @override
+  Future<List<ConsultationModel>> build() async {
+    final datasource = ref.read(medecinDatasourceProvider);
+    return await datasource.getConsultations();
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final datasource = ref.read(medecinDatasourceProvider);
+      return await datasource.getConsultations();
+    });
+  }
+
+  Future<bool> updateConsultation(int id, Map<String, dynamic> data) async {
+    try {
+      final datasource = ref.read(medecinDatasourceProvider);
+      await datasource.updateConsultation(id, data);
+      await refresh();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> cloturerConsultation(int id) async {
+    try {
+      final datasource = ref.read(medecinDatasourceProvider);
+      await datasource.cloturerConsultation(id);
+      await refresh();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+}

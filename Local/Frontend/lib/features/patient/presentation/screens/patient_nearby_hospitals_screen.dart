@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,8 +10,6 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 import '../providers/patient_provider.dart';
 import '../../data/models/hopital_search_model.dart';
@@ -144,7 +142,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 4,
                           )
                         ],
@@ -229,7 +227,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                         'Trouvez les établissements les plus proches',
                         style: GoogleFonts.poppins(
                           fontSize: 13,
-                          color: Colors.white.withOpacity(0.8),
+                          color: Colors.white.withValues(alpha: 0.8),
                         ),
                       ),
                     ],
@@ -249,7 +247,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                   ),
@@ -271,7 +269,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
+                      color: Colors.black.withValues(alpha: 0.03),
                       blurRadius: 10,
                       offset: const Offset(0, 2),
                     ),
@@ -294,7 +292,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -315,9 +313,9 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                           child: SliderTheme(
                             data: SliderThemeData(
                               activeTrackColor: AppColors.primary,
-                              inactiveTrackColor: AppColors.primary.withOpacity(0.2),
+                              inactiveTrackColor: AppColors.primary.withValues(alpha: 0.2),
                               thumbColor: AppColors.primary,
-                              overlayColor: AppColors.primary.withOpacity(0.1),
+                              overlayColor: AppColors.primary.withValues(alpha: 0.1),
                             ),
                             child: Slider(
                               value: _selectedRadius.toDouble(),
@@ -373,7 +371,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
               child: Center(
                 child: Shimmer.fromColors(
                   baseColor: AppColors.surface,
-                  highlightColor: AppColors.surface.withOpacity(0.5),
+                  highlightColor: AppColors.surface.withValues(alpha: 0.5),
                   child: Container(
                     width: 200,
                     height: 20,
@@ -417,7 +415,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
       return Center(
         child: Shimmer.fromColors(
           baseColor: AppColors.surface,
-          highlightColor: AppColors.surface.withOpacity(0.5),
+          highlightColor: AppColors.surface.withValues(alpha: 0.5),
           child: Container(
             width: 40,
             height: 40,
@@ -435,7 +433,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.location_off_outlined, size: 50, color: AppColors.textSecondary.withOpacity(0.5)),
+            Icon(Icons.location_off_outlined, size: 50, color: AppColors.textSecondary.withValues(alpha: 0.5)),
             const SizedBox(height: 12),
             Text(
               'Localisation non activée',
@@ -568,7 +566,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -589,7 +587,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                   width: 70,
                   height: 70,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
+                    color: AppColors.primary.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Center(
@@ -634,7 +632,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.secondary.withOpacity(0.1),
+                            color: AppColors.secondary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(

@@ -160,4 +160,39 @@ class AdminHopitalRemoteDatasource {
       throw ApiException.fromDioError(e);
     }
   }
+
+  /// Récupérer les demandes de service de l'hôpital
+  Future<List<dynamic>> getDemandes() async {
+    try {
+      final response = await _client.get(ApiConstants.demandes);
+      final data = response.data;
+      final results =
+          data is List ? data : (data['results'] as List<dynamic>?) ?? [];
+      return results;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Récupérer les patients de l'hôpital
+  Future<List<UserModel>> getPatients({String? search}) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (search != null && search.isNotEmpty) {
+        queryParams['search'] = search;
+      }
+      final response = await _client.get(
+        '${ApiConstants.hopitaux}patients/',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      );
+      final data = response.data;
+      final results =
+          data is List ? data : (data['results'] as List<dynamic>?) ?? [];
+      return results
+          .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }

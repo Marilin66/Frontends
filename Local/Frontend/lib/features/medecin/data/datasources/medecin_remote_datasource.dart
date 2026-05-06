@@ -160,3 +160,25 @@ class MedecinRemoteDatasource {
     }
   }
 }
+
+  Future<List<ConsultationModel>> getConsultations() async {
+    try {
+      final response = await _client.get(ApiConstants.consultations);
+      final data = response.data;
+      final results =
+          data is List ? data : (data['results'] as List<dynamic>?) ?? [];
+      return results
+          .map((e) => ConsultationModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<void> cloturerConsultation(int id) async {
+    try {
+      await _client.post('${ApiConstants.consultations}$id/cloturer/');
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }

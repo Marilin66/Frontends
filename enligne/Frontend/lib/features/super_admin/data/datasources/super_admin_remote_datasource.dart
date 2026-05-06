@@ -200,6 +200,17 @@ class SuperAdminRemoteDatasource {
     }
   }
 
+  /// Mettre à jour un service global
+  Future<ServiceModel> updateService(int id, Map<String, dynamic> data) async {
+    try {
+      final response =
+          await _client.patch('${ApiConstants.services}$id/', data: data);
+      return ServiceModel.fromJson(response.data);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   /// Récupérer les services d'un hôpital précis
   Future<List<HopitalServiceModel>> getHopitalServices(int hopitalId) async {
     try {

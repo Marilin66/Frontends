@@ -1,82 +1,94 @@
 // @ts-nocheck
 import { NavLink } from 'react-router-dom';
-import { Home, Search, Calendar, MessageCircle, User, Bot } from 'lucide-react';
+import {
+  Home, Search, Calendar, MessageCircle, User, Bot,
+  LayoutDashboard, FlaskConical, History, Stethoscope,
+  Activity, Settings, Building, Users, BarChart2
+} from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { clsx } from 'clsx';
+
+interface NavItem { path: string; icon: any; label: string; end?: boolean; highlight?: boolean }
 
 export function BottomNav() {
   const { user } = useAuth();
-  
   if (!user) return null;
 
-  let navItems = [
-    { path: '/', icon: Home, label: 'Accueil' },
-    { path: '/patient/search', icon: Search, label: 'Recherche' },
-    { path: '/patient/ai-agent', icon: Bot, label: 'IA Santé', highlight: true },
-    { path: '/patient/appointments', icon: Calendar, label: 'RDV' },
-    { path: '/profile', icon: User, label: 'Profil' },
-  ];
+  const role = user.role;
 
-  // Adapter les items selon le rôle
-  if (user.role === 'medecin') {
-    navItems = [
-      { path: '/', icon: Home, label: 'Accueil' },
-      { path: '/doctor/patients', icon: Search, label: 'Patients' },
-      { path: '/doctor/agenda', icon: Calendar, label: 'Agenda' },
-      { path: '/messages', icon: MessageCircle, label: 'Messages' },
-      { path: '/profile', icon: User, label: 'Profil' },
+  const getItems = (): NavItem[] => {
+    if (role === 'patient') return [
+      { path: '/patient',              icon: Home,          label: 'Accueil',   end: true },
+      { path: '/patient/search',       icon: Search,        label: 'Recherche' },
+      { path: '/patient/ai-agent',     icon: Bot,           label: 'IA',        highlight: true },
+      { path: '/patient/appointments', icon: Calendar,      label: 'RDV' },
+      { path: '/patient/profile',      icon: User,          label: 'Profil' },
     ];
-  } else if (user.role === 'admin_hopital' || user.role === 'admin_general') {
-    navItems = [
-      { path: '/', icon: Home, label: 'Accueil' },
-      { path: '/admin/medecins', icon: Search, label: 'Médecins' },
-      { path: '/admin/services', icon: Calendar, label: 'Services' },
-      { path: '/messages', icon: MessageCircle, label: 'Messages' },
-      { path: '/profile', icon: User, label: 'Profil' },
+    if (role === 'medecin') return [
+      { path: '/medecin',              icon: Home,          label: 'Accueil',   end: true },
+      { path: '/medecin/agenda',       icon: Calendar,      label: 'Agenda' },
+      { path: '/medecin/patients',     icon: Users,         label: 'Patients' },
+      { path: '/medecin/messagerie',   icon: MessageCircle, label: 'Messages' },
+      { path: '/medecin/profile',      icon: Settings,      label: 'Paramètres' },
     ];
-  } else if (user.role === 'laborantin') {
-    navItems = [
-      { path: '/', icon: Home, label: 'Accueil' },
-      { path: '/results', icon: Search, label: 'Résultats' },
-      { path: '/messages', icon: MessageCircle, label: 'Messages' },
-      { path: '/profile', icon: User, label: 'Profil' },
+    if (role === 'admin_hopital') return [
+      { path: '/admin-hopital',                icon: Home,          label: 'Accueil',   end: true },
+      { path: '/admin-hopital/medecins',       icon: Stethoscope,   label: 'Médecins' },
+      { path: '/admin-hopital/services',       icon: Activity,      label: 'Services' },
+      { path: '/admin-hopital/messages',       icon: MessageCircle, label: 'Messages' },
+      { path: '/admin-hopital/settings',       icon: Settings,      label: 'Paramètres' },
     ];
-  }
+    if (role === 'super_admin' || role === 'admin_general') return [
+      { path: '/super-admin',                  icon: LayoutDashboard, label: 'Accueil',   end: true },
+      { path: '/super-admin/hopitaux',         icon: Building,        label: 'Hôpitaux' },
+      { path: '/super-admin/demandes',         icon: Activity,        label: 'Demandes' },
+      { path: '/super-admin/messagerie',       icon: MessageCircle,   label: 'Messages' },
+      { path: '/super-admin/settings',         icon: Settings,        label: 'Paramètres' },
+    ];
+    if (role === 'laborantin') return [
+      { path: '/laborantin',                   icon: LayoutDashboard, label: 'Dashboard', end: true },
+      { path: '/laborantin/pending',           icon: FlaskConical,    label: 'En cours' },
+      { path: '/laborantin/finished',          icon: History,         label: 'Clôturées' },
+      { path: '/laborantin/messagerie',        icon: MessageCircle,   label: 'Messages' },
+      { path: '/laborantin/profile',           icon: User,            label: 'Profil' },
+    ];
+    return [{ path: '/', icon: Home, label: 'Accueil', end: true }];
+  };
+
+  const items = getItems();
 
   return (
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-secondary-light/95 backdrop-blur-xl border-t border-slate-200 z-[500] px-2 pb-safe">
-      <div className="flex justify-around items-center h-16 max-w-md mx-auto">
-        {navItems.map((item) => {
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200">
+      <div className="flex items-center justify-around h-16 px-1 max-w-lg mx-auto">
+        {items.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink
               key={item.path}
               to={item.path}
-              className={({ isActive }) => clsx(
-                "flex flex-col items-center justify-center gap-1 transition-all relative px-3 py-1",
-                isActive ? "text-primary scale-110" : "text-slate-500 hover:text-slate-700"
-              )}
+              end={item.end}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center gap-1 flex-1 py-1 min-w-0 transition-colors
+                ${isActive ? 'text-primary' : 'text-slate-400'}`
+              }
             >
-              {item.highlight ? (
-                <div className="relative -mt-8">
-                  <div className="absolute inset-0 bg-primary/15 rounded-full blur-lg animate-pulse" />
-                  <div className={clsx(
-                    "w-14 h-14 rounded-2xl flex items-center justify-center shadow-md border-2 transition-all",
-                    "bg-primary border-secondary-light text-white"
-                  )}>
-                    <Icon className="w-6 h-6" />
+              {({ isActive }) =>
+                item.highlight ? (
+                  <div className="relative -mt-5">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all ${isActive ? 'bg-primary-dark' : 'bg-primary'}`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <Icon className="w-5 h-5" />
-                  <span className="text-[9px] font-black uppercase tracking-widest italic">{item.label}</span>
-                </>
-              )}
+                ) : (
+                  <>
+                    <Icon className="w-5 h-5 flex-shrink-0" />
+                    <span className="text-[10px] font-medium truncate max-w-full px-1">{item.label}</span>
+                  </>
+                )
+              }
             </NavLink>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

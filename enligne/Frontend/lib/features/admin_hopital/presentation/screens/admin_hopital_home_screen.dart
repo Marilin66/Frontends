@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -80,10 +80,10 @@ class AdminHopitalHomeContent extends ConsumerWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _StatCard(
-                        icon: Icons.people,
-                        value: '${stats['total_patients'] ?? 0}',
-                        label: 'Patients',
-                        color: AppColors.patient,
+                        icon: Icons.hourglass_empty,
+                        value: '${stats['rdv_en_attente'] ?? 0}',
+                        label: 'RDV en attente',
+                        color: Colors.orange,
                       ),
                     ),
                   ],
@@ -94,8 +94,8 @@ class AdminHopitalHomeContent extends ConsumerWidget {
                     Expanded(
                       child: _StatCard(
                         icon: Icons.calendar_today,
-                        value: '${stats['rdv_aujourdhui'] ?? 0}',
-                        label: 'RDV aujourd\'hui',
+                        value: '${stats['total_rdv'] ?? 0}',
+                        label: 'Total RDV',
                         color: AppColors.primary,
                       ),
                     ),
@@ -131,7 +131,7 @@ class AdminHopitalHomeContent extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.adminHopital.withOpacity(0.3),
+            color: AppColors.adminHopital.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -154,7 +154,7 @@ class AdminHopitalHomeContent extends ConsumerWidget {
               hopitalNom,
               style: GoogleFonts.poppins(
                 fontSize: 16,
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
           ],
@@ -163,7 +163,7 @@ class AdminHopitalHomeContent extends ConsumerWidget {
             'Administration de l\'établissement',
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -172,33 +172,68 @@ class AdminHopitalHomeContent extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _QuickActionCard(
-            icon: Icons.medical_services,
-            label: 'Mes\nMédecins',
-            color: AppColors.medecin,
-            onTap: () => context.go('/admin-hopital/medecins'),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.medical_services,
+                label: 'Médecins',
+                color: AppColors.medecin,
+                onTap: () => context.go('/admin-hopital/medecins'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.category,
+                label: 'Services',
+                color: AppColors.primary,
+                onTap: () => context.go('/admin-hopital/services'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.message,
+                label: 'Messages',
+                color: AppColors.secondary,
+                onTap: () => context.go('/admin-hopital/messages'),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _QuickActionCard(
-            icon: Icons.category,
-            label: 'Mes\nServices',
-            color: AppColors.primary,
-            onTap: () => context.go('/admin-hopital/services'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _QuickActionCard(
-            icon: Icons.message,
-            label: 'Mes\nMessages',
-            color: AppColors.secondary,
-            onTap: () => context.go('/admin-hopital/messages'),
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.inbox_outlined,
+                label: 'Demandes',
+                color: Colors.orange,
+                onTap: () => context.go('/admin-hopital/demandes'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.people_outline,
+                label: 'Patients',
+                color: AppColors.patient,
+                onTap: () => context.go('/admin-hopital/patients'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.bar_chart,
+                label: 'Statistiques',
+                color: Colors.teal,
+                onTap: () => context.go('/admin-hopital/stats'),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -229,7 +264,7 @@ class _QuickActionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.10),
+              color: color.withValues(alpha: 0.10),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -241,7 +276,7 @@ class _QuickActionCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+                color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),
@@ -283,7 +318,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.textHint.withOpacity(0.2)),
+        border: Border.all(color: AppColors.textHint.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -291,7 +326,7 @@ class _StatCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
+              color: color.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color),

@@ -111,31 +111,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Real login
   const login = async (credentials: LoginCredentials) => {
-    console.log('Tentative de connexion pour:', credentials.email);
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const response = await api.post<{ access: string; refresh: string; user?: User }>(endpoints.login, credentials);
-      console.log('Réponse connexion reçue (token obtenu)');
-      
+      const response = await api.post<{ access: string; refresh: string }>(endpoints.login, credentials);
       const { access, refresh } = response;
       localStorage.setItem('auth_token', access);
       localStorage.setItem('refresh_token', refresh);
 
-      // Fetch user profile immediately after login
-      console.log('Récupération du profil utilisateur...');
       const user = await api.get<User>(endpoints.me);
-      console.log('Profil utilisateur récupéré:', user);
-      
       localStorage.setItem('user', JSON.stringify(user));
-
       dispatch({ type: 'SET_USER', payload: { user, token: access } });
-      console.log('Authentification réussie, état mis à jour');
     } catch (error: any) {
-      console.error('Erreur lors de la connexion:', error);
       let message = 'Identifiants invalides ou erreur serveur';
-      
       if (!error.response) {
         message = 'Impossible de contacter le serveur (vérifiez que le backend est lancé)';
       } else if (error.response.status === 401) {
@@ -143,9 +132,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else if (error.response.status === 404) {
         message = 'Endpoint de connexion non trouvé (404)';
       } else {
-        message = error.response.data?.detail || error.response.data?.message || 'Erreur serveur (' + error.response.status + ')';
+        message = error.response.data?.detail || error.response.data?.message || `Erreur serveur (${error.response.status})`;
       }
-      
       dispatch({ type: 'SET_ERROR', payload: message });
       throw error;
     }

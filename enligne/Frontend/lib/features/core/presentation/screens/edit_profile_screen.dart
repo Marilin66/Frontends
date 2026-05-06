@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,8 +7,6 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
-import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/safe_pop_scope.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -191,7 +189,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 height: 20, 
                                 width: 20, 
                                 child: Shimmer.fromColors(
-                                  baseColor: Colors.white.withOpacity(0.8),
+                                  baseColor: Colors.white.withValues(alpha: 0.8),
                                   highlightColor: Colors.white,
                                   child: Container(
                                     height: 20,
@@ -298,7 +296,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedSexe,
+                    initialValue: _selectedSexe,
                     decoration: const InputDecoration(labelText: 'Sexe', prefixIcon: Icon(Icons.person_pin_outlined)),
                     items: const [
                       DropdownMenuItem(value: 'M', child: Text('H')),
@@ -327,7 +325,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             children: [
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: _selectedGroupeSanguin,
+                initialValue: _selectedGroupeSanguin,
                 decoration: const InputDecoration(labelText: 'Groupe Sanguin', prefixIcon: Icon(Icons.bloodtype_outlined)),
                 items: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
                 onChanged: (v) {

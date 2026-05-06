@@ -26,7 +26,7 @@ class PremiumLoadingView extends StatelessWidget {
                 height: 60,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>((color ?? AppColors.primary).withOpacity(0.2)),
+                  valueColor: AlwaysStoppedAnimation<Color>((color ?? AppColors.primary).withValues(alpha: 0.2)),
                 ),
               ),
               SizedBox(

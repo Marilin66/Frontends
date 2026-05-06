@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -116,8 +116,8 @@ class _PatientNotificationSettingsContentState extends ConsumerState<PatientNoti
                 height: 40,
                 decoration: BoxDecoration(
                   color: _settings.pushEnabled 
-                      ? widget.primaryColor.withOpacity(0.1)
-                      : AppColors.textHint.withOpacity(0.1),
+                      ? widget.primaryColor.withValues(alpha: 0.1)
+                      : AppColors.textHint.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -158,8 +158,8 @@ class _PatientNotificationSettingsContentState extends ConsumerState<PatientNoti
                 height: 40,
                 decoration: BoxDecoration(
                   color: _settings.emailEnabled 
-                      ? widget.primaryColor.withOpacity(0.1)
-                      : AppColors.textHint.withOpacity(0.1),
+                      ? widget.primaryColor.withValues(alpha: 0.1)
+                      : AppColors.textHint.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -200,8 +200,8 @@ class _PatientNotificationSettingsContentState extends ConsumerState<PatientNoti
                 height: 40,
                 decoration: BoxDecoration(
                   color: _settings.appointmentReminders 
-                      ? widget.primaryColor.withOpacity(0.1)
-                      : AppColors.textHint.withOpacity(0.1),
+                      ? widget.primaryColor.withValues(alpha: 0.1)
+                      : AppColors.textHint.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -242,8 +242,8 @@ class _PatientNotificationSettingsContentState extends ConsumerState<PatientNoti
                 height: 40,
                 decoration: BoxDecoration(
                   color: _settings.messageNotifications 
-                      ? widget.primaryColor.withOpacity(0.1)
-                      : AppColors.textHint.withOpacity(0.1),
+                      ? widget.primaryColor.withValues(alpha: 0.1)
+                      : AppColors.textHint.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -284,8 +284,8 @@ class _PatientNotificationSettingsContentState extends ConsumerState<PatientNoti
                 height: 40,
                 decoration: BoxDecoration(
                   color: _settings.systemUpdates 
-                      ? widget.primaryColor.withOpacity(0.1)
-                      : AppColors.textHint.withOpacity(0.1),
+                      ? widget.primaryColor.withValues(alpha: 0.1)
+                      : AppColors.textHint.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(

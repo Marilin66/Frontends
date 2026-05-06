@@ -78,11 +78,13 @@ export default function UsersPage() {
     try {
       setIsLoading(true);
       const [adminsData, hopitauxData] = await Promise.all([
-        api.get<Admin[]>(endpoints.adminHopitaux),
-        api.get<{ results: any[] }>(endpoints.hopitaux)
+        api.get<any>(endpoints.adminHopitaux),
+        api.get<any>(endpoints.hopitaux)
       ]);
-      setAdmins(adminsData || []);
-      setHospitals(hopitauxData.results || []);
+      const adminsList = Array.isArray(adminsData) ? adminsData : adminsData?.results ?? [];
+      const hopitauxList = Array.isArray(hopitauxData) ? hopitauxData : hopitauxData?.results ?? [];
+      setAdmins(adminsList);
+      setHospitals(hopitauxList);
     } catch (error) {
       console.error('Erreur:', error);
     } finally {

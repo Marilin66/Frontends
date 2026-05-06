@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,9 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
 import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/fluid_card.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../data/models/rendezvous_medecin_model.dart';
 import '../providers/medecin_provider.dart';
 
@@ -19,9 +17,7 @@ class MedecinHomeContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
     final rdvAsync = ref.watch(medecinRendezvousProvider);
-    final unreadCount = ref.watch(unreadNotificationCountProvider);
 
-    final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return RefreshIndicator(
         onRefresh: () =>
@@ -42,7 +38,7 @@ class MedecinHomeContent extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.medecin.withOpacity(0.3),
+                    color: AppColors.medecin.withValues(alpha: 0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -64,7 +60,7 @@ class MedecinHomeContent extends ConsumerWidget {
                     'Bienvenue sur votre espace médecin',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                     ),
                   ),
                 ],
@@ -100,6 +96,37 @@ class MedecinHomeContent extends ConsumerWidget {
                     label: 'Mes Messages',
                     color: AppColors.secondary,
                     onTap: () => context.go('/medecin/messages'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.medical_services_outlined,
+                    label: 'Consultations',
+                    color: Colors.teal,
+                    onTap: () => context.go('/medecin/consultations'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.science_outlined,
+                    label: 'Résultats',
+                    color: Colors.purple,
+                    onTap: () => context.go('/medecin/result-patient'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: Icons.person_outline,
+                    label: 'Mon Profil',
+                    color: AppColors.textSecondary,
+                    onTap: () => context.go('/medecin/profile'),
                   ),
                 ),
               ],
@@ -152,7 +179,7 @@ class MedecinHomeContent extends ConsumerWidget {
             // ── Dernières consultations ──────────────────────────────
             _SectionHeader(
               title: 'Dernières consultations',
-              onSeeAll: () => context.go('/medecin/rendezvous'),
+              onSeeAll: () => context.go('/medecin/consultations'),
             ),
             const SizedBox(height: 8),
             rdvAsync.when(
@@ -275,10 +302,10 @@ class _QuickActionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.08),
+              color: color.withValues(alpha: 0.08),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -289,7 +316,7 @@ class _QuickActionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),
@@ -325,7 +352,7 @@ class _RendezVousMedecinCard extends ConsumerWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.withOpacity(0.15)),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.15)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -336,7 +363,7 @@ class _RendezVousMedecinCard extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 20,
-                  backgroundColor: AppColors.medecin.withOpacity(0.1),
+                  backgroundColor: AppColors.medecin.withValues(alpha: 0.1),
                   child: Text(
                     _initials(rdv.patientNom),
                     style: GoogleFonts.poppins(
@@ -381,7 +408,7 @@ class _RendezVousMedecinCard extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -541,13 +568,13 @@ class _ConsultationCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.success.withOpacity(0.2)),
+        side: BorderSide(color: AppColors.success.withValues(alpha: 0.2)),
       ),
       child: ListTile(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         leading: CircleAvatar(
-          backgroundColor: AppColors.success.withOpacity(0.1),
+          backgroundColor: AppColors.success.withValues(alpha: 0.1),
           child: const Icon(Icons.check_circle_outline,
               color: AppColors.success, size: 22),
         ),

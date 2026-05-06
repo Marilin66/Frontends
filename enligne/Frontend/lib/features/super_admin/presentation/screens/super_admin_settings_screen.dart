@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -36,7 +36,7 @@ class SuperAdminSettingsContent extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 50,
-                  backgroundColor: AppColors.superAdmin.withOpacity(0.1),
+                  backgroundColor: AppColors.superAdmin.withValues(alpha: 0.1),
                   child: const Icon(Icons.admin_panel_settings, size: 50, color: AppColors.superAdmin),
                 ),
                 const SizedBox(height: 16),
@@ -52,7 +52,7 @@ class SuperAdminSettingsContent extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.superAdmin.withOpacity(0.1),
+                    color: AppColors.superAdmin.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

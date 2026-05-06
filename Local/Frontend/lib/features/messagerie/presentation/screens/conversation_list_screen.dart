@@ -1,173 +1,313 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/universal_back_button.dart';
 import '../providers/messagerie_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
-class ConversationListScreen extends ConsumerWidget {
+class ConversationListScreen extends ConsumerStatefulWidget {
   const ConversationListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConversationListScreen> createState() =>
+      _ConversationListScreenState();
+}
+
+class _ConversationListScreenState
+    extends ConsumerState<ConversationListScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final _searchCtrl = TextEditingController();
+  String _search = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  String _formatDate(String dateStr) {
+    if (dateStr.isEmpty) return '';
+    try {
+      final d = DateTime.parse(dateStr);
+      final now = DateTime.now();
+      if (d.year == now.year && d.month == now.month && d.day == now.day) {
+        return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+      }
+      return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return '';
+    }
+  }
+
+  Color _roleColor(String role) {
+    switch (role) {
+      case 'medecin':
+        return AppColors.medecin;
+      case 'laborantin':
+        return Colors.teal;
+      case 'admin_hopital':
+        return AppColors.adminHopital;
+      case 'admin_general':
+      case 'super_admin':
+        return AppColors.superAdmin;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  String _roleLabel(String role) {
+    switch (role) {
+      case 'medecin':
+        return 'Médecin';
+      case 'laborantin':
+        return 'Laborantin';
+      case 'admin_hopital':
+        return 'Admin Hôpital';
+      case 'admin_general':
+      case 'super_admin':
+        return 'Admin Général';
+      default:
+        return role;
+    }
+  }
+
+  String _initials(String nom) {
+    final parts = nom.trim().split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return nom.isNotEmpty ? nom[0].toUpperCase() : '?';
+  }
+
+  // ── Navigation vers le chat ────────────────────────────────────────────────
+
+  void _openChat(BuildContext context, {int? destinataireId, int? consultationId, required String nom}) {
+    final location = GoRouterState.of(context).matchedLocation;
+    if (consultationId != null) {
+      context.push('$location/consultation/$consultationId');
+    } else if (destinataireId != null) {
+      context.push('$location/direct/$destinataireId');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final conversationsAsync = ref.watch(conversationProvider);
+    final contactsAsync = ref.watch(contactsDisponiblesProvider);
+    final user = ref.watch(authProvider).user;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          _buildSliverAppBar(context),
-          SliverToBoxAdapter(child: _buildQuickActions(context)),
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            sliver: conversationsAsync.when(
-              loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
-              error: (e, _) => SliverFillRemaining(child: Center(child: Text('Erreur: $e'))),
-              data: (conversations) {
-                if (conversations.isEmpty) return SliverFillRemaining(child: _buildEmptyState());
-                return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _ConversationCard(conversation: conversations[index]),
-                    childCount: conversations.length,
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Text(
+          'Messages',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.textSecondary),
+            onPressed: () => ref.read(conversationProvider.notifier).refresh(),
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: AppColors.textSecondary,
+          indicatorColor: AppColors.primary,
+          indicatorWeight: 2,
+          labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14),
+          unselectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 14),
+          tabs: const [
+            Tab(text: 'Discussions'),
+            Tab(text: 'Contacts'),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          // ── Barre de recherche ─────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Container(
+              height: 42,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF2F2F7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: TextField(
+                controller: _searchCtrl,
+                onChanged: (v) => setState(() => _search = v.toLowerCase()),
+                style: GoogleFonts.poppins(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: 'Rechercher…',
+                  hintStyle: GoogleFonts.poppins(
+                      color: AppColors.textHint, fontSize: 14),
+                  prefixIcon: const Icon(Icons.search,
+                      color: AppColors.textHint, size: 20),
+                  suffixIcon: _search.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.close,
+                              size: 18, color: AppColors.textHint),
+                          onPressed: () {
+                            _searchCtrl.clear();
+                            setState(() => _search = '');
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
+            ),
+          ),
+
+          // ── Tabs ───────────────────────────────────────────────────────
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                // ── Onglet Discussions ─────────────────────────────────
+                conversationsAsync.when(
+                  loading: () => const Center(
+                      child: CircularProgressIndicator()),
+                  error: (e, _) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.error_outline,
+                            color: AppColors.error, size: 40),
+                        const SizedBox(height: 12),
+                        Text('Erreur: $e',
+                            style: GoogleFonts.poppins(
+                                color: AppColors.textSecondary)),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: () => ref
+                              .read(conversationProvider.notifier)
+                              .refresh(),
+                          child: const Text('Réessayer'),
+                        ),
+                      ],
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+                  data: (conversations) {
+                    final filtered = conversations
+                        .where((c) => _search.isEmpty ||
+                            c.titre.toLowerCase().contains(_search))
+                        .toList();
 
-  Widget _buildSliverAppBar(BuildContext context) {
-    return SliverAppBar(
-      expandedHeight: 140,
-      floating: true,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: AppColors.slate950,
-      leading: const UniversalBackButton(color: Colors.white),
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 60, bottom: 16),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'HOPITEL MESSAGERIE',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                letterSpacing: -0.5,
-                color: Colors.white,
-              ),
-            ),
-            Text(
-              'RÉSEAU SÉCURISÉ AES-256',
-              style: GoogleFonts.poppins(
-                fontSize: 7,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary.withOpacity(0.8),
-                letterSpacing: 1.5,
-              ),
-            ),
-          ],
-        ),
-        background: Stack(
-          children: [
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [AppColors.slate950, Color(0xFF0F172A)],
+                    if (filtered.isEmpty) {
+                      return _EmptyState(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        title: 'Aucune discussion',
+                        subtitle: _search.isEmpty
+                            ? 'Allez dans l\'onglet Contacts\npour démarrer une conversation.'
+                            : 'Aucun résultat pour "$_search"',
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const Divider(
+                          height: 1, indent: 76, endIndent: 16),
+                      itemBuilder: (context, i) {
+                        final conv = filtered[i];
+                        final isConsultation = conv.type == 'consultation';
+                        return _ConversationTile(
+                          initials: _initials(conv.titre),
+                          nom: conv.titre,
+                          dernierMessage: conv.dernierMessage.isNotEmpty
+                              ? conv.dernierMessage
+                              : 'Démarrer la conversation',
+                          heure: _formatDate(conv.dateDernierMessage),
+                          nonLus: conv.nonLus,
+                          estCloture: conv.estCloture,
+                          couleur: AppColors.primary,
+                          onTap: () => _openChat(
+                            context,
+                            consultationId: conv.consultationId,
+                            destinataireId: conv.destinataireId,
+                            nom: conv.titre,
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              ),
-            ),
-            Positioned(
-              right: -50,
-              top: -50,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withOpacity(0.05),
+
+                // ── Onglet Contacts ────────────────────────────────────
+                contactsAsync.when(
+                  loading: () => const Center(
+                      child: CircularProgressIndicator()),
+                  error: (e, _) => Center(
+                    child: Text('Erreur: $e',
+                        style: GoogleFonts.poppins(
+                            color: AppColors.textSecondary)),
+                  ),
+                  data: (contacts) {
+                    final filtered = contacts
+                        .where((c) =>
+                            _search.isEmpty ||
+                            c.nom.toLowerCase().contains(_search) ||
+                            (c.hopitalNom ?? '')
+                                .toLowerCase()
+                                .contains(_search))
+                        .toList();
+
+                    if (filtered.isEmpty) {
+                      return _EmptyState(
+                        icon: Icons.people_outline_rounded,
+                        title: 'Aucun contact',
+                        subtitle: _search.isEmpty
+                            ? 'Aucun contact disponible\npour votre rôle.'
+                            : 'Aucun résultat pour "$_search"',
+                      );
+                    }
+
+                    return ListView.separated(
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, __) => const Divider(
+                          height: 1, indent: 76, endIndent: 16),
+                      itemBuilder: (context, i) {
+                        final contact = filtered[i];
+                        final color = _roleColor(contact.role);
+                        return _ContactTile(
+                          initials: _initials(contact.nom),
+                          nom: contact.nom,
+                          roleLabel: _roleLabel(contact.role),
+                          hopitalNom: contact.hopitalNom,
+                          couleur: color,
+                          onTap: () => _openChat(
+                            context,
+                            destinataireId: contact.id,
+                            nom: contact.nom,
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context) {
-    return Container(
-      height: 110,
-      margin: const EdgeInsets.only(top: 20),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        children: [
-          _QuickActionItem(
-            icon: Icons.add_rounded, 
-            label: 'Nouveau', 
-            isAdd: true,
-            onTap: () => _showNewConversationModal(context),
-          ),
-          _QuickActionItem(
-            icon: Icons.support_agent_rounded, 
-            label: 'Support',
-            onTap: () {
-              context.push('/patient/chatbot');
-            },
-          ),
-          _QuickActionItem(
-            icon: Icons.flash_on_rounded, 
-            label: 'Urgence',
-            onTap: () {
-              context.push('/patient/nearby');
-            },
-          ),
-          _QuickActionItem(
-            icon: Icons.bookmark_outline_rounded, 
-            label: 'Favoris',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aucun favori enregistré.')));
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showNewConversationModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => _NewConversationSheet(),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.chat_bubble_outline_rounded, size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text(
-            'AUCUNE DISCUSSION',
-            style: GoogleFonts.poppins(
-              fontSize: 10,
-              fontWeight: FontWeight.w900,
-              color: Colors.grey[400],
-              letterSpacing: 2.0,
+              ],
             ),
           ),
         ],
@@ -176,358 +316,322 @@ class ConversationListScreen extends ConsumerWidget {
   }
 }
 
-class _QuickActionItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isAdd;
-  final VoidCallback? onTap;
+// ── Tuile conversation ────────────────────────────────────────────────────────
 
-  const _QuickActionItem({
-    required this.icon, 
-    required this.label, 
-    this.isAdd = false,
-    this.onTap,
+class _ConversationTile extends StatelessWidget {
+  final String initials;
+  final String nom;
+  final String dernierMessage;
+  final String heure;
+  final int nonLus;
+  final bool estCloture;
+  final Color couleur;
+  final VoidCallback onTap;
+
+  const _ConversationTile({
+    required this.initials,
+    required this.nom,
+    required this.dernierMessage,
+    required this.heure,
+    required this.nonLus,
+    required this.estCloture,
+    required this.couleur,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedTap(
+    return InkWell(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 24),
-        child: Column(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
           children: [
-          Container(
-            height: 60,
-            width: 60,
-            decoration: BoxDecoration(
-              color: isAdd ? AppColors.primary : AppColors.surface,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: [
-                BoxShadow(
-                  color: (isAdd ? AppColors.primary : Colors.black).withOpacity(0.1),
-                  blurRadius: 15,
-                  offset: const Offset(0, 6),
+            // Avatar
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: couleur.withValues(alpha: 0.15),
+                  child: Text(
+                    initials,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: couleur,
+                    ),
+                  ),
                 ),
+                if (!estCloture)
+                  Positioned(
+                    bottom: 1,
+                    right: 1,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
               ],
             ),
-            child: Icon(icon, color: isAdd ? Colors.white : AppColors.primary, size: 28),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            label.toUpperCase(),
-            style: GoogleFonts.poppins(
-              fontSize: 9, 
-              fontWeight: FontWeight.w800,
-              color: AppColors.textSecondary,
-              letterSpacing: 0.5,
+            const SizedBox(width: 14),
+            // Contenu
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          nom,
+                          style: GoogleFonts.poppins(
+                            fontWeight: nonLus > 0
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            fontSize: 15,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text(
+                        heure,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: nonLus > 0
+                              ? AppColors.primary
+                              : AppColors.textHint,
+                          fontWeight: nonLus > 0
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      if (estCloture) ...[
+                        const Icon(Icons.lock_outline,
+                            size: 12, color: Colors.orange),
+                        const SizedBox(width: 4),
+                      ],
+                      Expanded(
+                        child: Text(
+                          dernierMessage,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: nonLus > 0
+                                ? AppColors.textPrimary
+                                : AppColors.textSecondary,
+                            fontWeight: nonLus > 0
+                                ? FontWeight.w500
+                                : FontWeight.w400,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (nonLus > 0) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '$nonLus',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ));
+    );
   }
 }
 
-class _ConversationCard extends StatelessWidget {
-  final dynamic conversation;
-  const _ConversationCard({required this.conversation});
+// ── Tuile contact ─────────────────────────────────────────────────────────────
+
+class _ContactTile extends StatelessWidget {
+  final String initials;
+  final String nom;
+  final String roleLabel;
+  final String? hopitalNom;
+  final Color couleur;
+  final VoidCallback onTap;
+
+  const _ContactTile({
+    required this.initials,
+    required this.nom,
+    required this.roleLabel,
+    this.hopitalNom,
+    required this.couleur,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isConsultation = conversation.type == 'consultation';
-    
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: AnimatedTap(
-        onTap: () {
-          final location = GoRouterState.of(context).matchedLocation;
-          if (isConsultation) {
-            context.push('$location/consultation/${conversation.consultationId}');
-          } else {
-            context.push('$location/direct/${conversation.destinataireId}');
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            // Avatar
+            CircleAvatar(
+              radius: 26,
+              backgroundColor: couleur.withValues(alpha: 0.15),
+              child: Text(
+                initials,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: couleur,
+                ),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              _buildAvatar(),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+            ),
+            const SizedBox(width: 14),
+            // Infos
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    nom,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: couleur.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          roleLabel,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: couleur,
+                          ),
+                        ),
+                      ),
+                      if (hopitalNom != null) ...[
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            conversation.titre.toUpperCase(),
+                            hopitalNom!,
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14,
-                              letterSpacing: -0.5,
+                              fontSize: 12,
+                              color: AppColors.textHint,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Text(
-                          _formatDate(conversation.dateDernierMessage),
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textHint,
-                          ),
-                        ),
                       ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      conversation.dernierMessage.isNotEmpty 
-                          ? conversation.dernierMessage 
-                          : 'Initialiser la synchronisation...',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 12, 
-                        color: AppColors.textSecondary,
-                        fontWeight: conversation.nonLus > 0 ? FontWeight.w700 : FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (conversation.nonLus > 0) _buildUnreadBadge(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAvatar() {
-    return Stack(
-      children: [
-        Container(
-          height: 64,
-          width: 64,
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(22),
-            image: const DecorationImage(
-              image: NetworkImage('https://ui-avatars.com/api/?background=0F172A&color=fff&bold=true'),
-              fit: BoxFit.cover,
-            ),
-            border: Border.all(color: AppColors.background, width: 2),
-          ),
-        ),
-        Positioned(
-          bottom: 2,
-          right: 2,
-          child: Container(
-            height: 14,
-            width: 14,
-            decoration: BoxDecoration(
-              color: Colors.green[500],
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.surface, width: 2),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUnreadBadge() {
-    return Container(
-      margin: const EdgeInsets.only(left: 12),
-      height: 24,
-      width: 24,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [AppColors.primary, Color(0xFF4F46E5)]),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 4)),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        '${conversation.nonLus}',
-        style: GoogleFonts.poppins(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-      ),
-    );
-  }
-
-  String _formatDate(String dateStr) {
-    if (dateStr.isEmpty) return '';
-    try {
-      final date = DateTime.parse(dateStr);
-      final now = DateTime.now();
-      if (date.day == now.day && date.month == now.month && date.year == now.year) {
-        return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-      }
-      return '${date.day}/${date.month}';
-    } catch (_) {
-      return '';
-    }
-  }
-}
-
-class _NewConversationSheet extends ConsumerStatefulWidget {
-  @override
-  ConsumerState<_NewConversationSheet> createState() => _NewConversationSheetState();
-}
-
-class _NewConversationSheetState extends ConsumerState<_NewConversationSheet> {
-  final _searchController = TextEditingController();
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This sheet could fetch doctors and laboratorians directly, but for now we provide quick navigation
-    // Since we don't have a specific `search_contacts` endpoint, we just provide shortcuts to search screens
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 20),
-                  decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10)),
-                ),
-                Row(
-                  children: [
-                    const Icon(Icons.maps_ugc_rounded, color: AppColors.primary),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Nouvelle Discussion',
-                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Text('Sélectionnez un canal :', style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 16),
-                _buildOption(
-                  icon: Icons.medical_services_rounded,
-                  title: 'Contacter un Médecin',
-                  subtitle: 'Recherchez un patricien pour démarrer un chat',
-                  color: AppColors.secondary,
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/patient/search');
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildOption(
-                  icon: Icons.science_rounded,
-                  title: 'Laboratoires & Résultats',
-                  subtitle: 'Demandez des précisions sur vos analyses',
-                  color: Colors.purple,
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/patient/results');
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildOption(
-                  icon: Icons.smart_toy_rounded,
-                  title: 'Assistant IA',
-                  subtitle: 'Une question rapide ?',
-                  color: Colors.teal,
-                  onTap: () {
-                    Navigator.pop(context);
-                    context.push('/patient/chatbot');
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return AnimatedTap(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w700)),
-                  Text(subtitle, style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textHint)),
+                    ],
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: Colors.grey[300]),
+            // Bouton message
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: couleur.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.chat_bubble_outline_rounded,
+                  size: 18, color: couleur),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── État vide ─────────────────────────────────────────────────────────────────
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon,
+                  size: 36,
+                  color: AppColors.primary.withValues(alpha: 0.5)),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              title,
+              style: GoogleFonts.poppins(
+                fontSize: 17,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+                height: 1.5,
+              ),
+            ),
           ],
         ),
       ),

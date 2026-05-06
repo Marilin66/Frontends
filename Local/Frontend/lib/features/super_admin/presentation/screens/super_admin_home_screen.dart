@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,92 +13,131 @@ class SuperAdminHomeContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final statsAsync = ref.watch(dashboardStatsProvider);
+    // On utilise statsProvider qui mappe correctement toutes les clés du backend
+    final statsAsync = ref.watch(statsProvider);
 
     return statsAsync.when(
       loading: () => const PremiumLoadingView(message: 'Chargement du tableau de bord...'),
       error: (e, _) => PremiumErrorView(
         message: 'Erreur: $e',
-        onRetry: () => ref.read(dashboardStatsProvider.notifier).refresh(),
+        onRetry: () => ref.read(statsProvider.notifier).refresh(),
       ),
       data: (stats) => RefreshIndicator(
-        onRefresh: () => ref.read(dashboardStatsProvider.notifier).refresh(),
+        onRefresh: () => ref.read(statsProvider.notifier).refresh(),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Welcome Section ──
+              // ── Welcome ──────────────────────────────────────────────
               _buildWelcomeSection(),
               const SizedBox(height: 24),
-              
-              // ... rest of the column content ...
 
-                // ── Quick Actions ──
-                _buildQuickActions(context),
+              // ── Quick Actions ─────────────────────────────────────────
+              _buildQuickActions(context),
+              const SizedBox(height: 28),
+
+              // ── Stats Grid ────────────────────────────────────────────
+              Text(
+                'Statistiques',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 14,
+                crossAxisSpacing: 14,
+                childAspectRatio: 1.15,
+                children: [
+                  _StatCard(
+                    icon: Icons.local_hospital,
+                    value: stats['total_hopitaux'] ?? 0,
+                    label: 'Hôpitaux',
+                    color: AppColors.primary,
+                  ),
+                  _StatCard(
+                    icon: Icons.medical_services,
+                    value: stats['total_medecins'] ?? 0,
+                    label: 'Médecins',
+                    color: AppColors.medecin,
+                  ),
+                  _StatCard(
+                    icon: Icons.people,
+                    value: stats['total_patients'] ?? 0,
+                    label: 'Patients',
+                    color: AppColors.patient,
+                  ),
+                  _StatCard(
+                    icon: Icons.calendar_month,
+                    value: stats['total_rdv'] ?? 0,
+                    label: 'Rendez-vous',
+                    color: AppColors.secondary,
+                  ),
+                  _StatCard(
+                    icon: Icons.person_outline,
+                    value: stats['active_users'] ?? 0,
+                    label: 'Utilisateurs actifs',
+                    color: Colors.teal,
+                  ),
+                  _StatCard(
+                    icon: Icons.message_outlined,
+                    value: stats['total_messages'] ?? 0,
+                    label: 'Messages',
+                    color: Colors.deepPurple,
+                  ),
+                ],
+              ),
+
+              // ── Graphique connexions ───────────────────────────────────
+              if ((stats['daily_logins'] as List?)?.isNotEmpty == true) ...[
                 const SizedBox(height: 28),
-
-                // ── Stats Grid ──
                 Text(
-                  'Statistiques',
+                  'Activité des connexions',
                   style: GoogleFonts.poppins(
-                    fontSize: 18,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '7 derniers jours',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: AppColors.textHint,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildLoginChart(stats['daily_logins'] as List),
+              ],
+
+              // ── Activité récente ──────────────────────────────────────
+              if ((stats['recent_activity'] as List?)?.isNotEmpty == true) ...[
+                const SizedBox(height: 28),
+                Text(
+                  'Activité récente',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 14,
-                  crossAxisSpacing: 14,
-                  childAspectRatio: 1.15,
-                  children: [
-                    _StatCard(
-                      icon: Icons.local_hospital,
-                      value: stats.totalHopitaux,
-                      label: 'Hôpitaux',
-                      color: AppColors.primary,
-                    ),
-                    _StatCard(
-                      icon: Icons.medical_services,
-                      value: stats.totalMedecins,
-                      label: 'Médecins',
-                      color: AppColors.medecin,
-                    ),
-                    _StatCard(
-                      icon: Icons.people,
-                      value: stats.totalPatients,
-                      label: 'Patients',
-                      color: AppColors.patient,
-                    ),
-                    _StatCard(
-                      icon: Icons.calendar_month,
-                      value: stats.totalRendezvous,
-                      label: 'RDV Total',
-                      color: AppColors.secondary,
-                    ),
-                    _StatCard(
-                      icon: Icons.today,
-                      value: stats.rdvAujourdhui,
-                      label: 'RDV Aujourd\'hui',
-                      color: AppColors.warning,
-                    ),
-                    _StatCard(
-                      icon: Icons.date_range,
-                      value: stats.rdvSemaine,
-                      label: 'RDV Semaine',
-                      color: AppColors.info,
-                    ),
-                  ],
-                ),
+                _buildRecentActivity(stats['recent_activity'] as List),
               ],
-            ),
+
+              const SizedBox(height: 24),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -115,7 +154,7 @@ class SuperAdminHomeContent extends ConsumerWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.superAdmin.withOpacity(0.3),
+            color: AppColors.superAdmin.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 6),
           ),
@@ -137,7 +176,7 @@ class SuperAdminHomeContent extends ConsumerWidget {
             'Gestion globale de la plateforme',
             style: GoogleFonts.poppins(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.7),
+              color: Colors.white.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -146,38 +185,114 @@ class SuperAdminHomeContent extends ConsumerWidget {
   }
 
   Widget _buildQuickActions(BuildContext context) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _QuickActionCard(
-            icon: Icons.local_hospital,
-            label: 'Hôpitaux',
-            color: AppColors.primary,
-            onTap: () => context.go('/super-admin/hopitaux'),
-          ),
+        Row(
+          children: [
+            Expanded(child: _QuickActionCard(icon: Icons.local_hospital, label: 'Hôpitaux',      color: AppColors.primary,    onTap: () => context.go('/super-admin/hopitaux'))),
+            const SizedBox(width: 12),
+            Expanded(child: _QuickActionCard(icon: Icons.people,         label: 'Admins',        color: AppColors.medecin,    onTap: () => context.go('/super-admin/users'))),
+            const SizedBox(width: 12),
+            Expanded(child: _QuickActionCard(icon: Icons.settings,       label: 'Paramètres',    color: AppColors.secondary,  onTap: () => context.go('/super-admin/settings'))),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _QuickActionCard(
-            icon: Icons.people,
-            label: 'Utilisateurs',
-            color: AppColors.medecin,
-            onTap: () => context.go('/super-admin/users'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _QuickActionCard(
-            icon: Icons.settings,
-            label: 'Paramètres',
-            color: AppColors.secondary,
-            onTap: () => context.go('/super-admin/settings'),
-          ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: _QuickActionCard(icon: Icons.medical_services_outlined, label: 'Services',    color: Colors.teal,          onTap: () => context.go('/super-admin/services'))),
+            const SizedBox(width: 12),
+            Expanded(child: _QuickActionCard(icon: Icons.inbox_outlined,            label: 'Demandes',    color: Colors.orange,        onTap: () => context.go('/super-admin/demandes'))),
+            const SizedBox(width: 12),
+            Expanded(child: _QuickActionCard(icon: Icons.bar_chart,                 label: 'Statistiques',color: AppColors.superAdmin, onTap: () => context.go('/super-admin/stats'))),
+          ],
         ),
       ],
     );
   }
+
+  Widget _buildLoginChart(List logins) {
+    final maxCount = logins.map((d) => (d['count'] as int? ?? 0)).fold<int>(1, (a, b) => a > b ? a : b);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: SizedBox(
+        height: 120,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: logins.map((d) {
+            final count = d['count'] as int? ?? 0;
+            final pct = maxCount > 0 ? (count / maxCount) : 0.04;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('$count', style: GoogleFonts.poppins(fontSize: 9, color: AppColors.textHint)),
+                    const SizedBox(height: 4),
+                    Container(
+                      height: 80 * pct.toDouble().clamp(0.04, 1.0),
+                      decoration: BoxDecoration(
+                        color: AppColors.superAdmin.withValues(alpha: 0.7),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(d['day'] as String? ?? '', style: GoogleFonts.poppins(fontSize: 9, color: AppColors.textHint)),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivity(List activities) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2))],
+      ),
+      child: Column(
+        children: activities.take(5).map((a) {
+          final type = a['type'] as String? ?? '';
+          final color = type == 'register' ? Colors.green : type == 'appointment' ? Colors.blue : Colors.orange;
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    a['description'] as String? ?? '',
+                    style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Text(
+                  a['timestamp'] as String? ?? '',
+                  style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textHint),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 }
+
+// ── Widgets ───────────────────────────────────────────────────────────────────
 
 class _QuickActionCard extends StatelessWidget {
   final IconData icon;
@@ -185,51 +300,28 @@ class _QuickActionCard extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const _QuickActionCard({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+  const _QuickActionCard({required this.icon, required this.label, required this.color, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.10),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          boxShadow: [BoxShadow(color: color.withValues(alpha: 0.10), blurRadius: 10, offset: const Offset(0, 4))],
         ),
         child: Column(
           children: [
             Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
+              width: 44, height: 44,
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+              child: Icon(icon, color: color, size: 22),
             ),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-              textAlign: TextAlign.center,
-            ),
+            const SizedBox(height: 8),
+            Text(label, style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textPrimary), textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -239,16 +331,11 @@ class _QuickActionCard extends StatelessWidget {
 
 class _StatCard extends StatelessWidget {
   final IconData icon;
-  final int value;
+  final dynamic value;
   final String label;
   final Color color;
 
-  const _StatCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.color,
-  });
+  const _StatCard({required this.icon, required this.value, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -256,44 +343,26 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.10),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.10), blurRadius: 12, offset: const Offset(0, 4))],
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 26),
+            width: 44, height: 44,
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+            child: Icon(icon, color: color, size: 24),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
-            '$value',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+            '${value ?? 0}',
+            style: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
+            style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],

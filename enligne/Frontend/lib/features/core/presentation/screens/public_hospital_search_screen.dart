@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -40,7 +40,7 @@ class PublicHospitalSearchScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.05),
+              color: AppColors.primary.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Column(
@@ -91,7 +91,7 @@ class PublicHospitalSearchScreen extends ConsumerWidget {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.05),
+                                  color: AppColors.primary.withValues(alpha: 0.05),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Icon(Icons.apartment, color: AppColors.primary),
@@ -120,7 +120,7 @@ class PublicHospitalSearchScreen extends ConsumerWidget {
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
-                                            h.adresse ?? 'Adresse non disponible',
+                                            h.adresse.isNotEmpty ? h.adresse : 'Adresse non disponible',
                                             style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary),
                                           ),
                                         ),

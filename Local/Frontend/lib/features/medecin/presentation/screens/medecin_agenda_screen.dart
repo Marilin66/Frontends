@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -75,7 +75,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColors.textHint.withOpacity(0.3),
+                          color: AppColors.textHint.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -162,7 +162,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                             color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppColors.textHint.withOpacity(0.2),
+                              color: AppColors.textHint.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Row(
@@ -360,11 +360,11 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.textHint.withOpacity(0.2)),
+        borderSide: BorderSide(color: AppColors.textHint.withValues(alpha: 0.2)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: AppColors.textHint.withOpacity(0.2)),
+        borderSide: BorderSide(color: AppColors.textHint.withValues(alpha: 0.2)),
       ),
     );
   }
@@ -375,7 +375,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.textHint.withOpacity(0.2)),
+        border: Border.all(color: AppColors.textHint.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -479,7 +479,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
             },
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: AppColors.medecin.withOpacity(0.2),
+                color: AppColors.medecin.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               selectedDecoration: const BoxDecoration(
@@ -498,7 +498,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
               formatButtonVisible: true,
               titleCentered: true,
               formatButtonDecoration: BoxDecoration(
-                color: AppColors.medecin.withOpacity(0.1),
+                color: AppColors.medecin.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               formatButtonTextStyle: const TextStyle(
@@ -542,7 +542,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                       Icon(
                         Icons.calendar_today_outlined,
                         size: 48,
-                        color: AppColors.textHint.withOpacity(0.3),
+                        color: AppColors.textHint.withValues(alpha: 0.3),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -596,7 +596,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                               Expanded(
                                 child: Container(
                                   width: 2,
-                                  color: AppColors.textHint.withOpacity(0.1),
+                                  color: AppColors.textHint.withValues(alpha: 0.1),
                                   margin: const EdgeInsets.symmetric(
                                     vertical: 8,
                                   ),
@@ -616,13 +616,13 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
                                 color: isNext
-                                    ? AppColors.medecin.withOpacity(0.3)
+                                    ? AppColors.medecin.withValues(alpha: 0.3)
                                     : Colors.transparent,
                                 width: 2,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.04),
+                                  color: Colors.black.withValues(alpha: 0.04),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -650,7 +650,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: statusCol.withOpacity(0.1),
+                                        color: statusCol.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
@@ -684,10 +684,10 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                                       padding: const EdgeInsets.all(10),
                                       margin: const EdgeInsets.only(bottom: 10),
                                       decoration: BoxDecoration(
-                                        color: Colors.teal.withOpacity(0.08),
+                                        color: Colors.teal.withValues(alpha: 0.08),
                                         borderRadius: BorderRadius.circular(10),
                                         border: Border.all(
-                                          color: Colors.teal.withOpacity(0.25),
+                                          color: Colors.teal.withValues(alpha: 0.25),
                                         ),
                                       ),
                                       child: Row(
@@ -793,7 +793,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -850,7 +850,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.1),
+                        color: Colors.teal.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.assignment_ind_rounded,
@@ -1029,7 +1029,7 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                 Icon(
                   Icons.calendar_month,
                   size: 60,
-                  color: AppColors.textHint.withOpacity(0.5),
+                  color: AppColors.textHint.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -1095,8 +1095,8 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: d.type == 'indisponible'
-              ? AppColors.error.withOpacity(0.1)
-              : AppColors.medecin.withOpacity(0.1),
+              ? AppColors.error.withValues(alpha: 0.1)
+              : AppColors.medecin.withValues(alpha: 0.1),
           child: Icon(
             d.type == 'indisponible' ? Icons.block : Icons.access_time,
             color: d.type == 'indisponible'
@@ -1145,9 +1145,9 @@ class _IntakeField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.15)),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

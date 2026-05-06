@@ -11,58 +11,39 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-  (
-    {
-      className = '',
-      label,
-      error,
-      helperText,
-      leftIcon,
-      rightIcon,
-      onRightIconClick,
-      type,
-      ...props
-    },
-    ref
-  ) => {
-    const inputType = type === 'password' ? 'password' : type;
-
+  ({ className = '', label, error, helperText, leftIcon, rightIcon, onRightIconClick, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-bold text-slate-700 mb-1.5 ml-1 tracking-tight">
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">
             {label}
           </label>
         )}
-        <div className="relative group">
+        <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
               {leftIcon}
             </div>
           )}
           <input
             ref={ref}
-            type={inputType}
             className={`
-              w-full px-4 py-3.5 bg-slate-100/50 border border-slate-200/60 rounded-2xl transition-all duration-300 outline-none
-              ${leftIcon ? 'pl-11' : ''}
-              ${rightIcon ? 'pr-11' : ''}
-              ${error 
-                ? 'border-error/50 bg-error/5 focus:ring-error/10 focus:border-error' 
-                : 'hover:bg-slate-100 hover:border-slate-300 focus:bg-white focus:ring-4 focus:ring-primary/5 focus:border-primary shadow-inner-soft'
+              w-full h-10 px-3 bg-white border rounded-xl text-sm text-slate-900 placeholder:text-slate-400
+              transition-all duration-150 outline-none
+              ${leftIcon ? 'pl-10' : ''}
+              ${rightIcon ? 'pr-10' : ''}
+              ${error
+                ? 'border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-100'
+                : 'border-slate-200 hover:border-slate-300 focus:border-primary focus:ring-2 focus:ring-primary/10'
               }
               ${className}
             `}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
               {onRightIconClick ? (
-                <button
-                  type="button"
-                  onClick={onRightIconClick}
-                  className="text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
-                >
+                <button type="button" onClick={onRightIconClick} className="text-slate-400 hover:text-slate-600 transition-colors">
                   {rightIcon}
                 </button>
               ) : (
@@ -71,15 +52,12 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <p className="text-xs font-bold text-error mt-1.5 ml-1">{error}</p>}
-        {helperText && !error && (
-          <p className="text-xs text-slate-500 mt-1.5 ml-1">{helperText}</p>
-        )}
+        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+        {helperText && !error && <p className="text-xs text-slate-500 mt-1">{helperText}</p>}
       </div>
     );
   }
 );
 
 Input.displayName = 'Input';
-
 export { Input };

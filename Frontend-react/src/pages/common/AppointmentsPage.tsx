@@ -52,10 +52,11 @@ export default function AppointmentsPage() {
   const handleCancel = async (id: number) => {
     if (window.confirm('Voulez-vous vraiment annuler ce rendez-vous ?')) {
       try {
-        await api.delete(`${endpoints.rendezVous}${id}/`);
-        setAppointments(appointments.filter(a => a.id !== id));
+        await api.post(endpoints.annulerRdv(id));
+        setAppointments(appointments.map(a => a.id === id ? { ...a, statut: 'annule' } : a));
       } catch (error) {
         console.error('Erreur annulation:', error);
+        alert('Impossible d\'annuler ce rendez-vous.');
       }
     }
   };
@@ -165,7 +166,7 @@ export default function AppointmentsPage() {
                       </Link>
                     )}
                     {apt.has_consultation && apt.consultation_id && (
-                      <Link to="/messages" className="w-full h-10 rounded-lg text-[9px] font-black uppercase tracking-widest italic flex items-center justify-center gap-2 bg-primary/5 border-2 border-primary/20 text-primary hover:bg-primary/10 transition-all">
+                      <Link to="/patient/messagerie" className="w-full h-10 rounded-lg text-[9px] font-black uppercase tracking-widest italic flex items-center justify-center gap-2 bg-primary/5 border-2 border-primary/20 text-primary hover:bg-primary/10 transition-all">
                         <MessageSquare className="w-3 h-3" /> Conversation
                       </Link>
                     )}

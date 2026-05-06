@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,7 +10,6 @@ import '../../../../core/widgets/shimmer_loading.dart';
 import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/animated_tap.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../providers/patient_provider.dart';
 import '../../data/models/rendezvous_model.dart';
 import '../../data/models/resultat_model.dart';
@@ -23,10 +22,8 @@ class PatientHomeContent extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final rdvAsync = ref.watch(patientRendezvousProvider);
     final resultatsAsync = ref.watch(patientResultatsProvider);
-    final unreadCount = ref.watch(unreadNotificationCountProvider);
     final firstName = authState.user?.firstName ?? 'Patient';
 
-    final isDesktop = MediaQuery.of(context).size.width >= 1100;
 
     return RefreshIndicator(
         onRefresh: () async {
@@ -180,9 +177,9 @@ class PatientHomeContent extends ConsumerWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.primary.withOpacity(0.1)),
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -276,7 +273,7 @@ class PatientHomeContent extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.1),
+        color: AppColors.error.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(message, style: GoogleFonts.poppins(color: AppColors.error, fontSize: 13)),
@@ -290,11 +287,11 @@ class PatientHomeContent extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.textHint.withOpacity(0.1)),
+        border: Border.all(color: AppColors.textHint.withValues(alpha: 0.1)),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 40, color: AppColors.textHint.withOpacity(0.5)),
+          Icon(icon, size: 40, color: AppColors.textHint.withValues(alpha: 0.5)),
           const SizedBox(height: 12),
           Text(title, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
           const SizedBox(height: 4),
@@ -321,7 +318,7 @@ class _QuickActionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -329,7 +326,7 @@ class _QuickActionCard extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: Icon(icon, color: color, size: 24),
             ),
             const SizedBox(height: 8),
@@ -365,7 +362,7 @@ class _RendezVousCard extends StatelessWidget {
         contentPadding: const EdgeInsets.all(12),
         leading: Container(
           width: 50,
-          decoration: BoxDecoration(color: AppColors.primary.withOpacity(0.05), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: AppColors.primary.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -388,7 +385,7 @@ class _RendezVousCard extends StatelessWidget {
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                  decoration: BoxDecoration(color: statusColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
                   child: Text(Helpers.getStatusLabel(rdv.statut), style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.bold, color: statusColor)),
                 ),
               ],
@@ -412,7 +409,7 @@ class _ResultatCard extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: AppColors.secondary.withOpacity(0.1),
+          backgroundColor: AppColors.secondary.withValues(alpha: 0.1),
           child: const Icon(Icons.description_outlined, color: AppColors.secondary, size: 20),
         ),
         title: Text(resultat.titre.isNotEmpty ? resultat.titre : 'Analyse médicale', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14)),

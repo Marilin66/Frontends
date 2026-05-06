@@ -1,90 +1,59 @@
 // @ts-nocheck
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 
-export type BadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+export type BadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'outline';
 
 export interface BadgeProps {
   children: React.ReactNode;
   variant?: BadgeVariant;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md';
   className?: string;
   showDot?: boolean;
 }
 
-export function Badge({ 
-  children, 
-  variant = 'primary', 
-  size = 'md',
-  className = '',
-  showDot = false
-}: BadgeProps) {
+export function Badge({ children, variant = 'primary', size = 'md', className = '', showDot = false }: BadgeProps) {
   const variants = {
-    primary: 'bg-primary/10 text-primary border-primary/20 shadow-glow-sm',
-    secondary: 'bg-slate-900 text-white border-white/10 shadow-3xl',
-    success: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-    warning: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-    error: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
-    info: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
+    primary:   'bg-blue-50 text-blue-700 border border-blue-200',
+    secondary: 'bg-slate-100 text-slate-700 border border-slate-200',
+    success:   'bg-emerald-50 text-emerald-700 border border-emerald-200',
+    warning:   'bg-amber-50 text-amber-700 border border-amber-200',
+    error:     'bg-red-50 text-red-700 border border-red-200',
+    info:      'bg-sky-50 text-sky-700 border border-sky-200',
+    outline:   'bg-transparent text-slate-600 border border-slate-200',
   };
 
   const dotColors = {
-    primary: 'bg-primary',
-    secondary: 'bg-white',
-    success: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    error: 'bg-rose-500',
-    info: 'bg-sky-500',
+    primary: 'bg-blue-500', secondary: 'bg-slate-500', success: 'bg-emerald-500',
+    warning: 'bg-amber-500', error: 'bg-red-500', info: 'bg-sky-500', outline: 'bg-slate-400',
   };
 
   const sizes = {
-    sm: 'px-4 py-1.5 text-[8px] tracking-[0.2em]',
-    md: 'px-6 py-2 text-[10px] tracking-[0.3em]',
-    lg: 'px-8 py-3 text-[12px] tracking-[0.4em]',
+    sm: 'px-2 py-0.5 text-xs',
+    md: 'px-2.5 py-1 text-xs',
   };
 
   return (
-    <motion.span 
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className={`
-        inline-flex items-center gap-2 rounded-xl border font-black uppercase italic
-        backdrop-blur-sm transition-all duration-300
-        ${variants[variant]}
-        ${sizes[size]}
-        ${className}
-      `}
-    >
-      <AnimatePresence>
-        {showDot && (
-          <motion.span 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            className={`w-1.5 h-1.5 rounded-full animate-pulse shadow-glow-sm ${dotColors[variant]}`} 
-          />
-        )}
-      </AnimatePresence>
+    <span className={`inline-flex items-center gap-1.5 rounded-lg font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
+      {showDot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColors[variant]}`} />}
       {children}
-    </motion.span>
+    </span>
   );
 }
 
-export function StatusBadge({ status, className = "" }: { status: string, className?: string }) {
-  const statusConfig: Record<string, { variant: BadgeVariant; label: string; dot?: boolean }> = {
-    // Appointment statuses
-    en_attente: { variant: 'warning', label: 'Attente Terminale', dot: true },
-    confirme: { variant: 'info', label: 'Segment Confirmé', dot: true },
-    en_cours: { variant: 'primary', label: 'Opération Active', dot: true },
-    termine: { variant: 'success', label: 'Archive Terminée', dot: false },
-    annule: { variant: 'error', label: 'Vecteur Annulé', dot: false },
-    absent: { variant: 'error', label: 'Carence Patient', dot: false },
-    // Result statuses
-    pret: { variant: 'success', label: 'Dataset Prêt', dot: true },
-    livre: { variant: 'info', label: 'Données Livrées', dot: false },
+export function StatusBadge({ status, className = '' }: { status: string; className?: string }) {
+  const config: Record<string, { variant: BadgeVariant; label: string; dot?: boolean }> = {
+    en_attente: { variant: 'warning', label: 'En attente', dot: true },
+    confirme:   { variant: 'info',    label: 'Confirmé',   dot: true },
+    en_cours:   { variant: 'primary', label: 'En cours',   dot: true },
+    termine:    { variant: 'success', label: 'Terminé',    dot: false },
+    annule:     { variant: 'error',   label: 'Annulé',     dot: false },
+    refuse:     { variant: 'error',   label: 'Refusé',     dot: false },
+    absent:     { variant: 'error',   label: 'Absent',     dot: false },
+    pret:       { variant: 'success', label: 'Prêt',       dot: true },
+    livre:      { variant: 'info',    label: 'Livré',      dot: false },
+    valide:     { variant: 'success', label: 'Validé',     dot: false },
   };
 
-  const config = statusConfig[status] || { variant: 'primary' as BadgeVariant, label: status, dot: false };
-
-  return <Badge variant={config.variant} size="sm" showDot={config.dot} className={className}>{config.label}</Badge>;
+  const c = config[status] || { variant: 'secondary' as BadgeVariant, label: status, dot: false };
+  return <Badge variant={c.variant} size="sm" showDot={c.dot} className={className}>{c.label}</Badge>;
 }

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:esante_app/features/auth/data/models/user_model.dart';
+import 'package:hopitel_app/features/auth/data/models/user_model.dart';
 
 void main() {
   group('UserModel', () {

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:hopitel_app/core/theme/app_colors.dart';
@@ -35,7 +35,7 @@ class LaborantinDashboardScreen extends ConsumerWidget {
                           count: pendingAsync.when(
                             data: (list) => list.length.toString(),
                             loading: () => '...',
-                            error: (_, __) => '!',
+                            error: (error, stackTrace) => '!',
                           ),
                           icon: Icons.hourglass_empty_rounded,
                           color: AppColors.warning,
@@ -48,7 +48,7 @@ class LaborantinDashboardScreen extends ConsumerWidget {
                           count: finishedAsync.when(
                             data: (list) => list.length.toString(),
                             loading: () => '...',
-                            error: (_, __) => '!',
+                            error: (error, stackTrace) => '!',
                           ),
                           icon: Icons.check_circle_outline_rounded,
                           color: AppColors.success,
@@ -132,7 +132,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -173,7 +173,7 @@ class _QuickActionCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+            colors: [AppColors.primary, AppColors.primary.withValues(alpha: 0.8)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -184,7 +184,7 @@ class _QuickActionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: Colors.white, size: 24),
@@ -195,7 +195,7 @@ class _QuickActionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: AppTextStyles.bodyLarge.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                  Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withOpacity(0.9))),
+                  Text(subtitle, style: AppTextStyles.bodySmall.copyWith(color: Colors.white.withValues(alpha: 0.9))),
                 ],
               ),
             ),
@@ -224,7 +224,7 @@ class _SmallAnalysisTile extends StatelessWidget {
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             child: Text(d.patientNom.isNotEmpty ? d.patientNom[0] : '?', style: TextStyle(color: AppColors.primary)),
           ),
           const SizedBox(width: 12),

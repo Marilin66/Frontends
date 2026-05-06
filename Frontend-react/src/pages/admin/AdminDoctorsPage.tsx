@@ -1,403 +1,213 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent, 
-  Button, 
-  Badge,
-  Avatar, 
-  PageLoader 
-} from '@/components/ui';
-import { 
-  Plus, 
-  Mail, 
-  Phone, 
-  X, 
-  Stethoscope, 
-  Trash, 
-  MoreVertical,
-  ShieldCheck,
-  UserCheck,
-  Search,
-  Zap,
-  Star,
-  Activity,
-  ArrowRight,
-  Filter
-} from 'lucide-react';
-
-interface Specialite {
-  id: number;
-  nom: string;
-}
-
-interface Medecin {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  specialite: string;
-  telephone: string;
-  numero_ordre: string;
-  is_active: boolean;
-}
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants: any = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1, 
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
+import { Avatar, Badge, Button, Input, PageLoader } from '@/components/ui';
+import { Plus, Mail, Phone, X, Search, Upload, Download, UserCheck, Trash2, Stethoscope } from 'lucide-react';
 
 export default function AdminDoctorsPage() {
-  const [doctors, setDoctors] = useState<Medecin[]>([]);
-  const [specialties, setSpecialties] = useState<Specialite[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  const [formData, setFormData] = useState({
-    email: '',
-    first_name: '',
-    last_name: '',
-    telephone: '',
-    specialite: '',
-    numero_ordre: '',
-    date_naissance: '1985-01-01',
-    sexe: 'M',
-    biographie: '',
-  });
+  const [doctors, setDoctors] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [search, setSearch] = useState('');
+  const [form, setForm] = useState({ email: '', first_name: '', last_name: '', telephone: '', specialite: '', numero_ordre: '', date_naissance: '1985-01-01', sexe: 'M', biographie: '' });
 
   const fetchData = async () => {
     try {
-      setIsLoading(true);
-      const [docsData, specsData] = await Promise.all([
-        api.get<{ results: Medecin[] }>(endpoints.medecins),
-        api.get<Specialite[]>(endpoints.servicesGlobaux)
-      ]);
-      setDoctors(docsData.results || []);
-      setSpecialties(specsData || []);
-    } catch (error) {
-      console.error('Erreur:', error);
-    } finally {
-      setIsLoading(false);
-    }
+      setLoading(true);
+      const [d, s]: any = await Promise.all([api.get(endpoints.medecins), api.get(endpoints.servicesGlobaux)]);
+      setDoctors(Array.isArray(d) ? d : d.results || []);
+      setSpecialties(Array.isArray(s) ? s : s.results || []);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setIsLoading(true);
-      await api.post(endpoints.medecins, formData);
-      setIsModalOpen(false);
+      setLoading(true);
+      await api.post(endpoints.medecins, form);
+      setShowModal(false);
+      setForm({ email: '', first_name: '', last_name: '', telephone: '', specialite: '', numero_ordre: '', date_naissance: '1985-01-01', sexe: 'M', biographie: '' });
       fetchData();
-      setFormData({ email: '', first_name: '', last_name: '', telephone: '', specialite: '', numero_ordre: '', date_naissance: '1985-01-01', sexe: 'M', biographie: '' });
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (e: any) { alert(e.response?.data?.email?.[0] || 'Erreur lors de la création.'); }
+    finally { setLoading(false); }
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Confirmer la désactivation ?')) return;
-    try {
-      setIsLoading(true);
-      await api.delete(`${endpoints.medecins}${id}/`);
-      fetchData();
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    if (!confirm('Désactiver ce médecin ?')) return;
+    try { await api.delete(`${endpoints.medecins}${id}/`); fetchData(); }
+    catch (e) { console.error(e); }
   };
 
-  const filteredDoctors = doctors.filter(d => 
-    `${d.first_name} ${d.last_name} ${d.specialite}`.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('fichier', file);
+    try {
+      setLoading(true);
+      await api.post(endpoints.medecinsImport, fd);
+      alert('Import réussi !');
+      fetchData();
+    } catch (err: any) { alert(err.response?.data?.error || 'Erreur import.'); }
+    finally { setLoading(false); e.target.value = ''; }
+  };
+
+  const filtered = doctors.filter((d: any) =>
+    `${d.first_name} ${d.last_name} ${d.specialite}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (loading && doctors.length === 0) return <PageLoader />;
+
   return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8 lg:space-y-12 pb-20"
-    >
-      {/* High-Contrast Header architecture */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-        <motion.div variants={itemVariants}>
-          <div className="flex items-center gap-3 mb-4">
-             <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center shadow-lg">
-                <Stethoscope className="w-6 h-6 text-white" />
-             </div>
-             <div className="bg-slate-900 text-white border-2 border-slate-800 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest italic">
-                PRATICIEN_SYNC.
-             </div>
-          </div>
-          <h1 className="text-4xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Corps Médical</h1>
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Indexation des praticiens certifiés du réseau</p>
-        </motion.div>
+    <div className="space-y-6 animate-fade-in">
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="relative w-full sm:w-64 group">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors z-10" />
-             <input 
-               placeholder="Filtrer les experts..." 
-               className="w-full pl-11 h-12 rounded-xl bg-white border-2 border-slate-200 focus:border-primary text-slate-950 text-xs font-black transition-all shadow-sm italic placeholder:text-slate-300"
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-             />
-          </div>
-          
-          <input 
-            type="file" 
-            id="csv-import" 
-            className="hidden" 
-            accept=".csv"
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              
-              const formData = new FormData();
-              formData.append('fichier', file);
-              
-              try {
-                setIsLoading(true);
-                await api.post(endpoints.medecinsImport, formData);
-                alert('Importation réussie ! Les médecins recevront un email de confirmation.');
-                fetchData();
-              } catch (err: any) {
-                alert(err.response?.data?.error || "Erreur lors de l'importation. Vérifiez le format du fichier.");
-              } finally {
-                setIsLoading(false);
-                e.target.value = '';
-              }
-            }}
-          />
-          
-          <div className="flex flex-col items-center sm:items-end gap-2 w-full sm:w-auto">
-            <div className="flex items-center gap-2">
-              <Button 
-                onClick={() => document.getElementById('csv-import')?.click()} 
-                variant="outline" 
-                className="h-12 px-6 rounded-xl text-[10px] italic border-2 border-slate-200 hover:border-emerald-500 hover:text-emerald-500 transition-all font-black"
-              >
-                <Activity className="w-4 h-4 mr-2" /> IMPORT CSV
-              </Button>
-              <Button onClick={() => setIsModalOpen(true)} variant="primary" className="h-12 px-8 rounded-xl text-[10px] italic font-black shadow-lg shadow-primary/20">
-                <Plus className="w-4 h-4 mr-2" /> NOUVEAU PRATICIEN
-              </Button>
-            </div>
-            <a 
-              href={`${import.meta.env.VITE_API_URL || 'https://backend-soutenance-1et0.onrender.com/api'}${endpoints.medecinsImportTemplate}`}
-              className="text-[9px] font-black text-primary uppercase tracking-widest italic hover:underline"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Télécharger le modèle CSV
-            </a>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Corps médical</h1>
+          <p className="text-slate-500 mt-1">{doctors.length} médecin{doctors.length !== 1 ? 's' : ''} enregistré{doctors.length !== 1 ? 's' : ''}</p>
         </div>
-      </section>
-
-      {/* Grid architecture Loop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
-        {filteredDoctors.length > 0 ? filteredDoctors.map((medecin) => (
-          <motion.div key={medecin.id} variants={itemVariants}>
-            <Card className="h-full border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group p-8 lg:p-10 flex flex-col justify-between shadow-sm relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-primary/5 transition-colors" />
-               
-               <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-8">
-                     <div className="relative">
-                        <Avatar name={`${medecin.first_name} ${medecin.last_name}`} size="lg" className="ring-4 ring-white shadow-xl group-hover:scale-105 transition-transform duration-500" />
-                        <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-emerald-500 border-2 border-white rounded-lg flex items-center justify-center shadow-lg">
-                           <ShieldCheck className="w-4 h-4 text-white" />
-                        </div>
-                     </div>
-                     <Badge variant={medecin.is_active ? 'success' : 'warning'} className="text-[8px] px-3 font-black italic">
-                        {medecin.is_active ? 'ACTIF' : 'PENDING'}
-                     </Badge>
-                  </div>
-                  
-                  <div className="space-y-2 mb-8">
-                     <div className="bg-primary/10 text-primary border-2 border-primary/20 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest italic inline-block">{medecin.specialite || 'PRATICIEN'}</div>
-                     <h3 className="text-xl lg:text-3xl font-black text-slate-950 tracking-tighter uppercase italic leading-none">{medecin.first_name} {medecin.last_name}</h3>
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">REF_ID: MED-0{medecin.id}99</p>
-                  </div>
-
-                  <div className="w-full space-y-3 text-left bg-slate-50 p-5 rounded-xl border-2 border-slate-100 mb-8">
-                    <div className="flex items-center gap-3 text-[10px] font-black text-slate-900 italic">
-                      <Mail className="w-4 h-4 text-primary" /> {medecin.email}
-                    </div>
-                    <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                      <Phone className="w-4 h-4 text-emerald-500" /> {medecin.telephone}
-                    </div>
-                  </div>
-               </div>
-
-               <div className="mt-auto flex items-center justify-between relative z-10 pt-6 border-t-2 border-slate-50">
-                  <div className="flex items-center gap-2">
-                     <Star className="w-3 h-3 text-amber-500 fill-current" />
-                     <span className="text-[9px] font-black text-slate-950 italic">RANKING: TOP_TIER</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                     <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-2 text-slate-300 hover:text-slate-950">
-                        <MoreVertical className="w-4 h-4" />
-                     </Button>
-                     <Button 
-                       variant="outline" 
-                       size="sm" 
-                       className="h-9 w-9 p-0 rounded-lg border-2 text-slate-300 hover:text-rose-600 hover:border-rose-200"
-                       onClick={() => handleDelete(medecin.id)}
-                     >
-                       <Trash className="w-4 h-4" />
-                     </Button>
-                  </div>
-               </div>
-            </Card>
-          </motion.div>
-        )) : (
-            <div className="col-span-full py-32 text-center bg-slate-50 rounded-3xl border-2 border-slate-100 border-dashed">
-               <Activity className="w-20 h-20 text-slate-200 mx-auto mb-6" />
-               <p className="text-2xl font-black text-slate-300 uppercase tracking-[0.2em] italic">Aucune donnée Medecin</p>
+        <div className="flex gap-3">
+          <label className="cursor-pointer">
+            <input type="file" accept=".csv" className="hidden" onChange={handleCSV} />
+            <div className="inline-flex items-center gap-2 h-10 px-4 text-sm font-semibold border border-slate-200 bg-white text-slate-700 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm cursor-pointer">
+              <Upload className="w-4 h-4" /> Import CSV
             </div>
+          </label>
+          <a href={`${import.meta.env.VITE_API_URL || 'https://backend-soutenance-1et0.onrender.com/api'}${endpoints.medecinsImportTemplate}`} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="md" leftIcon={<Download className="w-4 h-4" />}>Modèle</Button>
+          </a>
+          <Button onClick={() => setShowModal(true)} leftIcon={<Plus className="w-4 h-4" />}>
+            Nouveau médecin
+          </Button>
+        </div>
+      </div>
+
+      {/* Recherche */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <input
+          placeholder="Rechercher un médecin..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+        />
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        {filtered.length === 0 ? (
+          <div className="p-16 text-center">
+            <Stethoscope className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+            <p className="text-slate-500 font-medium">Aucun médecin trouvé</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Médecin</th>
+                  <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Spécialité</th>
+                  <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Contact</th>
+                  <th className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
+                  <th className="px-6 py-3.5" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {filtered.map((doc: any) => (
+                  <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={`${doc.first_name} ${doc.last_name}`} size="md" />
+                        <div>
+                          <p className="font-medium text-slate-900">Dr. {doc.first_name} {doc.last_name}</p>
+                          <p className="text-xs text-slate-400">{doc.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      <span className="text-sm text-slate-600">{doc.specialite || '—'}</span>
+                    </td>
+                    <td className="px-6 py-4 hidden lg:table-cell">
+                      <span className="text-sm text-slate-600">{doc.telephone || '—'}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge variant={doc.is_active ? 'success' : 'warning'} size="sm">
+                        {doc.is_active ? 'Actif' : 'Inactif'}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDelete(doc.id)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
-      {/* Modal Matrix */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               onClick={() => setIsModalOpen(false)}
-               className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto no-scrollbar"
-            >
-              <Card className="shadow-2xl rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-white/5 bg-white">
-                <CardHeader className="bg-slate-950 p-8 lg:p-10 flex flex-row items-center justify-between text-white relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -mr-16 -mt-16" />
-                  <div className="relative z-10">
-                    <CardTitle className="text-2xl lg:text-3xl font-black tracking-tighter leading-none italic uppercase">Nouvelle Archive</CardTitle>
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mt-3 flex items-center gap-2">
-                       <Zap className="w-3.5 h-3.5 text-primary" /> Integration d'Expert Clinique
-                    </p>
-                  </div>
-                  <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="h-10 w-10 p-0 rounded-lg hover:bg-white/10 text-white relative z-10">
-                    <X className="w-6 h-6" />
-                  </Button>
-                </CardHeader>
-                <form onSubmit={handleCreate}>
-                  <CardContent className="p-8 lg:p-10 space-y-8 text-black">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Prénom Docteur</label>
-                        <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="Ex: Jean..." value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Nom de Famille</label>
-                        <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="Ex: Kouassi..." value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Email Professionnel</label>
-                        <input type="email" required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="med@matrix.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Spécialité Principale</label>
-                        <select 
-                          required 
-                          className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none cursor-pointer italic"
-                          value={formData.specialite}
-                          onChange={(e) => setFormData({...formData, specialite: e.target.value})}
-                        >
-                          <option value="">Sélectionner une unité</option>
-                          {specialties.map(spec => (
-                            <option key={spec.id} value={spec.nom}>{spec.nom}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Contact Direct</label>
-                        <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="+229 XX XX XX XX" value={formData.telephone} onChange={(e) => setFormData({...formData, telephone: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Genre Clinique</label>
-                        <select 
-                          className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none cursor-pointer italic"
-                          value={formData.sexe}
-                          onChange={(e) => setFormData({...formData, sexe: e.target.value})}
-                        >
-                          <option value="M">Masculin</option>
-                          <option value="F">Féminin</option>
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                       <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Date de Naissance</label>
-                        <input type="date" required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" value={formData.date_naissance} onChange={(e) => setFormData({...formData, date_naissance: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">N° d'Ordre National</label>
-                        <input placeholder="ORD-XXXXX-BJ" className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" value={formData.numero_ordre} onChange={(e) => setFormData({...formData, numero_ordre: e.target.value})} />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Note de Curriculum / Expertise</label>
-                      <textarea className="w-full h-32 p-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none leading-relaxed resize-none italic placeholder:text-slate-300" placeholder="Présentation synthétique du parcours..." value={formData.biographie} onChange={(e) => setFormData({...formData, biographie: e.target.value})} />
-                    </div>
-                    
-                    <div className="flex items-center gap-3 p-4 bg-slate-950 rounded-xl border-2 border-white/5">
-                       <ShieldCheck className="w-5 h-5 text-primary" />
-                       <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic leading-relaxed">
-                          Validation requise : Ce profil sera activé après audit du numéro d'ordre national des médecins.
-                       </p>
-                    </div>
-
-                    <Button type="submit" isLoading={isLoading} className="w-full h-14 rounded-xl font-black italic text-[10px] shadow-2xl shadow-primary/20">
-                       FINALISER L'INTEGRATION <UserCheck className="w-4 h-4 ml-2" />
-                    </Button>
-                  </CardContent>
-                </form>
-              </Card>
-            </motion.div>
+      {/* Modal création */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-modal w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slide-up">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Nouveau médecin</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Le médecin recevra un email pour configurer son mot de passe</p>
+              </div>
+              <button onClick={() => setShowModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Prénom" required value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} placeholder="Jean" />
+                <Input label="Nom" required value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} placeholder="Dupont" />
+              </div>
+              <Input label="Email professionnel" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="dr.dupont@hopital.bj" leftIcon={<Mail className="w-4 h-4" />} />
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Téléphone" required value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} placeholder="+229 XX XX XX XX" leftIcon={<Phone className="w-4 h-4" />} />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Spécialité</label>
+                  <select required value={form.specialite} onChange={(e) => setForm({ ...form, specialite: e.target.value })}
+                    className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">
+                    <option value="">Choisir...</option>
+                    {specialties.map((s: any) => <option key={s.id} value={s.nom}>{s.nom}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Input label="Date de naissance" type="date" required value={form.date_naissance} onChange={(e) => setForm({ ...form, date_naissance: e.target.value })} />
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Sexe</label>
+                  <select value={form.sexe} onChange={(e) => setForm({ ...form, sexe: e.target.value })}
+                    className="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10">
+                    <option value="M">Masculin</option>
+                    <option value="F">Féminin</option>
+                  </select>
+                </div>
+              </div>
+              <Input label="N° d'ordre (optionnel)" value={form.numero_ordre} onChange={(e) => setForm({ ...form, numero_ordre: e.target.value })} placeholder="ORD-XXXXX-BJ" />
+              <div className="flex gap-3 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)} type="button">Annuler</Button>
+                <Button type="submit" className="flex-1" isLoading={loading} leftIcon={<UserCheck className="w-4 h-4" />}>
+                  Créer le médecin
+                </Button>
+              </div>
+            </form>
           </div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+        </div>
+      )}
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'animated_tap.dart';
 import '../theme/app_colors.dart';
 
@@ -32,7 +32,7 @@ class FluidCard extends StatelessWidget {
         boxShadow: hasShadow
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.05),
+                  color: AppColors.primary.withValues(alpha: 0.05),
                   blurRadius: 15,
                   offset: const Offset(0, 5),
                 ),

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:esante_app/core/network/dio_client.dart';
+import 'package:hopitel_app/core/network/dio_client.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {

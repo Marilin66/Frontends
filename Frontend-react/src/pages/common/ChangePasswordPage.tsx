@@ -1,110 +1,125 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent, Button, Input } from '@/components/ui';
-import { ChevronLeft, Lock, Key, Save, AlertCircle } from 'lucide-react';
+import { api, endpoints } from '@/services/api';
+import { Card, Button, Input } from '@/components/ui';
+import { ArrowLeft, Lock, Key, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    oldPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [form, setForm] = useState({ old_password: '', new_password: '', confirm: '' });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.newPassword !== formData.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+    setError('');
+    if (form.new_password !== form.confirm) {
+      setError('Les mots de passe ne correspondent pas.');
       return;
     }
-
+    if (form.new_password.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
     try {
-      setIsLoading(true);
-      // await api.post(endpoints.changePassword, formData);
-      alert('Mot de passe mis à jour avec succès !');
-      navigate('/profile');
-    } catch (error) {
-      alert('Erreur lors du changement de mot de passe');
+      setSaving(true);
+      // PATCH /api/accounts/users/me/ avec les champs password
+      await api.patch(endpoints.me, {
+        old_password: form.old_password,
+        new_password: form.new_password,
+      });
+      setSuccess(true);
+      setTimeout(() => navigate(-1), 2000);
+    } catch (err: any) {
+      setError(err.response?.data?.old_password?.[0] || err.response?.data?.detail || 'Erreur lors du changement de mot de passe.');
     } finally {
-      setIsLoading(false);
+      setSaving(false);
     }
   };
 
+  if (success) {
+    return (
+      <div className="max-w-sm mx-auto flex flex-col items-center justify-center py-20 gap-4 animate-fade-in">
+        <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
+          <CheckCircle className="w-8 h-8 text-emerald-600" />
+        </div>
+        <h2 className="text-lg font-semibold text-slate-900">Mot de passe mis à jour</h2>
+        <p className="text-sm text-slate-500 text-center">Votre mot de passe a été changé avec succès.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-xl mx-auto space-y-6 animate-fade-in pb-20">
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
+    <div className="max-w-sm mx-auto space-y-5 animate-fade-in">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <button
           onClick={() => navigate(-1)}
+          className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
         >
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-2xl font-bold text-gray-900">Sécurité</h1>
+          <ArrowLeft className="w-4 h-4 text-slate-600" />
+        </button>
+        <h1 className="text-xl font-bold text-slate-900">Changer le mot de passe</h1>
       </div>
 
-      <Card className="border-none shadow-sm overflow-hidden">
-        <CardHeader className="bg-primary p-6 text-white text-center">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8" />
+      <Card className="p-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              {error}
+            </div>
+          )}
+
+          <Input
+            label="Mot de passe actuel"
+            type={showOld ? 'text' : 'password'}
+            placeholder="••••••••"
+            required
+            value={form.old_password}
+            onChange={(e) => setForm({ ...form, old_password: e.target.value })}
+            leftIcon={<Key className="w-4 h-4" />}
+            rightIcon={showOld ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            onRightIconClick={() => setShowOld(!showOld)}
+          />
+
+          <div className="border-t border-slate-100 pt-4">
+            <Input
+              label="Nouveau mot de passe"
+              type={showNew ? 'text' : 'password'}
+              placeholder="••••••••"
+              required
+              value={form.new_password}
+              onChange={(e) => setForm({ ...form, new_password: e.target.value })}
+              leftIcon={<Lock className="w-4 h-4" />}
+              rightIcon={showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              onRightIconClick={() => setShowNew(!showNew)}
+            />
           </div>
-          <CardTitle className="text-xl">Changer le mot de passe</CardTitle>
-          <p className="text-white/70 text-sm mt-1">Protégez votre compte Hopitel</p>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="p-8 space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">Ancien mot de passe</label>
-                <Input 
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  leftIcon={<Key className="w-4 h-4 text-gray-400" />}
-                  value={formData.oldPassword}
-                  onChange={(e) => setFormData({...formData, oldPassword: e.target.value})}
-                />
-              </div>
-              
-              <div className="h-px bg-gray-100 my-4" />
 
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">Nouveau mot de passe</label>
-                <Input 
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  leftIcon={<Lock className="w-4 h-4 text-gray-400" />}
-                  value={formData.newPassword}
-                  onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
-                />
-              </div>
+          <Input
+            label="Confirmer le nouveau mot de passe"
+            type="password"
+            placeholder="••••••••"
+            required
+            value={form.confirm}
+            onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+            leftIcon={<Lock className="w-4 h-4" />}
+            error={form.confirm && form.new_password !== form.confirm ? 'Les mots de passe ne correspondent pas' : ''}
+          />
 
-              <div className="space-y-1">
-                <label className="text-sm font-bold text-gray-700 uppercase tracking-wider">Confirmer le nouveau mot de passe</label>
-                <Input 
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  leftIcon={<Lock className="w-4 h-4 text-gray-400" />}
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                />
-              </div>
-            </div>
+          <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+            <AlertCircle className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-700">Minimum 8 caractères avec lettres et chiffres.</p>
+          </div>
 
-            <div className="bg-blue-50/50 p-4 rounded-xl flex items-start gap-4">
-              <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0" />
-              <p className="text-xs text-blue-700 leading-relaxed">
-                Utilisez au moins 8 caractères avec un mélange de lettres, de chiffres et de caractères spéciaux pour une sécurité maximale.
-              </p>
-            </div>
-          </CardContent>
-          <div className="p-8 border-t flex gap-4">
-            <Button variant="ghost" className="flex-1" onClick={() => navigate(-1)} type="button">Annuler</Button>
-            <Button type="submit" isLoading={isLoading} className="flex-[2]" leftIcon={<Save className="w-4 h-4" />}>Enregistrer</Button>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => navigate(-1)} type="button">Annuler</Button>
+            <Button type="submit" className="flex-1" isLoading={saving}>Enregistrer</Button>
           </div>
         </form>
       </Card>

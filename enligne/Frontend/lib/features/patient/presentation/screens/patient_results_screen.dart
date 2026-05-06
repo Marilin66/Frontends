@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+﻿import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +12,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
 import '../providers/patient_provider.dart';
 import '../../data/models/resultat_model.dart';
-import '../../data/models/medecin_search_model.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 
 /// ==========================================================================
@@ -148,12 +147,12 @@ class PatientResultsScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: Colors.black.withValues(alpha: 0.04),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ],
-                    border: Border.all(color: AppColors.textHint.withOpacity(0.1)),
+                    border: Border.all(color: AppColors.textHint.withValues(alpha: 0.1)),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
@@ -168,7 +167,7 @@ class PatientResultsScreen extends ConsumerWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.success.withOpacity(0.1),
+                                  color: AppColors.success.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -199,7 +198,7 @@ class PatientResultsScreen extends ConsumerWidget {
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
@@ -258,7 +257,7 @@ class PatientResultsScreen extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.background.withOpacity(0.5),
+                            color: AppColors.background.withValues(alpha: 0.5),
                             borderRadius: const BorderRadius.only(
                               bottomLeft: Radius.circular(20),
                               bottomRight: Radius.circular(20),
@@ -374,7 +373,7 @@ class PatientResultsScreen extends ConsumerWidget {
                           }
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: AppColors.primary.withOpacity(0.1),
+                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                               child: Text(m.firstName[0], style: const TextStyle(color: AppColors.primary)),
                             ),
                             title: Text('Dr. ${m.firstName} ${m.lastName}', style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500)),
@@ -420,9 +419,9 @@ class _MedecinChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.medecin.withOpacity(0.08),
+        color: AppColors.medecin.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.medecin.withOpacity(0.2)),
+        border: Border.all(color: AppColors.medecin.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -435,35 +434,6 @@ class _MedecinChip extends StatelessWidget {
               fontSize: 11,
               fontWeight: FontWeight.w500,
               color: AppColors.medecin,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _InfoRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: AppColors.textSecondary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

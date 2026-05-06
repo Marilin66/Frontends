@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +9,6 @@ import 'package:shimmer/shimmer.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
 import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 import '../../data/models/medecin_search_model.dart';
 import '../../data/models/creneau_model.dart';
@@ -79,7 +78,7 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   child: const Icon(Icons.person, size: 30, color: AppColors.primary),
                 ),
                 const SizedBox(width: 16),
@@ -160,7 +159,7 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.event_busy, size: 64, color: AppColors.textHint.withOpacity(0.3)),
+                        Icon(Icons.event_busy, size: 64, color: AppColors.textHint.withValues(alpha: 0.3)),
                         const SizedBox(height: 16),
                         Text(
                           'Aucune disponibilité ce jour',
@@ -199,7 +198,7 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
                           color: isSelected ? AppColors.primary : AppColors.surface,
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
-                            color: isSelected ? AppColors.primary : AppColors.textHint.withOpacity(0.2),
+                            color: isSelected ? AppColors.primary : AppColors.textHint.withValues(alpha: 0.2),
                           ),
                         ),
                         alignment: Alignment.center,
@@ -224,7 +223,7 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
             decoration: BoxDecoration(
               color: AppColors.surface,
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -4)),
               ],
             ),
             child: SafeArea(
@@ -242,7 +241,7 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
                         height: 20, 
                         width: 20, 
                         child: Shimmer.fromColors(
-                          baseColor: Colors.white.withOpacity(0.8),
+                          baseColor: Colors.white.withValues(alpha: 0.8),
                           highlightColor: Colors.white,
                           child: Container(
                             height: 20,
@@ -287,7 +286,7 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
               width: 65,
               margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
+                color: isSelected ? AppColors.primary.withValues(alpha: 0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(16),
                 border: isSelected ? Border.all(color: AppColors.primary, width: 1.5) : null,
               ),

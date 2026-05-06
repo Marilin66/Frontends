@@ -164,3 +164,117 @@ final unreadMessageCountProvider = Provider<int>((ref) {
   final conversations = ref.watch(conversationProvider);
   return conversations.value?.fold<int>(0, (sum, c) => sum + c.nonLus) ?? 0;
 });
+
+// ─── Contacts disponibles selon le rôle ─────────────────────────────────────
+
+/// Modèle léger pour un contact messagerie
+class ContactModel {
+  final int id;
+  final String nom;
+  final String role;
+  final String? hopitalNom;
+
+  const ContactModel({
+    required this.id,
+    required this.nom,
+    required this.role,
+    this.hopitalNom,
+  });
+}
+
+/// Charge les contacts à qui l'utilisateur connecté peut envoyer un message direct.
+/// - admin_general  → tous les admins hôpitaux
+/// - admin_hopital  → médecins + laborantins de son hôpital
+/// - medecin        → admin de son hôpital
+/// - laborantin     → admin de son hôpital
+final contactsDisponiblesProvider =
+    FutureProvider<List<ContactModel>>((ref) async {
+  final user = ref.watch(authProvider).user;
+  if (user == null) return [];
+
+  final client = ref.read(dioClientProvider);
+
+  Future<List<dynamic>> fetchList(String url,
+      {Map<String, dynamic>? params}) async {
+    final resp = await client.get(url, queryParameters: params);
+    final data = resp.data;
+    if (data is List) return data;
+    if (data is Map && data['results'] is List) return data['results'] as List;
+    return [];
+  }
+
+  final role = user.role;
+
+  // ── Admin général → tous les admins hôpitaux ──────────────────────────
+  if (role == 'admin_general' || role == 'super_admin') {
+    final list = await fetchList(ApiConstants.adminHopitaux);
+    return list.map((e) {
+      final m = e as Map<String, dynamic>;
+      return ContactModel(
+        id: m['id'] as int,
+        nom: '${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
+        role: 'admin_hopital',
+        hopitalNom: m['hopital_nom'] as String?,
+      );
+    }).toList();
+  }
+
+  // ── Admin hôpital → médecins + laborantins de son hôpital ─────────────
+  if (role == 'admin_hopital') {
+    final hopId = user.hopital;
+    if (hopId == null) return [];
+
+    final medList = await fetchList(ApiConstants.medecins,
+        params: {'hopital': hopId});
+    final labList = await fetchList(ApiConstants.laborantins,
+        params: {'hopital': hopId});
+
+    final contacts = <ContactModel>[];
+    for (final e in medList) {
+      final m = e as Map<String, dynamic>;
+      contacts.add(ContactModel(
+        id: m['id'] as int,
+        nom: 'Dr. ${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
+        role: 'medecin',
+        hopitalNom: m['hopital_nom'] as String?,
+      ));
+    }
+    for (final e in labList) {
+      final m = e as Map<String, dynamic>;
+      contacts.add(ContactModel(
+        id: m['id'] as int,
+        nom: '${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
+        role: 'laborantin',
+        hopitalNom: m['hopital_nom'] as String?,
+      ));
+    }
+    return contacts;
+  }
+
+  // ── Médecin ou Laborantin → admin de son hôpital ──────────────────────
+  if (role == 'medecin' || role == 'laborantin') {
+    final hopId = user.hopital;
+    if (hopId == null) return [];
+
+    final list = await fetchList(ApiConstants.adminHopitaux);
+    return list
+        .where((e) {
+          final m = e as Map<String, dynamic>;
+          final hId = m['hopital'];
+          return hId == hopId ||
+              hId?.toString() == hopId.toString();
+        })
+        .map((e) {
+          final m = e as Map<String, dynamic>;
+          return ContactModel(
+            id: m['id'] as int,
+            nom: '${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
+            role: 'admin_hopital',
+            hopitalNom: m['hopital_nom'] as String?,
+          );
+        })
+        .toList();
+  }
+
+  return [];
+});

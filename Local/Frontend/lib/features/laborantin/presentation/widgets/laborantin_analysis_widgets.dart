@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
@@ -24,7 +25,7 @@ class AnalysisCard extends ConsumerWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Padding(
@@ -37,7 +38,7 @@ class AnalysisCard extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (isPending ? AppColors.warning : AppColors.success).withOpacity(0.1),
+                    color: (isPending ? AppColors.warning : AppColors.success).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -66,7 +67,7 @@ class AnalysisCard extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -86,6 +87,17 @@ class AnalysisCard extends ConsumerWidget {
                   style: GoogleFonts.poppins(fontSize: 11, color: AppColors.textHint),
                 ),
                 const Spacer(),
+                // Bouton message direct vers le patient
+                if (demande.patientId != null)
+                  IconButton(
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+                    color: AppColors.primary,
+                    tooltip: 'Contacter le patient',
+                    onPressed: () => context.go('/laborantin/messagerie/direct/${demande.patientId}'),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                const SizedBox(width: 8),
                 if (isPending)
                   ElevatedButton.icon(
                     onPressed: () => _showCloturerAnalyseSheet(context, demande),
@@ -253,7 +265,7 @@ class EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 80, color: AppColors.textHint.withOpacity(0.3)),
+          Icon(icon, size: 80, color: AppColors.textHint.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           Text(message, style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
           Text(subMessage, style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textHint)),

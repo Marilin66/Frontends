@@ -1,35 +1,14 @@
 // @ts-nocheck
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent, 
-  Button, 
-  Badge,
-  Avatar, 
-  PageLoader 
-} from '@/components/ui';
-import { 
-  Plus, 
-  Mail, 
-  Phone, 
-  X, 
-  Building, 
-  Trash, 
-  MoreVertical,
-  ShieldCheck,
-  Search,
-  Zap,
-  MapPin,
-  Activity,
-  ArrowRight,
-  Globe,
-  Settings
+import { Card, Button, Badge, PageLoader } from '@/components/ui';
+import {
+  Plus, Search, Building, MapPin, Mail, Phone,
+  ArrowRight, Zap, Edit2, X, Check, RefreshCw,
+  ToggleLeft, ToggleRight, ChevronRight
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface Hopital {
   id: number;
@@ -39,296 +18,430 @@ interface Hopital {
   telephone: string;
   email: string;
   is_active: boolean;
-  date_creation: string;
+  code_court?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants: any = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1, 
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
+const EMPTY_FORM = {
+  nom: '', adresse: '', ville: '', telephone: '', email: '',
+  code_court: '', latitude: '', longitude: '',
 };
 
 export default function EntitiesPage() {
-  const [entities, setEntities] = useState<Hopital[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
-  
-  const [formData, setFormData] = useState({
-    nom: '',
-    adresse: '',
-    ville: '',
-    telephone: '',
-    email: '',
-    admin_email: '',
-    admin_first_name: '',
-    admin_last_name: '',
-    admin_telephone: '',
-    admin_date_naissance: '1990-01-01',
-    admin_sexe: 'M'
-  });
+  const [hopitaux, setHopitaux] = useState<Hopital[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [modal, setModal] = useState<'create' | 'edit' | null>(null);
+  const [selected, setSelected] = useState<Hopital | null>(null);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState<number | null>(null);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      setIsLoading(true);
-      const response = await api.get<{ results: Hopital[] }>(endpoints.hopitaux);
-      setEntities(response.results || []);
-    } catch (error) {
-      console.error('Erreur:', error);
-    } finally {
-      setIsLoading(false);
-    }
+      const data: any = await api.get(endpoints.hopitaux);
+      setHopitaux(Array.isArray(data) ? data : data.results ?? []);
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useEffect(() => { fetchData(); }, []);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const openCreate = () => {
+    setForm({ ...EMPTY_FORM });
+    setSelected(null);
+    setModal('create');
+  };
+
+  const openEdit = (h: Hopital) => {
+    setForm({
+      nom: h.nom ?? '',
+      adresse: h.adresse ?? '',
+      ville: h.ville ?? '',
+      telephone: h.telephone ?? '',
+      email: h.email ?? '',
+      code_court: h.code_court ?? '',
+      latitude: h.latitude?.toString() ?? '',
+      longitude: h.longitude?.toString() ?? '',
+    });
+    setSelected(h);
+    setModal('edit');
+  };
+
+  const closeModal = () => { setModal(null); setSelected(null); };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     try {
-      setIsLoading(true);
-      await api.post(endpoints.hopitaux, formData);
-      setIsModalOpen(false);
+      const payload: any = {
+        nom: form.nom,
+        adresse: form.adresse,
+        ville: form.ville,
+        telephone: form.telephone,
+        email: form.email,
+      };
+      if (form.code_court) payload.code_court = form.code_court;
+      if (form.latitude)   payload.latitude   = parseFloat(form.latitude);
+      if (form.longitude)  payload.longitude  = parseFloat(form.longitude);
+
+      if (modal === 'create') {
+        await api.post(endpoints.hopitaux, payload);
+      } else if (modal === 'edit' && selected) {
+        await api.patch(`${endpoints.hopitaux}${selected.id}/`, payload);
+      }
+      closeModal();
       fetchData();
-      // Reset form
-      setFormData({
-        nom: '', adresse: '', ville: '', telephone: '', email: '',
-        admin_email: '', admin_first_name: '', admin_last_name: '',
-        admin_telephone: '', admin_date_naissance: '1990-01-01', admin_sexe: 'M'
-      });
-    } catch (error: any) {
-      console.error(error);
-      alert("Erreur lors de la création de l'hôpital.");
+    } catch (e: any) {
+      alert(e?.response?.data ? JSON.stringify(e.response.data) : 'Erreur lors de la sauvegarde.');
     } finally {
-      setIsLoading(false);
+      setSaving(false);
     }
   };
 
-  const handleToggleStatus = async (id: number, currentStatus: boolean) => {
+  const handleToggle = async (h: Hopital) => {
+    setToggling(h.id);
     try {
-      setIsLoading(true);
-      await api.patch(`${endpoints.hopitaux}${id}/`, { is_active: !currentStatus });
+      await api.patch(`${endpoints.hopitaux}${h.id}/`, { is_active: !h.is_active });
       fetchData();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { alert('Erreur lors du changement de statut.'); }
+    finally { setToggling(null); }
   };
 
-  const filteredEntities = entities.filter(e => 
-    `${e.nom} ${e.ville} ${e.adresse}`.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = hopitaux.filter(h =>
+    `${h.nom} ${h.ville} ${h.adresse}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-8 lg:space-y-12 pb-20"
-    >
-      {/* High-Contrast Header */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-        <motion.div variants={itemVariants}>
-          <div className="flex items-center gap-3 mb-4">
-             <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center shadow-lg">
-                <Building className="w-6 h-6 text-white" />
-             </div>
-             <div className="bg-slate-900 text-white border-2 border-slate-800 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest italic">
-                ENTITY_MANAGER.
-             </div>
-          </div>
-          <h1 className="text-4xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Hôpitaux Réseau</h1>
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Gestion des infrastructures sanitaires certifiées</p>
-        </motion.div>
+  const actifs   = hopitaux.filter(h => h.is_active).length;
+  const inactifs = hopitaux.filter(h => !h.is_active).length;
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="relative w-full sm:w-64 group">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors z-10" />
-             <input 
-               placeholder="Rechercher une entité..." 
-               className="w-full pl-11 h-12 rounded-xl bg-white border-2 border-slate-200 focus:border-primary text-slate-950 text-xs font-black transition-all shadow-sm italic placeholder:text-slate-300"
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-             />
-          </div>
-          
-          <Button onClick={() => setIsModalOpen(true)} variant="primary" className="h-12 px-8 rounded-xl text-[10px] italic font-black shadow-lg shadow-primary/20">
-            <Plus className="w-4 h-4 mr-2" /> NOUVEL HOPITAL
+  if (loading && hopitaux.length === 0) return <PageLoader />;
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+
+      {/* ── Header ──────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Gestion des Hôpitaux</h1>
+          <p className="text-slate-500 mt-1">
+            {hopitaux.length} hôpital{hopitaux.length !== 1 ? 'x' : ''} — {actifs} actif{actifs !== 1 ? 's' : ''}, {inactifs} inactif{inactifs !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={fetchData}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+          >
+            <RefreshCw className="w-4 h-4" /> Actualiser
+          </button>
+          <Button onClick={openCreate} leftIcon={<Plus className="w-4 h-4" />}>
+            Nouvel hôpital
           </Button>
         </div>
-      </section>
-
-      {/* Entities Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
-        {isLoading && entities.length === 0 ? (
-          [...Array(6)].map((_, i) => (
-            <div key={i} className="h-64 bg-slate-100 rounded-3xl animate-pulse" />
-          ))
-        ) : filteredEntities.length > 0 ? filteredEntities.map((entity) => (
-          <motion.div key={entity.id} variants={itemVariants}>
-            <Card className="h-full border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group p-8 lg:p-10 flex flex-col justify-between shadow-sm relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-primary/5 transition-colors" />
-               
-               <div className="relative z-10">
-                  <div className="flex items-start justify-between mb-8">
-                     <div className="w-16 h-16 rounded-2xl bg-slate-50 border-2 border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-slate-950 group-hover:text-white transition-all">
-                        <Building className="w-8 h-8" />
-                     </div>
-                     <Badge variant={entity.is_active ? 'success' : 'warning'} className="text-[8px] px-3 font-black italic">
-                        {entity.is_active ? 'OPÉRATIONNEL' : 'INACTIF'}
-                     </Badge>
-                  </div>
-                  
-                  <div className="space-y-2 mb-8">
-                     <h3 className="text-xl lg:text-3xl font-black text-slate-950 tracking-tighter uppercase italic leading-none">{entity.nom}</h3>
-                     <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-widest italic">
-                        <MapPin className="w-3 h-3 text-primary" /> {entity.ville || 'BÉNIN'}
-                     </div>
-                  </div>
-
-                  <div className="w-full space-y-3 text-left bg-slate-50 p-5 rounded-xl border-2 border-slate-100 mb-8">
-                    <div className="flex items-center gap-3 text-[10px] font-black text-slate-900 italic">
-                      <Mail className="w-4 h-4 text-primary" /> {entity.email || 'N/A'}
-                    </div>
-                    <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                      <Phone className="w-4 h-4 text-emerald-500" /> {entity.telephone || 'N/A'}
-                    </div>
-                  </div>
-               </div>
-
-               <div className="mt-auto flex items-center justify-between relative z-10 pt-6 border-t-2 border-slate-50">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="h-10 px-4 rounded-lg border-2 text-[10px] font-black italic uppercase"
-                    onClick={() => navigate(`/super-admin/entities/${entity.id}`)}
-                  >
-                    PILOTAGE <ArrowRight className="w-3 h-3 ml-2" />
-                  </Button>
-                  <div className="flex items-center gap-2">
-                     <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className={`h-9 w-9 p-0 rounded-lg border-2 ${entity.is_active ? 'text-emerald-500' : 'text-rose-500'}`}
-                        onClick={() => handleToggleStatus(entity.id, entity.is_active)}
-                     >
-                        <Zap className="w-4 h-4" />
-                     </Button>
-                  </div>
-               </div>
-            </Card>
-          </motion.div>
-        )) : (
-            <div className="col-span-full py-32 text-center bg-slate-50 rounded-3xl border-2 border-slate-100 border-dashed">
-               <Activity className="w-20 h-20 text-slate-200 mx-auto mb-6" />
-               <p className="text-2xl font-black text-slate-300 uppercase tracking-[0.2em] italic">Aucune Entité répertoriée</p>
-            </div>
-        )}
       </div>
 
-      {/* Modal: Ajout Hospital */}
+      {/* ── KPIs ────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Total',    value: hopitaux.length, color: 'text-blue-600',   bg: 'bg-blue-50' },
+          { label: 'Actifs',   value: actifs,          color: 'text-green-600',  bg: 'bg-green-50' },
+          { label: 'Inactifs', value: inactifs,        color: 'text-slate-500',  bg: 'bg-slate-100' },
+        ].map((s, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-3">
+            <div className={`w-9 h-9 ${s.bg} rounded-xl flex items-center justify-center`}>
+              <Building className={`w-4 h-4 ${s.color}`} />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-slate-900">{s.value}</p>
+              <p className="text-xs text-slate-500">{s.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Search ──────────────────────────────────────────────────── */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Rechercher par nom, ville, adresse…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+        />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+      </div>
+
+      {/* ── Grid ────────────────────────────────────────────────────── */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
+            <Building className="w-8 h-8 text-slate-400" />
+          </div>
+          <p className="text-slate-600 font-medium">{search ? `Aucun résultat pour "${search}"` : 'Aucun hôpital enregistré'}</p>
+          {!search && (
+            <Button className="mt-4" onClick={openCreate} leftIcon={<Plus className="w-4 h-4" />}>
+              Créer le premier hôpital
+            </Button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((h, i) => (
+            <motion.div key={h.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+              <div className="bg-white rounded-2xl border border-slate-200 hover:shadow-card-md hover:border-slate-300 transition-all overflow-hidden group">
+
+                {/* Card header */}
+                <div className="p-5 pb-4">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Building className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${h.is_active ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                      {h.is_active ? 'Actif' : 'Inactif'}
+                    </span>
+                  </div>
+
+                  <h3 className="font-bold text-slate-900 text-base leading-tight mb-1 truncate">{h.nom}</h3>
+                  {h.code_court && (
+                    <span className="text-xs text-slate-400 font-mono">[{h.code_court}]</span>
+                  )}
+
+                  <div className="mt-3 space-y-1.5">
+                    {h.ville && (
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-400" /> {h.ville}
+                      </div>
+                    )}
+                    {h.email && (
+                      <div className="flex items-center gap-2 text-xs text-slate-500 truncate">
+                        <Mail className="w-3.5 h-3.5 shrink-0 text-slate-400" /> {h.email}
+                      </div>
+                    )}
+                    {h.telephone && (
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <Phone className="w-3.5 h-3.5 shrink-0 text-slate-400" /> {h.telephone}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card footer */}
+                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1">
+                    {/* Toggle actif/inactif */}
+                    <button
+                      onClick={() => handleToggle(h)}
+                      disabled={toggling === h.id}
+                      title={h.is_active ? 'Désactiver' : 'Activer'}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                        h.is_active
+                          ? 'text-green-700 hover:bg-green-100'
+                          : 'text-slate-500 hover:bg-slate-200'
+                      } disabled:opacity-50`}
+                    >
+                      {h.is_active
+                        ? <ToggleRight className="w-4 h-4" />
+                        : <ToggleLeft className="w-4 h-4" />
+                      }
+                      {toggling === h.id ? '…' : h.is_active ? 'Actif' : 'Inactif'}
+                    </button>
+
+                    {/* Modifier */}
+                    <button
+                      onClick={() => openEdit(h)}
+                      title="Modifier"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Détail */}
+                  <button
+                    onClick={() => navigate(`/super-admin/hopitaux/${h.id}`)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark transition"
+                  >
+                    Gérer <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Modal Créer / Modifier ───────────────────────────────────── */}
       <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               onClick={() => setIsModalOpen(false)}
-               className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+        {modal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={closeModal}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto no-scrollbar"
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-modal"
             >
-              <Card className="shadow-2xl rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-white/5 bg-white">
-                <CardHeader className="bg-slate-950 p-8 lg:p-10 flex flex-row items-center justify-between text-white relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -mr-16 -mt-16" />
-                  <div className="relative z-10">
-                    <CardTitle className="text-2xl lg:text-3xl font-black tracking-tighter leading-none italic uppercase">Déployer Unité</CardTitle>
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mt-3 flex items-center gap-2">
-                       <Zap className="w-3.5 h-3.5 text-primary" /> Initialisation Infrastructure
-                    </p>
-                  </div>
-                  <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="h-10 w-10 p-0 rounded-lg hover:bg-white/10 text-white relative z-10">
-                    <X className="w-6 h-6" />
-                  </Button>
-                </CardHeader>
-                <form onSubmit={handleCreate}>
-                  <CardContent className="p-8 lg:p-10 space-y-8 text-black">
-                    <div className="space-y-6">
-                      <h4 className="text-[10px] font-black text-primary uppercase tracking-widest italic border-l-4 border-primary pl-4">Informations Hôpital</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Nom de l'Entité</label>
-                          <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="Ex: CHU Cotonou..." value={formData.nom} onChange={(e) => setFormData({...formData, nom: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Adresse Physique</label>
-                          <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="Quartier, Rue..." value={formData.adresse} onChange={(e) => setFormData({...formData, adresse: e.target.value})} />
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                         <div className="space-y-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Ville</label>
-                          <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" placeholder="Cotonou" value={formData.ville} onChange={(e) => setFormData({...formData, ville: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Téléphone</label>
-                          <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" placeholder="+229..." value={formData.telephone} onChange={(e) => setFormData({...formData, telephone: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Email</label>
-                          <input required type="email" className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" placeholder="contact@hop.bj" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                        </div>
-                      </div>
-                    </div>
+              {/* Modal header */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">
+                    {modal === 'create' ? 'Nouvel hôpital' : `Modifier — ${selected?.nom}`}
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {modal === 'create' ? 'Remplissez les informations de l\'établissement' : 'Modifiez les informations'}
+                  </p>
+                </div>
+                <button onClick={closeModal} className="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center transition">
+                  <X className="w-4 h-4 text-slate-500" />
+                </button>
+              </div>
 
-                    <div className="space-y-6">
-                      <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-widest italic border-l-4 border-emerald-500 pl-4">Administrateur Local</h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Prénom Admin</label>
-                          <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" value={formData.admin_first_name} onChange={(e) => setFormData({...formData, admin_first_name: e.target.value})} />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Nom Admin</label>
-                          <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" value={formData.admin_last_name} onChange={(e) => setFormData({...formData, admin_last_name: e.target.value})} />
-                        </div>
+              {/* Form */}
+              <form onSubmit={handleSave} className="p-6 space-y-4">
+
+                {/* Infos principales */}
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Informations générales</p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Nom de l'hôpital *</label>
+                      <input
+                        required
+                        type="text"
+                        value={form.nom}
+                        onChange={e => setForm(f => ({ ...f, nom: e.target.value }))}
+                        placeholder="Ex: CHU de Cotonou"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Ville *</label>
+                        <input
+                          required
+                          type="text"
+                          value={form.ville}
+                          onChange={e => setForm(f => ({ ...f, ville: e.target.value }))}
+                          placeholder="Cotonou"
+                          className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Email Admin</label>
-                        <input required type="email" className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" value={formData.admin_email} onChange={(e) => setFormData({...formData, admin_email: e.target.value})} />
+                      <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Code court</label>
+                        <input
+                          type="text"
+                          value={form.code_court}
+                          onChange={e => setForm(f => ({ ...f, code_court: e.target.value }))}
+                          placeholder="CHU-COT"
+                          className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                        />
                       </div>
                     </div>
-                    
-                    <Button type="submit" isLoading={isLoading} className="w-full h-14 rounded-xl font-black italic text-[10px] shadow-2xl shadow-primary/20">
-                       ACTIVER L'ENTITE <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </CardContent>
-                </form>
-              </Card>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Adresse *</label>
+                      <input
+                        required
+                        type="text"
+                        value={form.adresse}
+                        onChange={e => setForm(f => ({ ...f, adresse: e.target.value }))}
+                        placeholder="Quartier, rue…"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Contact</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Téléphone *</label>
+                      <input
+                        required
+                        type="tel"
+                        value={form.telephone}
+                        onChange={e => setForm(f => ({ ...f, telephone: e.target.value }))}
+                        placeholder="+229 97 00 00 00"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Email *</label>
+                      <input
+                        required
+                        type="email"
+                        value={form.email}
+                        onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                        placeholder="contact@hopital.bj"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Géolocalisation */}
+                <div>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Géolocalisation (optionnel)</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Latitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={form.latitude}
+                        onChange={e => setForm(f => ({ ...f, latitude: e.target.value }))}
+                        placeholder="6.3654"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-600 mb-1">Longitude</label>
+                      <input
+                        type="number"
+                        step="any"
+                        value={form.longitude}
+                        onChange={e => setForm(f => ({ ...f, longitude: e.target.value }))}
+                        placeholder="2.4183"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    {saving ? 'Enregistrement…' : modal === 'create' ? 'Créer l\'hôpital' : 'Enregistrer'}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-    </motion.div>
+    </div>
   );
 }

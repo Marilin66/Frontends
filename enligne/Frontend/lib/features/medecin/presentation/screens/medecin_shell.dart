@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -51,7 +51,7 @@ class MedecinShell extends ConsumerWidget {
     return ResponsiveShellLayout(
       selectedIndex: _calculateIndex(GoRouterState.of(context).matchedLocation),
       onDestinationSelected: (index) => _onTap(index, context),
-      indicatorColor: AppColors.medecin.withOpacity(0.15),
+      indicatorColor: AppColors.medecin.withValues(alpha: 0.15),
       destinations: const [
         NavigationDestination(
           icon: Icon(Icons.home_outlined),

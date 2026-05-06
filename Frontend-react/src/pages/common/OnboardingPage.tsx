@@ -5,7 +5,7 @@ import {
   Activity,
   Search,
   Phone,
-  FolderHeart,
+  Heart,
   Shield,
   ArrowRight,
   LogIn,
@@ -19,7 +19,7 @@ const featureCards = [
       'Localisez et explorez les établissements partenaires autour de vous sans créer de compte.',
     icon: Search,
     color: 'bg-primary',
-    route: '/patient/search',
+    route: '/hospitals',
   },
   {
     title: 'Numéros d’Urgence',
@@ -33,7 +33,7 @@ const featureCards = [
     title: 'Suivi Patient Centralisé',
     description:
       'Connectez-vous pour voir vos RDV, vos résultats d’analyses labo et contacter vos médecins.',
-    icon: FolderHeart,
+    icon: Heart,
     color: 'bg-emerald-500',
     route: '/login',
   },
@@ -54,11 +54,17 @@ export default function OnboardingPage() {
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
-            <Button variant="ghost" onClick={() => navigate('/patient/search')} className="font-bold">
+            <Button variant="ghost" onClick={() => navigate('/hospitals')} className="font-bold">
               Hôpitaux & Cliniques
             </Button>
             <Button variant="ghost" onClick={() => navigate('/emergency')} className="font-bold">
               Urgences
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/chatbot')} className="font-bold">
+              Assistant IA
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/track-results')} className="font-bold">
+              Résultats Labo
             </Button>
             <Button onClick={() => navigate('/login')} className="font-bold">
               Espace Connexion
@@ -91,11 +97,19 @@ export default function OnboardingPage() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => navigate('/patient/search')}
+                  onClick={() => navigate('/hospitals')}
                   className="h-12 border-primary px-6 text-sm font-black uppercase tracking-wide text-primary"
                 >
                   <Search className="mr-2 h-4 w-4" />
                   Explorer les Hôpitaux
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/chatbot')}
+                  className="h-12 border-primary px-6 text-sm font-black uppercase tracking-wide text-primary"
+                >
+                  <Activity className="mr-2 h-4 w-4" />
+                  Assistant IA
                 </Button>
               </div>
             </motion.div>

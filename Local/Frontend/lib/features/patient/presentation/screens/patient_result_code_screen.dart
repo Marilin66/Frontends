@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -78,7 +77,7 @@ class _PatientResultCodeScreenState extends ConsumerState<PatientResultCodeScree
               ),
               child: Column(
                 children: [
-                  Icon(Icons.vpn_key, size: 48, color: AppColors.primary.withOpacity(0.7)),
+                  Icon(Icons.vpn_key, size: 48, color: AppColors.primary.withValues(alpha: 0.7)),
                   const SizedBox(height: 16),
                   Text(
                     'Saisissez le code remis par le laboratoire pour accéder à votre résultat.',
@@ -128,9 +127,9 @@ class _PatientResultCodeScreenState extends ConsumerState<PatientResultCodeScree
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withOpacity(0.1),
+                  color: AppColors.error.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.error.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -153,7 +152,7 @@ class _PatientResultCodeScreenState extends ConsumerState<PatientResultCodeScree
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
