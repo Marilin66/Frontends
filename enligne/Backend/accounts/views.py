@@ -44,22 +44,10 @@ class PatientRegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        user.is_active = False  # Désactiver jusqu'à vérification
-        user.save(update_fields=['is_active'])
-
-        # Générer et envoyer le token de vérification (valide 24h)
-        token = generate_secure_token(user.pk)
-        try:
-            send_verification_email(user, token)
-        except Exception:
-            # On ne supprime pas l'utilisateur, mais on prévient l'UI
-            return Response(
-                {'error': "Erreur Gmail : Impossible d'envoyer l'e-mail de vérification. Vérifiez la configuration SMTP."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+        # L'utilisateur est déjà actif (is_active=True, is_email_verified=True dans le serializer)
+        # La vérification email est désactivée pour l'instant
         return Response(
-            {'message': "Inscription réussie ! Veuillez vérifier votre boîte mail pour valider votre compte avant de vous connecter."},
+            {'message': "Inscription réussie ! Vous pouvez maintenant vous connecter."},
             status=status.HTTP_201_CREATED,
         )
 
