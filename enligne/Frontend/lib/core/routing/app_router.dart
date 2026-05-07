@@ -142,7 +142,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         final rest = state.matchedLocation.replaceFirst('/patient/hopital/', '');
         return '/hopital/$rest';
       }
-      if (state.matchedLocation == '/patient/service') return '/service';
+      // Note: /patient/service is handled directly in the patient ShellRoute
+      // to preserve state.extra (GoRouter drops extra on redirects)
 
       if (state.matchedLocation == '/messagerie') return '$rolePrefix/messagerie';
       
@@ -254,16 +255,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/service',
         pageBuilder: (context, state) {
-          final data = state.extra as Map<String, dynamic>;
+          final data = state.extra as Map<String, dynamic>?;
+          if (data == null) {
+            // Fallback si on arrive ici sans extra (ex: rechargement de page)
+            return _buildPageWithFadeTransition(
+              state: state,
+              child: const SplashScreen(),
+            );
+          }
           HopitalServiceModel service;
           if (data['service'] is Map<String, dynamic>) {
-            service = HopitalServiceModel.fromJson(data['service']);
+            service = HopitalServiceModel.fromJson(data['service'] as Map<String, dynamic>);
           } else {
             service = data['service'] as HopitalServiceModel;
           }
           HopitalSearchModel hopital;
           if (data['hopital'] is Map<String, dynamic>) {
-            hopital = HopitalSearchModel.fromJson(data['hopital']);
+            hopital = HopitalSearchModel.fromJson(data['hopital'] as Map<String, dynamic>);
           } else {
             hopital = data['hopital'] as HopitalSearchModel;
           }
@@ -322,163 +330,120 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: '/patient',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientHomeContent(),
-            ),
+            builder: (context, state) => const PatientHomeContent(),
           ),
           GoRoute(
             path: '/patient/result-code',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientResultCodeScreen(),
-            ),
+            builder: (context, state) => const PatientResultCodeScreen(),
           ),
           GoRoute(
             path: '/patient/rdv/:rdvId/intake',
-            pageBuilder: (context, state) {
+            builder: (context, state) {
               final rdvId = int.parse(state.pathParameters['rdvId']!);
               final medecinNom = state.uri.queryParameters['medecin'];
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: PatientIntakeScreen(
-                  rendezvousId: rdvId,
-                  medecinNom: medecinNom ?? 'votre médecin',
-                ),
+              return PatientIntakeScreen(
+                rendezvousId: rdvId,
+                medecinNom: medecinNom ?? 'votre médecin',
               );
             },
           ),
           GoRoute(
             path: '/patient/search',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientSearchContent(),
-            ),
+            builder: (context, state) => const PatientSearchContent(),
+          ),
+          GoRoute(
+            path: '/patient/service',
+            builder: (context, state) {
+              final data = state.extra as Map<String, dynamic>?;
+              if (data == null) return const PatientSearchContent();
+              HopitalServiceModel service;
+              if (data['service'] is Map<String, dynamic>) {
+                service = HopitalServiceModel.fromJson(data['service'] as Map<String, dynamic>);
+              } else {
+                service = data['service'] as HopitalServiceModel;
+              }
+              HopitalSearchModel hopital;
+              if (data['hopital'] is Map<String, dynamic>) {
+                hopital = HopitalSearchModel.fromJson(data['hopital'] as Map<String, dynamic>);
+              } else {
+                hopital = data['hopital'] as HopitalSearchModel;
+              }
+              return ServiceDetailScreen(service: service, hopital: hopital);
+            },
           ),
           GoRoute(
             path: '/patient/medecin/:id/rendezvous',
-            pageBuilder: (context, state) {
+            builder: (context, state) {
               final id = int.parse(state.pathParameters['id']!);
               final medecin = state.extra as MedecinSearchModel?;
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: RendezvousBookingScreen(
-                  medecin: medecin,
-                  medecinId: id,
-                ),
-              );
+              return RendezvousBookingScreen(medecin: medecin, medecinId: id);
             },
           ),
           GoRoute(
             path: '/patient/appointments',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientAppointmentsContent(),
-            ),
+            builder: (context, state) => const PatientAppointmentsContent(),
           ),
           GoRoute(
             path: '/patient/results',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientResultsContent(),
-            ),
+            builder: (context, state) => const PatientResultsContent(),
           ),
           GoRoute(
             path: '/patient/consultation/:id',
-            pageBuilder: (context, state) {
+            builder: (context, state) {
               final id = int.parse(state.pathParameters['id']!);
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: PatientConsultationDetailScreen(consultationId: id),
-              );
+              return PatientConsultationDetailScreen(consultationId: id);
             },
           ),
           GoRoute(
             path: '/patient/results/:id/share',
-            pageBuilder: (context, state) {
+            builder: (context, state) {
               final resultat = state.extra as dynamic;
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: PatientResultShareScreen(resultat: resultat),
-              );
+              return PatientResultShareScreen(resultat: resultat);
             },
           ),
           GoRoute(
             path: '/patient/messagerie',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const ConversationListScreen(),
-            ),
+            builder: (context, state) => const ConversationListScreen(),
             routes: [
               GoRoute(
                 path: 'consultation/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      consultationId: id,
-                      contactName: 'Consultation',
-                    ),
-                  );
+                  return ChatScreen(consultationId: id, contactName: 'Consultation');
                 },
               ),
               GoRoute(
                 path: 'direct/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      destinataireId: id,
-                      contactName: 'Conversation Directe',
-                    ),
-                  );
+                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
                 },
               ),
             ],
           ),
           GoRoute(
             path: '/patient/profile',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientProfileContent(),
-            ),
+            builder: (context, state) => const PatientProfileContent(),
           ),
           GoRoute(
             path: '/patient/profile/edit',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const EditProfileScreen(primaryColor: AppColors.primary),
-            ),
+            builder: (context, state) => const EditProfileScreen(primaryColor: AppColors.primary),
           ),
           GoRoute(
             path: '/patient/change-password',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientChangePasswordContent(),
-            ),
+            builder: (context, state) => const PatientChangePasswordContent(),
           ),
           GoRoute(
             path: '/patient/about',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientAboutContent(),
-            ),
+            builder: (context, state) => const PatientAboutContent(),
           ),
           GoRoute(
             path: '/patient/language',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientLanguageContent(),
-            ),
+            builder: (context, state) => const PatientLanguageContent(),
           ),
           GoRoute(
             path: '/patient/notification-settings',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientNotificationSettingsContent(),
-            ),
+            builder: (context, state) => const PatientNotificationSettingsContent(),
           ),
         ],
       ),
@@ -487,128 +452,44 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => MedecinShell(child: child),
         routes: [
-          GoRoute(
-            path: '/medecin',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinHomeContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/agenda',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinAgendaContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/result-patient',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinResultatPatientScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/consultations',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinConsultationsScreen(),
-            ),
-          ),
+          GoRoute(path: '/medecin', builder: (context, state) => const MedecinHomeContent()),
+          GoRoute(path: '/medecin/agenda', builder: (context, state) => const MedecinAgendaContent()),
+          GoRoute(path: '/medecin/result-patient', builder: (context, state) => const MedecinResultatPatientScreen()),
+          GoRoute(path: '/medecin/consultations', builder: (context, state) => const MedecinConsultationsScreen()),
           GoRoute(
             path: '/medecin/consultations/:id',
-            pageBuilder: (context, state) {
+            builder: (context, state) {
               final id = int.parse(state.pathParameters['id']!);
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: MedecinConsultationDetailScreen(consultationId: id),
-              );
+              return MedecinConsultationDetailScreen(consultationId: id);
             },
           ),
-          GoRoute(
-            path: '/medecin/patients',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinPatientsContent(),
-            ),
-          ),
+          GoRoute(path: '/medecin/patients', builder: (context, state) => const MedecinPatientsContent()),
           GoRoute(
             path: '/medecin/messagerie',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const ConversationListScreen(),
-            ),
+            builder: (context, state) => const ConversationListScreen(),
             routes: [
               GoRoute(
                 path: 'consultation/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      consultationId: id,
-                      contactName: 'Consultation',
-                    ),
-                  );
+                  return ChatScreen(consultationId: id, contactName: 'Consultation');
                 },
               ),
               GoRoute(
                 path: 'direct/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      destinataireId: id,
-                      contactName: 'Conversation Directe',
-                    ),
-                  );
+                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
                 },
               ),
             ],
           ),
-          GoRoute(
-            path: '/medecin/profile',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinProfileContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/profile/edit',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const EditProfileScreen(primaryColor: AppColors.medecin),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/change-password',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinChangePasswordContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/about',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const MedecinAboutContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/language',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientLanguageContent(primaryColor: AppColors.medecin),
-            ),
-          ),
-          GoRoute(
-            path: '/medecin/notifications',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientNotificationSettingsContent(primaryColor: AppColors.medecin),
-            ),
-          ),
+          GoRoute(path: '/medecin/profile', builder: (context, state) => const MedecinProfileContent()),
+          GoRoute(path: '/medecin/profile/edit', builder: (context, state) => const EditProfileScreen(primaryColor: AppColors.medecin)),
+          GoRoute(path: '/medecin/change-password', builder: (context, state) => const MedecinChangePasswordContent()),
+          GoRoute(path: '/medecin/about', builder: (context, state) => const MedecinAboutContent()),
+          GoRoute(path: '/medecin/language', builder: (context, state) => const PatientLanguageContent(primaryColor: AppColors.medecin)),
+          GoRoute(path: '/medecin/notifications', builder: (context, state) => const PatientNotificationSettingsContent(primaryColor: AppColors.medecin)),
         ],
       ),
 
@@ -616,139 +497,40 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => AdminHopitalShell(child: child),
         routes: [
-          GoRoute(
-            path: '/admin-hopital',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalHomeContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/medecins',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalMedecinsContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/laborantins',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalLaborantinsContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/services',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalServicesContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/demandes',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalDemandesContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/patients',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalPatientsContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/stats',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalStatsContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/messages',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalMessagesContent(),
-            ),
-          ),
+          GoRoute(path: '/admin-hopital', builder: (context, state) => const AdminHopitalHomeContent()),
+          GoRoute(path: '/admin-hopital/medecins', builder: (context, state) => const AdminHopitalMedecinsContent()),
+          GoRoute(path: '/admin-hopital/laborantins', builder: (context, state) => const AdminHopitalLaborantinsContent()),
+          GoRoute(path: '/admin-hopital/services', builder: (context, state) => const AdminHopitalServicesContent()),
+          GoRoute(path: '/admin-hopital/demandes', builder: (context, state) => const AdminHopitalDemandesContent()),
+          GoRoute(path: '/admin-hopital/patients', builder: (context, state) => const AdminHopitalPatientsContent()),
+          GoRoute(path: '/admin-hopital/stats', builder: (context, state) => const AdminHopitalStatsContent()),
+          GoRoute(path: '/admin-hopital/messages', builder: (context, state) => const AdminHopitalMessagesContent()),
           GoRoute(
             path: '/admin-hopital/messagerie',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const ConversationListScreen(),
-            ),
+            builder: (context, state) => const ConversationListScreen(),
             routes: [
               GoRoute(
                 path: 'consultation/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      consultationId: id,
-                      contactName: 'Consultation',
-                    ),
-                  );
+                  return ChatScreen(consultationId: id, contactName: 'Consultation');
                 },
               ),
               GoRoute(
                 path: 'direct/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      destinataireId: id,
-                      contactName: 'Conversation Directe',
-                    ),
-                  );
+                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
                 },
               ),
             ],
           ),
-          GoRoute(
-            path: '/admin-hopital/settings',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalSettingsContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/profile/edit',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const EditProfileScreen(primaryColor: AppColors.adminHopital),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/change-password',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalChangePasswordContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/about',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const AdminHopitalAboutContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/language',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientLanguageContent(primaryColor: AppColors.adminHopital),
-            ),
-          ),
-          GoRoute(
-            path: '/admin-hopital/notifications',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientNotificationSettingsContent(primaryColor: AppColors.adminHopital),
-            ),
-          ),
+          GoRoute(path: '/admin-hopital/settings', builder: (context, state) => const AdminHopitalSettingsContent()),
+          GoRoute(path: '/admin-hopital/profile/edit', builder: (context, state) => const EditProfileScreen(primaryColor: AppColors.adminHopital)),
+          GoRoute(path: '/admin-hopital/change-password', builder: (context, state) => const AdminHopitalChangePasswordContent()),
+          GoRoute(path: '/admin-hopital/about', builder: (context, state) => const AdminHopitalAboutContent()),
+          GoRoute(path: '/admin-hopital/language', builder: (context, state) => const PatientLanguageContent(primaryColor: AppColors.adminHopital)),
+          GoRoute(path: '/admin-hopital/notifications', builder: (context, state) => const PatientNotificationSettingsContent(primaryColor: AppColors.adminHopital)),
         ],
       ),
 
@@ -756,122 +538,38 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => SuperAdminShell(child: child),
         routes: [
-          GoRoute(
-            path: '/super-admin',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminHomeContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/hopitaux',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminHopitauxContent(),
-            ),
-          ),
+          GoRoute(path: '/super-admin', builder: (context, state) => const SuperAdminHomeContent()),
+          GoRoute(path: '/super-admin/hopitaux', builder: (context, state) => const SuperAdminHopitauxContent()),
           GoRoute(
             path: '/super-admin/hopitaux/:id',
-            pageBuilder: (context, state) {
+            builder: (context, state) {
               final hopital = state.extra as HopitalModel;
-              return _buildPageWithFadeTransition(
-                state: state,
-                child: SuperAdminHopitalDetailScreen(hopital: hopital),
-              );
+              return SuperAdminHopitalDetailScreen(hopital: hopital);
             },
           ),
-          GoRoute(
-            path: '/super-admin/users',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminUsersContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/services',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminServicesContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/demandes',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminDemandesContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/settings',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminSettingsContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/profile/edit',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const EditProfileScreen(primaryColor: AppColors.superAdmin),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/change-password',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminChangePasswordContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/about',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminAboutContent(),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/stats',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const SuperAdminStatsContent(),
-            ),
-          ),
+          GoRoute(path: '/super-admin/users', builder: (context, state) => const SuperAdminUsersContent()),
+          GoRoute(path: '/super-admin/services', builder: (context, state) => const SuperAdminServicesContent()),
+          GoRoute(path: '/super-admin/demandes', builder: (context, state) => const SuperAdminDemandesContent()),
+          GoRoute(path: '/super-admin/settings', builder: (context, state) => const SuperAdminSettingsContent()),
+          GoRoute(path: '/super-admin/profile/edit', builder: (context, state) => const EditProfileScreen(primaryColor: AppColors.superAdmin)),
+          GoRoute(path: '/super-admin/change-password', builder: (context, state) => const SuperAdminChangePasswordContent()),
+          GoRoute(path: '/super-admin/about', builder: (context, state) => const SuperAdminAboutContent()),
+          GoRoute(path: '/super-admin/stats', builder: (context, state) => const SuperAdminStatsContent()),
           GoRoute(
             path: '/super-admin/messagerie',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const ConversationListScreen(),
-            ),
+            builder: (context, state) => const ConversationListScreen(),
             routes: [
               GoRoute(
                 path: 'direct/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      destinataireId: id,
-                      contactName: 'Conversation Directe',
-                    ),
-                  );
+                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
                 },
               ),
             ],
           ),
-          GoRoute(
-            path: '/super-admin/language',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientLanguageContent(primaryColor: AppColors.superAdmin),
-            ),
-          ),
-          GoRoute(
-            path: '/super-admin/notifications',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientNotificationSettingsContent(primaryColor: AppColors.superAdmin),
-            ),
-          ),
+          GoRoute(path: '/super-admin/language', builder: (context, state) => const PatientLanguageContent(primaryColor: AppColors.superAdmin)),
+          GoRoute(path: '/super-admin/notifications', builder: (context, state) => const PatientNotificationSettingsContent(primaryColor: AppColors.superAdmin)),
         ],
       ),
 
@@ -879,91 +577,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (context, state, child) => LaborantinShell(child: child),
         routes: [
-          GoRoute(
-            path: '/laborantin',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const LaborantinDashboardScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/laborantin/pending',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const LaborantinPendingAnalysesScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/laborantin/finished',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const LaborantinFinishedAnalysesScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/laborantin/profile',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const LaborantinProfileScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/laborantin/profile/edit',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const EditProfileScreen(primaryColor: AppColors.laborantin),
-            ),
-          ),
+          GoRoute(path: '/laborantin', builder: (context, state) => const LaborantinDashboardScreen()),
+          GoRoute(path: '/laborantin/pending', builder: (context, state) => const LaborantinPendingAnalysesScreen()),
+          GoRoute(path: '/laborantin/finished', builder: (context, state) => const LaborantinFinishedAnalysesScreen()),
+          GoRoute(path: '/laborantin/profile', builder: (context, state) => const LaborantinProfileScreen()),
+          GoRoute(path: '/laborantin/profile/edit', builder: (context, state) => const EditProfileScreen(primaryColor: AppColors.laborantin)),
           GoRoute(
             path: '/laborantin/messagerie',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const ConversationListScreen(),
-            ),
+            builder: (context, state) => const ConversationListScreen(),
             routes: [
               GoRoute(
                 path: 'direct/:id',
-                pageBuilder: (context, state) {
+                builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return _buildPageWithFadeTransition(
-                    state: state,
-                    child: ChatScreen(
-                      destinataireId: id,
-                      contactName: 'Conversation Directe',
-                    ),
-                  );
+                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
                 },
               ),
             ],
           ),
-          GoRoute(
-            path: '/laborantin/language',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientLanguageContent(primaryColor: AppColors.laborantin),
-            ),
-          ),
-          GoRoute(
-            path: '/laborantin/notifications',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const PatientNotificationSettingsContent(primaryColor: AppColors.laborantin),
-            ),
-          ),
-          GoRoute(
-            path: '/laborantin/change-password',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const LaborantinChangePasswordScreen(),
-            ),
-          ),
-          GoRoute(
-            path: '/laborantin/about',
-            pageBuilder: (context, state) => _buildPageWithFadeTransition(
-              state: state,
-              child: const LaborantinAboutScreen(),
-            ),
-          ),
+          GoRoute(path: '/laborantin/language', builder: (context, state) => const PatientLanguageContent(primaryColor: AppColors.laborantin)),
+          GoRoute(path: '/laborantin/notifications', builder: (context, state) => const PatientNotificationSettingsContent(primaryColor: AppColors.laborantin)),
+          GoRoute(path: '/laborantin/change-password', builder: (context, state) => const LaborantinChangePasswordScreen()),
+          GoRoute(path: '/laborantin/about', builder: (context, state) => const LaborantinAboutScreen()),
         ],
       ),
     ],
@@ -974,8 +609,13 @@ CustomTransitionPage<void> _buildPageWithFadeTransition({
   required GoRouterState state,
   required Widget child,
 }) {
+  // On Flutter Web, using state.pageKey inside a ShellRoute can trigger
+  // "!_keyReservation.contains(key)" assertion when navigating between
+  // shell tabs, because GoRouter may assign the same pageKey to multiple
+  // routes within the same shell. Using ValueKey(state.matchedLocation)
+  // guarantees each route gets a unique, stable key based on its path.
   return CustomTransitionPage<void>(
-    key: state.pageKey,
+    key: ValueKey<String>(state.matchedLocation),
     child: child,
     transitionDuration: const Duration(milliseconds: 250),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {

@@ -22,7 +22,12 @@ class HopitelApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(routerProvider);
+    // Use ref.read instead of ref.watch: the GoRouter must NOT be recreated
+    // on every authProvider change. The router already handles auth state
+    // changes internally via its refreshListenable (ValueNotifier<AuthState>).
+    // Watching here would create a new GoRouter instance on each auth change,
+    // causing duplicate Navigator keys and the _keyReservation assertion on Web.
+    final router = ref.read(routerProvider);
 
     return MaterialApp.router(
       title: 'Hopitel',

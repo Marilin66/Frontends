@@ -950,8 +950,13 @@ CustomTransitionPage<void> _buildPageWithFadeTransition({
   required GoRouterState state,
   required Widget child,
 }) {
+  // On Flutter Web, using state.pageKey inside a ShellRoute can trigger
+  // "!_keyReservation.contains(key)" assertion when navigating between
+  // shell tabs, because GoRouter may assign the same pageKey to multiple
+  // routes within the same shell. Using ValueKey(state.matchedLocation)
+  // guarantees each route gets a unique, stable key based on its path.
   return CustomTransitionPage<void>(
-    key: state.pageKey,
+    key: ValueKey<String>(state.matchedLocation),
     child: child,
     transitionDuration: const Duration(milliseconds: 250),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {

@@ -9,7 +9,6 @@ import 'package:hopitel_app/core/widgets/premium_error_view.dart';
 import 'package:hopitel_app/core/widgets/premium_loading_view.dart';
 import 'package:hopitel_app/core/widgets/universal_back_button.dart';
 import 'package:hopitel_app/features/patient/presentation/providers/patient_provider.dart';
-import 'package:hopitel_app/features/patient/presentation/screens/patient_intake_screen.dart';
 
 import 'package:hopitel_app/features/super_admin/data/models/service_model.dart';
 
@@ -250,14 +249,8 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                         ),
                                 ),
                                 child: TextButton.icon(
-                                  onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PatientIntakeScreen(
-                                        rendezvousId: rdv.id,
-                                        medecinNom: rdv.medecinNom,
-                                      ),
-                                    ),
+                                  onPressed: () => context.go(
+                                    '/patient/rdv/${rdv.id}/intake?medecin=${Uri.encodeComponent(rdv.medecinNom)}',
                                   ),
                                   icon: const Icon(Icons.edit_note_rounded, size: 18),
                                   label: Text(
@@ -299,14 +292,8 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                       ),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => PatientIntakeScreen(
-                                            rendezvousId: rdv.id,
-                                            medecinNom: rdv.medecinNom,
-                                          ),
-                                        ),
+                                      onPressed: () => context.go(
+                                        '/patient/rdv/${rdv.id}/intake?medecin=${Uri.encodeComponent(rdv.medecinNom)}',
                                       ),
                                       style: TextButton.styleFrom(
                                         foregroundColor: Colors.teal,
