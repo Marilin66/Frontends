@@ -124,13 +124,61 @@ export default function PublicChatbotPage() {
     }
   };
 
+  // Sanitise les URLs générées par l'IA — l'IA peut générer des noms au lieu d'IDs
+  const sanitizeActionTarget = (target: string): string => {
+    // Routes valides connues (préfixes)
+    const validPrefixes = [
+      '/patient/', '/medecin/', '/admin', '/laborantin/', '/super-admin/',
+      '/hospitals', '/emergency', '/tips', '/login', '/register',
+      '/chatbot', '/track-results', '/hopital/',
+    ];
+
+    // Si c'est une URL externe
+    if (target.startsWith('http')) return target;
+
+    // Vérifier si c'est une route valide
+    const isValid = validPrefixes.some(p => target.startsWith(p));
+    if (isValid) return target;
+
+    // L'IA a généré une URL avec un nom d'hôpital → rediriger vers la liste
+    if (target.startsWith('/hopitaux/') || target.includes('hopital') || target.includes('hôpital')) {
+      return '/hospitals';
+    }
+    // L'IA a généré une URL de médecin avec un nom → rediriger vers la recherche
+    if (target.startsWith('/medecins/') || target.includes('medecin') || target.includes('médecin')) {
+      return '/hospitals';
+    }
+
+    // Route inconnue → page d'accueil
+    return '/hospitals';
+  };
+
   const handleAction = (action: Action) => {
-    const target = action.payload || action.url;
-    if (!target) return;
+    const raw = action.payload || action.url;
+    if (!raw) return;
+
     if (action.type === 'message') {
-      sendMessage(target);
-    } else if (action.type === 'redirect' || target.startsWith('http')) {
-      window.open(target, '_blank');
+      sendMessage(raw);
+      return;
+    }
+
+    // URL externe
+    if (raw.startsWith('http')) {
+      window.open(raw, '_blank');
+      return;
+    }
+
+    const target = sanitizeActionTarget(raw);
+
+    // Routes nécessitant une connexion
+    const requiresAuth = target.startsWith('/patient/') ||
+      target.startsWith('/medecin/') ||
+      target.startsWith('/admin') ||
+      target.startsWith('/laborantin/') ||
+      target.startsWith('/super-admin/');
+
+    if (requiresAuth) {
+      navigate('/login', { state: { message: 'Connectez-vous pour accéder à cette fonctionnalité.' } });
     } else {
       navigate(target);
     }

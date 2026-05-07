@@ -314,20 +314,39 @@ export default function AIAgentPage() {
                            variant="outline"
                            size="sm"
                            onClick={() => {
-                              const target = action.payload || action.url || action.target;
-                              if (!target) return;
+                              const raw = action.payload || action.url || action.target;
+                              if (!raw) return;
 
                               if (action.type === 'message') {
-                                sendMessage(target);
-                              } else if (action.type === 'redirect' || target.startsWith('http')) {
-                                window.open(target, '_blank');
-                              } else {
-                                // Si l'utilisateur n'est pas connecté, rediriger vers login
-                                if (!user) {
-                                  navigate('/login', { state: { message: 'Connectez-vous pour accéder à cette fonctionnalité.' } });
+                                sendMessage(raw);
+                                return;
+                              }
+
+                              if (action.type === 'redirect' || raw.startsWith('http')) {
+                                window.open(raw, '_blank');
+                                return;
+                              }
+
+                              // Sanitiser l'URL — l'IA peut générer des noms au lieu d'IDs
+                              let target = raw;
+                              const validPrefixes = ['/patient/', '/medecin/', '/admin', '/laborantin/', '/super-admin/', '/hospitals', '/emergency', '/tips', '/login', '/register', '/hopital/'];
+                              const isValid = validPrefixes.some(p => target.startsWith(p));
+                              if (!isValid) {
+                                // URL invalide générée par l'IA → rediriger vers recherche
+                                if (target.includes('hopital') || target.includes('hôpital') || target.startsWith('/hopitaux/')) {
+                                  target = '/hospitals';
+                                } else if (target.includes('medecin') || target.includes('médecin') || target.startsWith('/medecins/')) {
+                                  target = '/patient/search';
                                 } else {
-                                  navigate(target);
+                                  target = '/patient/search';
                                 }
+                              }
+
+                              // Si l'utilisateur n'est pas connecté, rediriger vers login
+                              if (!user) {
+                                navigate('/login', { state: { message: 'Connectez-vous pour accéder à cette fonctionnalité.' } });
+                              } else {
+                                navigate(target);
                               }
                            }}
                            className="h-10 px-4 rounded-xl border-2 border-primary/20 text-[10px] font-black uppercase text-primary hover:bg-primary/5 transition-all"

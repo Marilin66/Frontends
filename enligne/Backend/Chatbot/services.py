@@ -20,11 +20,16 @@ RÈGLES STRICTES :
 8. Si tu as trouvé des résultats (Hôpitaux, Medecins...) et que tu veux proposer une navigation à l'utilisateur, ajoute STRICTEMENT à la toute fin de ton message un bloc JSON au format suivant (sans commentaires) :
 ```json
 [
-  {"type": "redirect", "label": "Prendre RDV avec Dr. Nom", "url": "/medecins/ID/rendezvous"},
-  {"type": "redirect", "label": "Voir Hôpital", "url": "/hopitaux/ID"}
+  {"type": "redirect", "label": "Prendre RDV avec Dr. Nom", "url": "/patient/medecin/ID/rendezvous"},
+  {"type": "redirect", "label": "Voir Hôpital Nom", "url": "/patient/hopital/ID"}
 ]
 ```
-N'ajoute ce bloc QUE SI des IDs valides ont été renvoyés par tes outils.
+RÈGLES ABSOLUES pour les URLs :
+- Utilise TOUJOURS l'ID numérique (ex: /patient/medecin/42/rendezvous), JAMAIS le nom
+- Pour les hôpitaux : /patient/hopital/ID (ex: /patient/hopital/3)
+- Pour les médecins : /patient/medecin/ID/rendezvous (ex: /patient/medecin/7/rendezvous)
+- N'ajoute ce bloc QUE SI des IDs numériques valides ont été renvoyés par tes outils
+- Si tu n'as pas d'ID numérique, NE génère PAS de bouton de navigation
 
 IMPORTANT: Ta réponse doit être claire, formatée proprement (Markdown autorisé), courte et rassurante.
 """
