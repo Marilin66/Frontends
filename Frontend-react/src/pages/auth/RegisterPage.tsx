@@ -48,7 +48,7 @@ export default function RegisterPage() {
         sexe: 'M',
         role: 'patient',
       });
-      navigate('/login', { state: { message: 'Inscription réussie ! Vérifiez votre email puis connectez-vous.' } });
+      navigate('/login', { state: { message: 'Inscription réussie ! Vous pouvez maintenant vous connecter.' } });
     } catch (err: any) {
       // Les erreurs de validation du backend sont dans error.response.data
       const data = err?.response?.data;
@@ -57,7 +57,11 @@ export default function RegisterPage() {
         Object.entries(data).forEach(([key, val]) => {
           backendErrors[key] = Array.isArray(val) ? val[0] : String(val);
         });
-        setFieldErrors(backendErrors);
+        // Si erreur sur un champ spécifique, l'afficher sous le champ
+        if (Object.keys(backendErrors).some(k => k !== 'error' && k !== 'detail' && k !== 'message')) {
+          setFieldErrors(backendErrors);
+        }
+        // Sinon l'erreur globale est déjà gérée par AuthContext
       }
     }};
 

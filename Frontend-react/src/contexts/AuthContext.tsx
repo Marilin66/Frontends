@@ -148,27 +148,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await api.post<User>(endpoints.register, data);
       dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error: any) {
-      // Extraire le message d'erreur le plus pertinent
       const responseData = error.response?.data;
       let message = 'Erreur lors de l\'inscription';
-      if (responseData) {
+
+      if (!error.response) {
+        message = 'Le serveur démarre, veuillez patienter 30 secondes et réessayer…';
+      } else if (responseData) {
         if (typeof responseData === 'string') {
           message = responseData;
         } else if (responseData.error) {
           message = responseData.error;
         } else if (responseData.detail) {
           message = responseData.detail;
+        } else if (responseData.message) {
+          message = responseData.message;
         } else {
-          // Prendre la première erreur de champ
+          // Erreurs de validation champ par champ — prendre la première
           const firstKey = Object.keys(responseData)[0];
           if (firstKey) {
             const val = responseData[firstKey];
-            message = `${firstKey} : ${Array.isArray(val) ? val[0] : val}`;
+            const valStr = Array.isArray(val) ? val[0] : String(val);
+            message = `${firstKey === 'non_field_errors' ? '' : firstKey + ' : '}${valStr}`;
           }
         }
       }
+
       dispatch({ type: 'SET_ERROR', payload: message });
-      throw error; // Propager pour que RegisterPage puisse lire error.response.data
+      throw error;
     }
   };
 
