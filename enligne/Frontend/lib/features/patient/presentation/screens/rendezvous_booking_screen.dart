@@ -363,7 +363,8 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
         setState(() => _isSubmitting = false);
         if (ok) {
           Helpers.showSnackBar(context, 'Rendez-vous réservé avec succès !');
-          context.pop();
+          // Naviguer vers la page des rendez-vous pour voir la confirmation
+          context.go('/patient/appointments');
         } else {
           Helpers.showSnackBar(context, 'Erreur lors de la réservation', isError: true);
         }

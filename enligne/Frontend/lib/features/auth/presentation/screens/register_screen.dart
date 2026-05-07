@@ -140,6 +140,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
                 labelText: 'Téléphone', 
+                hintText: '0199395776',
+                helperText: 'Format Bénin : 10 chiffres commençant par 01',
                 prefixIcon: const Icon(Icons.phone_outlined),
                 errorText: authState.validationErrors?['telephone'],
               ),

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_tap.dart';
 import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/universal_back_button.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/chatbot_provider.dart';
 
 class PatientChatbotScreen extends ConsumerStatefulWidget {
@@ -54,7 +55,29 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
     if (payload == null) return;
     // Supporte 'route' (boutons statiques) et 'redirect' (venant du backend)
     if (action.type == 'route' || action.type == 'redirect') {
-      context.go(payload);
+      // Vérifier si l'utilisateur est connecté avant de naviguer
+      final authState = ref.read(authProvider);
+      final isAuthenticated = authState.status == AuthStatus.authenticated;
+      
+      // Routes nécessitant une connexion (tout ce qui commence par /patient/, /medecin/, etc.)
+      final requiresAuth = payload.startsWith('/patient/') ||
+          payload.startsWith('/medecin/') ||
+          payload.startsWith('/admin') ||
+          payload.startsWith('/laborantin/') ||
+          payload.startsWith('/super-admin/');
+      
+      if (requiresAuth && !isAuthenticated) {
+        // Rediriger vers login avec message
+        context.go('/login');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Connectez-vous pour accéder à cette fonctionnalité.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        context.go(payload);
+      }
     } else if (action.type == 'text') {
        _controller.text = action.label;
        _sendMessage();
