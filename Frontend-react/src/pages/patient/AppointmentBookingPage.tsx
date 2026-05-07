@@ -110,23 +110,24 @@ export default function AppointmentBookingPage() {
     }
   };
 
+  const [bookingError, setBookingError] = useState('');
+
   const handleBooking = async () => {
     const finalDoctorId = doctorId ? parseInt(doctorId) : selectedDoctor?.id;
-    if (!selectedSlot || !finalDoctorId) {
-      console.error('Missing data:', { selectedSlot, finalDoctorId });
-      return;
-    }
+    if (!selectedSlot || !finalDoctorId) return;
     setIsSubmitting(true);
+    setBookingError('');
     try {
       await api.post(endpoints.rendezVous, {
         medecin: finalDoctorId,
         disponibilite: selectedSlot.id,
-        motif: motif,
+        motif: motif || 'Consultation',
         date: new Date().toISOString().split('T')[0],
       });
       setStep(4);
-    } catch (error) {
-      console.error('Erreur:', error);
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || error.response?.data?.non_field_errors?.[0] || 'Erreur lors de la réservation. Veuillez réessayer.';
+      setBookingError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -300,29 +301,55 @@ export default function AppointmentBookingPage() {
                     <div className="space-y-1">
                        <h3 className="text-2xl lg:text-3xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-4">
                           <ShieldCheck className="w-8 h-8 text-primary" />
-                          Certification Finale
+                          Récapitulatif
                        </h3>
+                       <p className="text-[10px] font-black text-white/40 uppercase tracking-widest italic">Vérifiez les informations avant de confirmer</p>
                     </div>
-                    <div className="space-y-6">
-                       <div className="flex justify-between items-end border-b-2 border-white/5 pb-6">
+                    <div className="space-y-4">
+                       {/* Médecin */}
+                       <div className="flex justify-between items-center p-5 bg-white/5 border border-white/10 rounded-2xl">
                           <div>
-                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest group-hover:text-white/60 mb-2">Segment Clinique</p>
-                                                           <p className="text-2xl font-black italic uppercase tracking-tighter leading-none">{selectedDoctor?.user?.last_name || selectedDoctor?.last_name}</p>
-
+                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Médecin</p>
+                             <p className="text-lg font-black text-white">Dr. {selectedDoctor?.user?.last_name || selectedDoctor?.last_name}</p>
+                             <p className="text-xs text-white/40">{selectedDoctor?.specialite_nom || selectedDoctor?.specialty || ''}</p>
                           </div>
-                          <div className="text-right">
-                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Horodatage</p>
-                             <p className="text-2xl font-black italic uppercase tracking-tighter leading-none">{selectedSlot?.heure_debut}</p>
+                          <Avatar name={selectedDoctor?.user?.last_name || selectedDoctor?.last_name || ''} size="md" />
+                       </div>
+                       {/* Créneau */}
+                       <div className="flex justify-between items-center p-5 bg-white/5 border border-white/10 rounded-2xl">
+                          <div>
+                             <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Créneau</p>
+                             <p className="text-lg font-black text-white">{selectedSlot?.jour_semaine_display}</p>
+                             <p className="text-xs text-white/40">{selectedSlot?.heure_debut} — {selectedSlot?.heure_fin}</p>
                           </div>
+                          <Clock className="w-8 h-8 text-primary" />
                        </div>
-                       <div className="bg-white/5 border-2 border-white/10 p-6 rounded-2xl italic">
-                          <p className="text-[9px] font-black text-white/40 uppercase tracking-widest mb-3 italic">Note de motif</p>
-                          <p className="text-sm font-bold text-white leading-relaxed">"{motif}"</p>
-                       </div>
+                       {/* Motif */}
+                       {motif && (
+                         <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">Motif</p>
+                            <p className="text-sm text-white leading-relaxed">"{motif}"</p>
+                         </div>
+                       )}
                     </div>
-                    <div className="flex flex-col gap-4">
-                       <Button isLoading={isSubmitting} onClick={handleBooking} className="w-full h-16 rounded-xl bg-primary text-white font-black italic text-sm shadow-2xl">CONFIRMER RÉSERVATION <Zap className="w-5 h-5 ml-4" /></Button>
-                       <Button variant="ghost" onClick={() => setStep(2)} className="h-12 text-white/40 hover:text-white text-[10px] font-black italic">MODIFIER L'HORAIRE</Button>
+                    <div className="flex flex-col gap-3">
+                       {bookingError && (
+                         <div className="flex items-start gap-2 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-300">
+                           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                           {bookingError}
+                         </div>
+                       )}
+                       <Button
+                         isLoading={isSubmitting}
+                         onClick={handleBooking}
+                         className="w-full h-14 rounded-xl bg-primary text-white font-black text-sm shadow-2xl"
+                         leftIcon={!isSubmitting ? <CheckCircle className="w-5 h-5" /> : undefined}
+                       >
+                         Confirmer la réservation
+                       </Button>
+                       <Button variant="ghost" onClick={() => setStep(2)} className="h-11 text-white/40 hover:text-white text-xs font-semibold">
+                         ← Modifier le créneau
+                       </Button>
                     </div>
                  </Card>
                )}

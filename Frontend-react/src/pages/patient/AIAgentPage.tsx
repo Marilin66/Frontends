@@ -322,7 +322,12 @@ export default function AIAgentPage() {
                               } else if (action.type === 'redirect' || target.startsWith('http')) {
                                 window.open(target, '_blank');
                               } else {
-                                navigate(target);
+                                // Si l'utilisateur n'est pas connecté, rediriger vers login
+                                if (!user) {
+                                  navigate('/login', { state: { message: 'Connectez-vous pour accéder à cette fonctionnalité.' } });
+                                } else {
+                                  navigate(target);
+                                }
                               }
                            }}
                            className="h-10 px-4 rounded-xl border-2 border-primary/20 text-[10px] font-black uppercase text-primary hover:bg-primary/5 transition-all"

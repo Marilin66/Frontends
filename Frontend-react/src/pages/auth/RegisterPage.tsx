@@ -49,8 +49,17 @@ export default function RegisterPage() {
         role: 'patient',
       });
       navigate('/login', { state: { message: 'Inscription réussie ! Vérifiez votre email puis connectez-vous.' } });
-    } catch {}
-  };
+    } catch (err: any) {
+      // Les erreurs de validation du backend sont dans error.response.data
+      const data = err?.response?.data;
+      if (data && typeof data === 'object') {
+        const backendErrors: Record<string, string> = {};
+        Object.entries(data).forEach(([key, val]) => {
+          backendErrors[key] = Array.isArray(val) ? val[0] : String(val);
+        });
+        setFieldErrors(backendErrors);
+      }
+    }};
 
   return (
     <div className="space-y-5">
@@ -107,10 +116,11 @@ export default function RegisterPage() {
         <Input
           label="Téléphone"
           type="tel"
-          placeholder="+229 XX XX XX XX"
+          placeholder="0199395776"
           value={form.telephone}
           onChange={(e) => set('telephone', e.target.value)}
           error={fieldErrors.telephone}
+          helperText="Format Bénin : 10 chiffres commençant par 01 (ex: 0199395776)"
           leftIcon={<Phone className="w-4 h-4" />}
           autoComplete="tel"
         />

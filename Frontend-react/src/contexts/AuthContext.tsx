@@ -145,16 +145,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const user = await api.post<User>(endpoints.register, data);
-      
-      // Usually register doesn't return token immediately in some APIs
-      // But if it does, handle it. If not, redirect to login.
-      // Assuming for now it requires manual login after.
+      await api.post<User>(endpoints.register, data);
       dispatch({ type: 'SET_LOADING', payload: false });
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Erreur lors de l\'inscription';
+      // Extraire le message d'erreur le plus pertinent
+      const responseData = error.response?.data;
+      let message = 'Erreur lors de l\'inscription';
+      if (responseData) {
+        if (typeof responseData === 'string') {
+          message = responseData;
+        } else if (responseData.error) {
+          message = responseData.error;
+        } else if (responseData.detail) {
+          message = responseData.detail;
+        } else {
+          // Prendre la première erreur de champ
+          const firstKey = Object.keys(responseData)[0];
+          if (firstKey) {
+            const val = responseData[firstKey];
+            message = `${firstKey} : ${Array.isArray(val) ? val[0] : val}`;
+          }
+        }
+      }
       dispatch({ type: 'SET_ERROR', payload: message });
-      throw error;
+      throw error; // Propager pour que RegisterPage puisse lire error.response.data
     }
   };
 
