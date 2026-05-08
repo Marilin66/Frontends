@@ -49,7 +49,7 @@ export default function AIAgentPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // fermée par défaut sur mobile
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -201,20 +201,39 @@ export default function AIAgentPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex overflow-hidden bg-slate-50/50 rounded-3xl border border-slate-200">
+    <div className="h-[calc(100vh-8rem)] sm:h-[calc(100vh-8rem)] flex overflow-hidden bg-slate-50/50 rounded-3xl border border-slate-200 relative">
+
+      {/* Overlay mobile pour fermer la sidebar */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Architecture */}
-      <motion.aside 
-        initial={sidebarOpen ? { width: 320 } : { width: 0 }}
-        animate={sidebarOpen ? { width: 320 } : { width: 0 }}
-        className="bg-white border-r border-slate-200 flex flex-col relative"
+      <motion.aside
+        initial={false}
+        animate={sidebarOpen ? { width: 280, opacity: 1 } : { width: 0, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white border-r border-slate-200 flex flex-col overflow-hidden
+                   lg:relative lg:z-auto
+                   fixed left-0 top-0 h-full z-30 lg:h-auto"
+        style={{ minWidth: sidebarOpen ? 0 : 0 }}
       >
-        <div className="p-6">
+        <div className="p-6 flex items-center justify-between">
           <Button 
             onClick={startNewChat}
-            className="w-full h-12 rounded-xl flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white font-bold italic"
+            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white font-bold italic"
           >
             <Plus className="w-5 h-5" /> NOUVELLE BULLE IA
           </Button>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden ml-3 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 space-y-2 no-scrollbar">
@@ -253,7 +272,8 @@ export default function AIAgentPage() {
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-500"
+              className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
+              title="Historique des conversations"
             >
               <Menu className="w-6 h-6" />
             </button>
