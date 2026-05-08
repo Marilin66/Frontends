@@ -1,6 +1,6 @@
 // Composant réutilisable pour remplacer alert() / confirm() natifs
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertCircle, CheckCircle, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Trash2 } from 'lucide-react';
 
 interface ErrorModalProps {
   message: string;
