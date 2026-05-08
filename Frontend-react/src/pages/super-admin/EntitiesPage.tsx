@@ -152,7 +152,7 @@ export default function EntitiesPage() {
       </section>
 
       {/* KPIs */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: 'Total',    value: hopitaux.length, color: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100' },
           { label: 'Actifs',   value: actifs,          color: 'text-emerald-600',bg: 'bg-emerald-50',border: 'border-emerald-100' },

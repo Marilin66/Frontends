@@ -148,7 +148,7 @@ export default function AppointmentBookingPage() {
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 lg:space-y-12 pb-20">
+    <div className="max-w-5xl mx-auto space-y-5 lg:space-y-12 pb-20">
       {/* High-Contrast Stepper Architecture */}
       <div className="flex items-center justify-between px-4 lg:px-0">
         {steps.map((s, idx) => (
@@ -178,11 +178,11 @@ export default function AppointmentBookingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
           >
              {/* Left: Praticien Intel */}
             <div className="lg:col-span-1 space-y-8">
-               <Card className="border-2 border-slate-100 bg-white p-8 lg:p-10 sticky top-24 shadow-sm overflow-hidden group">
+               <Card className="border-2 border-slate-100 bg-white p-4 sm:p-6 lg:p-10 sticky top-24 shadow-sm overflow-hidden group">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full -mr-16 -mt-16 group-hover:bg-primary/5 transition-colors" />
                   <div className="relative z-10 flex flex-col items-center text-center space-y-6">
                     <div className="relative">
@@ -212,7 +212,7 @@ export default function AppointmentBookingPage() {
             {/* Right: Booking Matrix */}
             <div className="lg:col-span-2 space-y-8">
                {step === 1 && (
-                 <Card className="border-2 border-slate-100 bg-white p-8 lg:p-12 space-y-10 shadow-sm">
+                 <Card className="border-2 border-slate-100 bg-white p-4 sm:p-6 lg:p-12 space-y-10 shadow-sm">
                     {doctors.length > 0 && !selectedDoctor ? (
                       <>
                         <div className="space-y-1">
@@ -269,7 +269,7 @@ export default function AppointmentBookingPage() {
                )}
 
                {step === 2 && (
-                 <Card className="border-2 border-slate-100 bg-white p-8 lg:p-12 space-y-10 shadow-sm">
+                 <Card className="border-2 border-slate-100 bg-white p-4 sm:p-6 lg:p-12 space-y-10 shadow-sm">
                     <div className="flex items-center justify-between">
                        <div className="space-y-1">
                           <h3 className="text-2xl font-black text-slate-950 tracking-tighter uppercase italic leading-none flex items-center gap-4">
@@ -328,7 +328,7 @@ export default function AppointmentBookingPage() {
                )}
 
                {step === 3 && (
-                 <Card className="border-2 border-slate-900 bg-slate-950 p-8 lg:p-12 space-y-10 shadow-3xl text-white relative overflow-hidden">
+                 <Card className="border-2 border-slate-900 bg-slate-950 p-4 sm:p-6 lg:p-12 space-y-10 shadow-3xl text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px] -mr-32 -mt-32" />
                     <div className="space-y-1">
                        <h3 className="text-2xl lg:text-3xl font-black text-white tracking-tighter uppercase italic leading-none flex items-center gap-4">
@@ -410,7 +410,7 @@ export default function AppointmentBookingPage() {
 
                 <div className="space-y-6">
                   <Badge variant="success" className="bg-emerald-500 text-white font-black px-6 py-2 rounded-xl border-none tracking-[0.3em] text-[10px] italic">DEMANDE CERTIFIÉE</Badge>
-                  <h2 className="text-4xl lg:text-5xl font-black text-white tracking-tighter italic uppercase leading-[0.9]">Segment Synchronisé.</h2>
+                  <h2 className="text-2xl sm:text-3xl lg:text-5xl font-black text-white tracking-tighter italic uppercase leading-[0.9]">Segment Synchronisé.</h2>
                   <p className="text-white/40 font-black text-[12px] lg:text-sm uppercase tracking-widest leading-relaxed px-6 italic">
                     Votre demande avec le <span className="text-white">Dr. {selectedDoctor?.user?.last_name || selectedDoctor?.last_name}</span> est indexée dans l'architecture Hopitel.
                   </p>

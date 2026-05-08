@@ -74,7 +74,7 @@ export default function PatientsPage() {
       </section>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: 'Total patients',    value: patients.length,                      icon: Users,   color: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100' },
           { label: 'Résultats filtrés', value: filtered.length,                      icon: Search,  color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100' },

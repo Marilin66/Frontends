@@ -65,7 +65,7 @@ export default function AdminPatientsPage() {
       </section>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           { label: 'Total patients', value: patients.length,                          icon: Users,        color: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100' },
           { label: 'Actifs',         value: patients.filter(p => p.is_active).length, icon: CheckCircle,  color: 'text-emerald-600',bg: 'bg-emerald-50',border: 'border-emerald-100' },

@@ -66,7 +66,7 @@ export default function EditProfilePage() {
       </div>
 
       <Card className="border-none shadow-elevated rounded-[40px] overflow-hidden">
-        <CardContent className="p-8 lg:p-12">
+        <CardContent className="p-4 sm:p-6 lg:p-12">
           {step === 1 && (
             <div className="space-y-6 animate-scale-in">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

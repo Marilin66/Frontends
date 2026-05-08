@@ -26,7 +26,7 @@ export default function LaborantinDashboard() {
   const finished = resultats.length;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-5 lg:space-y-8 animate-fade-in">
 
       {/* Header */}
       <div>

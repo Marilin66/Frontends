@@ -102,10 +102,10 @@ export default function HospitalDetailPage() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 lg:space-y-12 pb-20"
+      className="space-y-5 lg:space-y-12 pb-20"
     >
       {/* High-Contrast Navigation architecture */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 lg:gap-8">
         <motion.div variants={itemVariants}>
           <div className="flex items-center gap-3 mb-4">
              <Link to="/patient/search">
@@ -117,7 +117,7 @@ export default function HospitalDetailPage() {
                 HOSPITAL_INTEL.
              </div>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">{hospital.nom}</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">{hospital.nom}</h1>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Indexation & Spécialités du Segment Clinique</p>
         </motion.div>
 

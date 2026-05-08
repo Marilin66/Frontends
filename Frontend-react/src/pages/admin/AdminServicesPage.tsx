@@ -112,10 +112,10 @@ export default function AdminServicesPage() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-8 lg:space-y-12 pb-20"
+      className="space-y-5 lg:space-y-12 pb-20"
     >
       {/* High-Contrast Header architecture */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 lg:gap-8">
         <motion.div variants={itemVariants}>
           <div className="flex items-center gap-3 mb-4">
              <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center shadow-lg">
@@ -125,7 +125,7 @@ export default function AdminServicesPage() {
                 STRUCTURE_DEPT.
              </div>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Départements Matrix</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Départements Matrix</h1>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Indexation de l'architecture clinique hospitalière</p>
         </motion.div>
 
@@ -149,7 +149,7 @@ export default function AdminServicesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
         {filteredServices.length > 0 ? filteredServices.map((s) => (
           <motion.div key={s.id} variants={itemVariants}>
-            <Card className="h-full border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group p-8 lg:p-10 flex flex-col justify-between shadow-sm relative overflow-hidden">
+            <Card className="h-full border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group p-4 sm:p-6 lg:p-10 flex flex-col justify-between shadow-sm relative overflow-hidden">
                <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-primary/5 transition-colors" />
                
                <div className="space-y-6 relative z-10">
@@ -207,7 +207,7 @@ export default function AdminServicesPage() {
               className="relative w-full max-w-xl"
             >
               <Card className="shadow-2xl rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-white/5 bg-white">
-                <CardHeader className="bg-slate-950 p-8 lg:p-10 flex flex-row items-center justify-between text-white relative">
+                <CardHeader className="bg-slate-950 p-4 sm:p-6 lg:p-10 flex flex-row items-center justify-between text-white relative">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -mr-16 -mt-16" />
                   <div className="relative z-10">
                     <CardTitle className="text-2xl lg:text-3xl font-black tracking-tighter leading-none italic uppercase">Nouvelle Unité</CardTitle>
@@ -218,7 +218,7 @@ export default function AdminServicesPage() {
                   </Button>
                 </CardHeader>
                 <form onSubmit={handleCreate}>
-                  <CardContent className="p-8 lg:p-10 space-y-8 text-black">
+                  <CardContent className="p-4 sm:p-6 lg:p-10 space-y-8 text-black">
                     <div className="space-y-2">
                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Nomenclature du Service</label>
                        <input 

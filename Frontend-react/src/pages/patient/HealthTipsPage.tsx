@@ -68,10 +68,10 @@ export default function HealthTipsPage() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="max-w-5xl mx-auto space-y-8 lg:space-y-12 pb-20"
+      className="max-w-5xl mx-auto space-y-5 lg:space-y-12 pb-20"
     >
       {/* High-Contrast Knowledge Header */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 lg:gap-8">
         <motion.div variants={itemVariants}>
           <div className="flex items-center gap-3 mb-4">
              <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="rounded-lg h-10 w-10 p-0 border-2">
@@ -81,7 +81,7 @@ export default function HealthTipsPage() {
                 HEALTH_INTEL.
              </div>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Protocole Préventif</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Protocole Préventif</h1>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Optimisation du segment de santé quotidien</p>
         </motion.div>
       </section>

@@ -64,12 +64,12 @@ export default function TrackResultsPage() {
             <ShieldCheck className="w-4 h-4" />
             <span className="text-[10px] font-black uppercase tracking-widest italic">Portail Sécurisé BioTrack</span>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Suivi de Résultats</h1>
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Suivi de Résultats</h1>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] italic">Entrez votre code unique pour accéder à vos documents</p>
         </div>
 
         {/* Search Matrix */}
-        <Card className="border-4 border-slate-100 p-8 lg:p-12 bg-white shadow-2xl rounded-[2rem]">
+        <Card className="border-4 border-slate-100 p-4 sm:p-6 lg:p-12 bg-white shadow-2xl rounded-[2rem]">
           <form onSubmit={handleTrack} className="space-y-8">
             <div className="space-y-4">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic flex items-center gap-2">

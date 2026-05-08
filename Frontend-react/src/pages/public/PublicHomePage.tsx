@@ -103,10 +103,10 @@ export default function PublicHomePage() {
       {/* ── Stats ───────────────────────────────────────────────────── */}
       <section id="stats" className="py-16 bg-slate-900">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {stats.map((s, i) => (
               <div key={i} className="text-center">
-                <p className="text-4xl lg:text-5xl font-bold text-white mb-2">{s.value}</p>
+                <p className="text-2xl sm:text-3xl lg:text-5xl font-bold text-white mb-2">{s.value}</p>
                 <p className="text-slate-400 text-sm">{s.label}</p>
               </div>
             ))}

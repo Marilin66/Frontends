@@ -32,10 +32,10 @@ export default function PatientDashboard() {
   if (isLoading) return <PageLoader />;
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-5 lg:space-y-8 animate-fade-in">
 
       {/* ── Hero banner ─────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-8 lg:p-10 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-blue-700 rounded-3xl p-4 sm:p-6 lg:p-10 text-white">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -translate-y-1/2 translate-x-1/3" />
           <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-white rounded-full translate-y-1/2" />

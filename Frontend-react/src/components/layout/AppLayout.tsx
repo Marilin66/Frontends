@@ -42,7 +42,7 @@ export function AppLayout() {
         {/* Contenu scrollable */}
         <main className="flex-1 overflow-y-auto custom-scrollbar">
           {/* Conteneur centré avec max-width large pour le web */}
-          <div className="max-w-screen-xl mx-auto px-6 py-8 lg:px-10 lg:py-10 pb-24 lg:pb-10">
+          <div className="max-w-screen-xl mx-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-10 pb-24 lg:pb-10">
             <Outlet />
           </div>
         </main>

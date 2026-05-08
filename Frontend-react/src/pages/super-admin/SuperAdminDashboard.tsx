@@ -105,7 +105,7 @@ export default function SuperAdminDashboard() {
                 })}
               </div>
             )}
-            <div className="grid grid-cols-3 gap-4 mt-5 pt-5 border-t border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5 pt-5 border-t border-slate-100">
               {[
                 { label: 'Utilisateurs actifs', value: stats?.active_users ?? 0, color: 'text-slate-900' },
                 { label: 'Patients inscrits',   value: stats?.total_patients ?? 0, color: 'text-slate-900' },

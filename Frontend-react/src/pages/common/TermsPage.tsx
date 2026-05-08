@@ -17,7 +17,7 @@ export default function TermsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
         <Card className="p-8 space-y-4 border-none shadow-premium bg-gradient-to-br from-white to-gray-50">
           <div className="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center text-info">
             <Eye className="w-6 h-6" />
@@ -39,7 +39,7 @@ export default function TermsPage() {
         </Card>
       </div>
 
-      <div className="bg-white rounded-3xl p-8 lg:p-12 shadow-premium border border-gray-100 space-y-10">
+      <div className="bg-white rounded-3xl p-4 sm:p-6 lg:p-12 shadow-premium border border-gray-100 space-y-10">
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">1</div>
