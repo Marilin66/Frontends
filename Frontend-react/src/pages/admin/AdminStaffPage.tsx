@@ -33,6 +33,7 @@ import {
   AlertCircle,
   Search
 } from 'lucide-react';
+import { ConfirmModal } from '@/components/ui';
 
 interface Laborantin {
   id: number;
@@ -66,6 +67,7 @@ export default function AdminStaffPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -109,7 +111,7 @@ export default function AdminStaffPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Confirmer la suppression ?')) return;
+    setConfirmDeleteId(null);
     try {
       setIsLoading(true);
       await api.delete(`${endpoints.laborantins}${id}/`);
@@ -205,7 +207,7 @@ export default function AdminStaffPage() {
                          variant="outline" 
                          size="sm" 
                          className="h-9 w-9 p-0 rounded-lg border-2 text-slate-300 hover:text-rose-600 hover:border-rose-200"
-                         onClick={() => handleDelete(member.id)}
+                         onClick={() => setConfirmDeleteId(member.id)}
                        >
                          <Trash className="w-4 h-4" />
                        </Button>
@@ -310,6 +312,16 @@ export default function AdminStaffPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        open={confirmDeleteId !== null}
+        title="Supprimer ce laborantin ?"
+        message="Le compte sera désactivé et le laborantin ne pourra plus se connecter."
+        confirmLabel="Supprimer"
+        icon="delete"
+        onConfirm={() => handleDelete(confirmDeleteId!)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </motion.div>
   );
 }

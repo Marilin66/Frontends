@@ -58,10 +58,15 @@ export default function PatientIntakePage() {
         setIsEditMode(true);
       }
     } catch (err: any) {
-      if (err?.response?.status !== 404) {
-        setError('Erreur lors du chargement de la fiche.');
+      const status = err?.response?.status;
+      if (status === 404) {
+        // Pas encore de fiche → mode création, c'est normal
+      } else if (status === 403) {
+        setError("Vous n'êtes pas autorisé à accéder à cette fiche.");
+      } else {
+        // Autre erreur → on laisse en mode création quand même
+        console.warn('Erreur chargement intake:', err?.response?.data);
       }
-      // 404 = pas encore de fiche → mode création
     } finally {
       setIsLoading(false);
     }
@@ -89,8 +94,17 @@ export default function PatientIntakePage() {
       }
       setSaved(true);
       setTimeout(() => navigate(-1), 1800);
-    } catch (err) {
-      setError('Erreur lors de la sauvegarde. Veuillez réessayer.');
+    } catch (err: any) {
+      const data = err?.response?.data;
+      let msg = 'Erreur lors de la sauvegarde. Veuillez réessayer.';
+      if (data) {
+        if (typeof data === 'string') msg = data;
+        else if (data.error) msg = data.error;
+        else if (data.detail) msg = data.detail;
+        else if (data.symptomes_principaux) msg = `Symptômes : ${data.symptomes_principaux[0]}`;
+        else msg = JSON.stringify(data);
+      }
+      setError(msg);
     } finally {
       setIsSaving(false);
     }

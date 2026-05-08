@@ -12,6 +12,7 @@ import {
   Badge,
   PageLoader 
 } from '@/components/ui';
+import { ErrorModal, SuccessModal } from '@/components/ui';
 import { 
   Plus, 
   Stethoscope, 
@@ -59,6 +60,8 @@ export default function AdminServicesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   
   const [formData, setFormData] = useState({
     nom_nouveau_service: '',
@@ -84,18 +87,17 @@ export default function AdminServicesPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.hopital) {
-      alert("Hôpital non identifié pour votre compte.");
+      setErrorMsg("Hôpital non identifié pour votre compte.");
       return;
     }
-
     try {
       setIsLoading(true);
       await api.post(endpoints.createDemandeService(user.hopital), formData);
-      alert("Demande transmise avec succès ! Elle sera examinée par le gouverneur général.");
+      setSuccessMsg("Demande transmise avec succès ! Elle sera examinée par l'administrateur général.");
       setIsModalOpen(false);
       setFormData({ nom_nouveau_service: '', description_nouveau_service: '' });
     } catch (error: any) {
-      alert(error.response?.data?.error || "Erreur lors de la transmission de la demande.");
+      setErrorMsg(error.response?.data?.error || "Erreur lors de la transmission de la demande.");
     } finally {
       setIsLoading(false);
     }
@@ -255,6 +257,8 @@ export default function AdminServicesPage() {
           </div>
         )}
       </AnimatePresence>
+      <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
+      <SuccessModal message={successMsg} onClose={() => setSuccessMsg('')} />
     </motion.div>
   );
 }

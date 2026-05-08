@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader } from '@/components/ui';
-import { Activity, Plus, Search, Edit2, Trash2, RefreshCw, X, Check } from 'lucide-react';
+import { Activity, Plus, Search, Edit2, Trash2, RefreshCw, X, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ErrorModal, ConfirmModal } from '@/components/ui';
 
 type Mode = 'list' | 'create' | 'edit';
 
@@ -15,6 +16,8 @@ export default function SuperAdminServicesPage() {
   const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({ nom: '', description: '' });
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<{ id: number; nom: string } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -42,16 +45,16 @@ export default function SuperAdminServicesPage() {
       }
       await fetchData();
       cancel();
-    } catch { alert('Erreur lors de la sauvegarde.'); }
+    } catch { setErrorMsg('Erreur lors de la sauvegarde.'); }
     finally { setSaving(false); }
   };
 
   const handleDelete = async (id: number, nom: string) => {
-    if (!confirm(`Supprimer le service "${nom}" ? Cette action est irréversible.`)) return;
+    setConfirmDelete(null);
     try {
       await api.delete(`${endpoints.servicesGlobaux}${id}/`);
       fetchData();
-    } catch { alert('Erreur lors de la suppression.'); }
+    } catch { setErrorMsg('Erreur lors de la suppression.'); }
   };
 
   const filtered = services.filter(s =>
@@ -158,7 +161,7 @@ export default function SuperAdminServicesPage() {
                       <Edit2 className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />
                     </button>
                     <button
-                      onClick={() => handleDelete(s.id, s.nom)}
+                      onClick={() => setConfirmDelete({ id: s.id, nom: s.nom })}
                       className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center transition group"
                       title="Supprimer"
                     >
@@ -171,6 +174,17 @@ export default function SuperAdminServicesPage() {
           ))}
         </div>
       )}
+
+      <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
+      <ConfirmModal
+        open={confirmDelete !== null}
+        title={`Supprimer "${confirmDelete?.nom}" ?`}
+        message="Cette action est irréversible. Le service sera retiré de tous les hôpitaux."
+        confirmLabel="Supprimer"
+        icon="delete"
+        onConfirm={() => handleDelete(confirmDelete!.id, confirmDelete!.nom)}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

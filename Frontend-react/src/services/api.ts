@@ -22,6 +22,11 @@ apiClient.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Si les données sont un FormData, supprimer le Content-Type fixe
+    // pour laisser axios définir automatiquement le boundary multipart/form-data
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error: AxiosError) => {

@@ -227,7 +227,10 @@ export default function MessagesPage() {
       };
       mr.start();
       setRecording(true);
-    } catch { alert('Impossible d\'accéder au microphone.'); }
+    } catch { 
+      // Microphone non disponible — on ignore silencieusement (pas d'alert natif)
+      console.warn('Impossible d\'accéder au microphone.');
+    }
   };
 
   const stopRecording = () => {

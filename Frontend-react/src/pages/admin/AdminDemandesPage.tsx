@@ -2,22 +2,23 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
-import { Card, Button, PageLoader } from '@/components/ui';
-import { Inbox, RefreshCw, Plus, CheckCircle, XCircle, Clock, Building, User, Calendar } from 'lucide-react';
+import { Button, PageLoader } from '@/components/ui';
+import { Inbox, RefreshCw, Plus, CheckCircle, XCircle, Clock, Building, User, Calendar, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ErrorModal } from '@/components/ui';
 
 type Tab = 'en_attente' | 'valide' | 'refuse';
 
 function StatusPill({ statut }: { statut: string }) {
   const map: Record<string, { label: string; cls: string; icon: any }> = {
-    en_attente: { label: 'En attente', cls: 'bg-amber-50 text-amber-700 border-amber-200',  icon: Clock },
-    valide:     { label: 'Validée',    cls: 'bg-green-50 text-green-700 border-green-200',  icon: CheckCircle },
-    refuse:     { label: 'Refusée',    cls: 'bg-red-50 text-red-700 border-red-200',        icon: XCircle },
+    en_attente: { label: 'En attente', cls: 'bg-amber-50 text-amber-700 border-amber-200',   icon: Clock },
+    valide:     { label: 'Validée',    cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle },
+    refuse:     { label: 'Refusée',    cls: 'bg-red-50 text-red-700 border-red-200',          icon: XCircle },
   };
   const s = map[statut] ?? map.en_attente;
   return (
-    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full border font-medium ${s.cls}`}>
-      <s.icon className="w-3 h-3" /> {s.label}
+    <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border font-medium ${s.cls}`}>
+      <s.icon className="w-3.5 h-3.5" /> {s.label}
     </span>
   );
 }
@@ -32,6 +33,7 @@ export default function AdminDemandesPage() {
   const [isNewService, setIsNewService] = useState(true);
   const [formData, setFormData] = useState({ nom: '', description: '', service_existant: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
@@ -59,7 +61,7 @@ export default function AdminDemandesPage() {
       setShowForm(false);
       setFormData({ nom: '', description: '', service_existant: '' });
       fetchData();
-    } catch { alert('Erreur lors de l\'envoi de la demande.'); }
+    } catch { setErrorMsg('Erreur lors de l\'envoi de la demande.'); }
     finally { setSubmitting(false); }
   };
 
@@ -74,34 +76,44 @@ export default function AdminDemandesPage() {
   if (loading && demandes.length === 0) return <PageLoader />;
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-20">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Demandes de Service</h1>
-          <p className="text-slate-500 mt-1">Gérez vos demandes d'ajout de services</p>
+          <p className="text-slate-500 mt-1 text-sm">Gérez vos demandes d'ajout de services</p>
         </div>
+
         <div className="flex gap-3">
-          <Button variant="outline" onClick={fetchData} leftIcon={<RefreshCw className="w-4 h-4" />}>Actualiser</Button>
-          <Button onClick={() => setShowForm(true)} leftIcon={<Plus className="w-4 h-4" />}>Nouvelle demande</Button>
+          <button onClick={fetchData} className="flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+            <RefreshCw className="w-4 h-4" /> Actualiser
+          </button>
+          <Button onClick={() => setShowForm(true)} className="h-10 px-4 rounded-xl text-sm font-semibold">
+            <Plus className="w-4 h-4 mr-2" /> Nouvelle demande
+          </Button>
         </div>
-      </div>
+      </section>
 
       {/* Formulaire création */}
       <AnimatePresence>
         {showForm && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <Card padding="lg">
-              <h2 className="font-semibold text-slate-900 mb-4">Nouvelle demande de service</h2>
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-slate-900">Nouvelle demande de service</h2>
+                <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
               {/* Toggle */}
-              <div className="flex rounded-xl overflow-hidden border border-slate-200 mb-4 w-fit">
+              <div className="flex rounded-xl overflow-hidden border border-slate-200 w-fit">
                 {[{ v: true, l: 'Nouveau service' }, { v: false, l: 'Service existant' }].map(({ v, l }) => (
                   <button
                     key={String(v)}
                     onClick={() => setIsNewService(v)}
-                    className={`px-4 py-2 text-sm font-medium transition ${isNewService === v ? 'bg-primary text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+                    className={`px-4 py-2 text-sm font-semibold transition ${isNewService === v ? 'bg-primary text-white' : 'bg-white text-slate-500 hover:bg-slate-50'}`}
                   >
                     {l}
                   </button>
@@ -109,53 +121,64 @@ export default function AdminDemandesPage() {
               </div>
 
               {isNewService ? (
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    placeholder="Nom du service *"
-                    value={formData.nom}
-                    onChange={e => setFormData(f => ({ ...f, nom: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                  />
-                  <textarea
-                    rows={3}
-                    placeholder="Description (optionnel)"
-                    value={formData.description}
-                    onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none transition"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600">Nom du service *</label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Cardiologie"
+                      value={formData.nom}
+                      onChange={e => setFormData(f => ({ ...f, nom: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600">Description (optionnel)</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Description du service…"
+                      value={formData.description}
+                      onChange={e => setFormData(f => ({ ...f, description: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all placeholder:text-slate-400 resize-none"
+                    />
+                  </div>
                 </div>
               ) : (
-                <select
-                  value={formData.service_existant}
-                  onChange={e => setFormData(f => ({ ...f, service_existant: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
-                >
-                  <option value="">Choisir un service…</option>
-                  {services.map((s: any) => <option key={s.id} value={s.id}>{s.nom}</option>)}
-                </select>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-600">Service existant *</label>
+                  <select
+                    value={formData.service_existant}
+                    onChange={e => setFormData(f => ({ ...f, service_existant: e.target.value }))}
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all cursor-pointer bg-white"
+                  >
+                    <option value="">Choisir un service…</option>
+                    {services.map((s: any) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+                  </select>
+                </div>
               )}
 
-              <div className="flex gap-3 mt-4">
-                <Button variant="outline" onClick={() => setShowForm(false)}>Annuler</Button>
-                <Button onClick={handleSubmit} loading={submitting}>Envoyer la demande</Button>
+              <div className="flex gap-3">
+                <button onClick={() => setShowForm(false)} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Annuler</button>
+                <Button onClick={handleSubmit} isLoading={submitting} className="flex-1 h-10 rounded-xl text-sm font-semibold">
+                  Envoyer la demande
+                </Button>
               </div>
-            </Card>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+      <div className="flex gap-2">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${tab === t.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${tab === t.key ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300'}`}
           >
             {t.label}
             {t.count > 0 && (
-              <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${tab === t.key ? 'bg-primary text-white' : 'bg-slate-200 text-slate-600'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded-md font-medium ${tab === t.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
                 {t.count}
               </span>
             )}
@@ -165,35 +188,35 @@ export default function AdminDemandesPage() {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">
-            <Inbox className="w-7 h-7 text-slate-400" />
-          </div>
-          <p className="text-slate-600 font-medium">Aucune demande {tab === 'en_attente' ? 'en attente' : tab === 'valide' ? 'validée' : 'refusée'}</p>
+        <div className="py-20 text-center bg-white rounded-2xl border border-slate-200">
+          <Inbox className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+          <p className="text-slate-500 font-medium">
+            Aucune demande {tab === 'en_attente' ? 'en attente' : tab === 'valide' ? 'validée' : 'refusée'}
+          </p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filtered.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-              <Card padding="md">
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:border-slate-300 transition-all duration-200">
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className="flex items-start gap-4 flex-1 min-w-0">
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 mt-0.5">
                       <Building className="w-5 h-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-900 truncate">
+                      <p className="text-sm font-semibold text-slate-900 truncate">
                         {d.nom_nouveau_service ?? d.service_existant_nom ?? 'Service'}
                       </p>
-                      {(d.description_nouveau_service) && (
-                        <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{d.description_nouveau_service}</p>
+                      {d.description_nouveau_service && (
+                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{d.description_nouveau_service}</p>
                       )}
-                      <div className="flex items-center gap-3 mt-2 flex-wrap">
-                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                      <div className="flex items-center gap-4 mt-1.5 flex-wrap">
+                        <span className="flex items-center gap-1.5 text-xs text-slate-500">
                           <Calendar className="w-3 h-3" />
                           {d.date_demande ? new Date(d.date_demande).toLocaleDateString('fr-FR') : '—'}
                         </span>
-                        <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <span className="flex items-center gap-1.5 text-xs text-slate-500">
                           <User className="w-3 h-3" />
                           {d.demande_par_nom ?? 'Vous'}
                         </span>
@@ -202,11 +225,12 @@ export default function AdminDemandesPage() {
                   </div>
                   <StatusPill statut={d.statut} />
                 </div>
-              </Card>
+              </div>
             </motion.div>
           ))}
         </div>
       )}
-    </div>
+      <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
+    </motion.div>
   );
 }

@@ -18,3 +18,4 @@ export type { AvatarProps } from './Avatar';
 
 export { Spinner, PageLoader, Skeleton, CardSkeleton } from './Loading';
 export { AIBubble } from './AIBubble';
+export { ErrorModal, SuccessModal, ConfirmModal } from './FeedbackModal';

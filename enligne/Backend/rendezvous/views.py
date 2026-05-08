@@ -369,13 +369,6 @@ class RendezVousTerminerView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Vérifier que l'heure du RDV est passée
-        if rdv.date_heure > timezone.now():
-            return Response(
-                {'error': "Impossible de terminer un rendez-vous avant l'heure prévue."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         # Marquer comme terminé
         rdv.statut = 'termine'
         rdv.save(update_fields=['statut', 'modifie_le'])
@@ -522,20 +515,33 @@ class PreEnregistrementView(APIView):
         except RendezVous.DoesNotExist:
             return Response({'error': 'Rendez-vous introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user.role != 'patient' or getattr(request.user, 'patient_profile', None) != rdv.patient:
+        if request.user.role != 'patient':
             from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Seul le patient titulaire du rendez-vous peut éditer cet intake.")
+            raise PermissionDenied("Seul un patient peut éditer cet intake.")
+
+        patient_profile = getattr(request.user, 'patient_profile', None)
+        if patient_profile is None:
+            return Response(
+                {'error': "Profil patient introuvable pour votre compte."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if patient_profile != rdv.patient:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Vous n'êtes pas le patient de ce rendez-vous.")
 
         if rdv.statut in ('termine', 'annule', 'refuse'):
             return Response(
-                {'error': f"Édition verrouillée car le rendez-vous est {rdv.get_statut_display()}."},
+                {'error': f"Édition verrouillée : le rendez-vous est {rdv.get_statut_display()}."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if create and hasattr(rdv, 'pre_enregistrement'):
-            return Response({'error': 'Déjà existant (utilisez PUT).'}, status=status.HTTP_400_BAD_REQUEST)
+            # Déjà existant → on bascule en mode PUT automatiquement
+            create = False
+
         if not create and not hasattr(rdv, 'pre_enregistrement'):
-            return Response({'error': 'N\'existe pas (utilisez POST).'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Fiche introuvable (utilisez POST pour créer).'}, status=status.HTTP_404_NOT_FOUND)
 
         from .serializers import PreEnregistrementSerializer
         instance = getattr(rdv, 'pre_enregistrement', None)

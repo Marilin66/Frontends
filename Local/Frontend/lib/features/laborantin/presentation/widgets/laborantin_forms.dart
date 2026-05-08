@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:hopitel_app/core/theme/app_colors.dart';
 import 'package:hopitel_app/core/utils/helpers.dart';
+import 'package:hopitel_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:hopitel_app/features/laborantin/presentation/providers/laborantin_provider.dart';
 
 class LaborantinManualInscriptionSheet extends ConsumerStatefulWidget {
@@ -153,27 +154,46 @@ class _LaborantinManualInscriptionSheetState extends ConsumerState<LaborantinMan
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Vérifier que le laborantin a un hôpital avant de soumettre
+    final user = ref.read(authProvider).user;
+    if (user?.hopital == null) {
+      Helpers.showSnackBar(
+        context,
+        'Votre compte n\'est pas associé à un hôpital. Contactez l\'administrateur.',
+        isError: true,
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    final result = await ref.read(laborantinPendingAnalysesProvider.notifier).creerDemande({
-      if (_selectedPatient != null) 'patient': _selectedPatient.id,
-      'patient_nom': _nomController.text.trim(),
-      'patient_prenom': _prenomController.text.trim(),
-      'patient_email': _emailController.text.trim(),
-      'patient_telephone': _telController.text.trim(),
-      'type_analyse': _typeController.text.trim(),
-    });
+    try {
+      await ref.read(laborantinPendingAnalysesProvider.notifier).creerDemande({
+        if (_selectedPatient != null) 'patient': _selectedPatient.id,
+        'patient_nom': _nomController.text.trim(),
+        'patient_prenom': _prenomController.text.trim(),
+        'patient_email': _emailController.text.trim(),
+        'patient_telephone': _telController.text.trim(),
+        'type_analyse': _typeController.text.trim(),
+      });
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      if (result != null) {
+      if (mounted) {
         Navigator.pop(context);
         Helpers.showSnackBar(context, 'Patient inscrit avec succès.');
-        // Refresh the pending list
         ref.read(laborantinPendingAnalysesProvider.notifier).refresh();
-      } else {
-        Helpers.showSnackBar(context, 'Erreur lors de l\'inscription.', isError: true);
       }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().replaceAll('Exception: ', '');
+        Helpers.showSnackBar(
+          context,
+          msg.isNotEmpty ? msg : 'Erreur lors de l\'inscription.',
+          isError: true,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 }

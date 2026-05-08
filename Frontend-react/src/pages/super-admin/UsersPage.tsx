@@ -26,8 +26,10 @@ import {
   Building,
   Activity,
   Calendar,
-  Lock
+  Lock,
+  AlertCircle
 } from 'lucide-react';
+import { ErrorModal, ConfirmModal } from '@/components/ui';
 
 interface Admin {
   id: number;
@@ -63,6 +65,8 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -103,26 +107,26 @@ export default function UsersPage() {
       await api.post(endpoints.adminHopitaux, formData);
       setIsModalOpen(false);
       fetchData();
-      setFormData({
-        email: '', first_name: '', last_name: '', telephone: '',
-        date_naissance: '1990-01-01', sexe: 'M', hopital: ''
-      });
+      setFormData({ email: '', first_name: '', last_name: '', telephone: '', date_naissance: '1990-01-01', sexe: 'M', hopital: '' });
     } catch (error: any) {
       console.error(error);
-      alert("Erreur lors de l'ajout de l'administrateur.");
+      const data = error.response?.data;
+      const msg = data ? Object.entries(data).map(([k, v]: any) => `${k === 'non_field_errors' ? '' : k + ' : '}${Array.isArray(v) ? v.join(', ') : v}`).join('\n') : "Erreur lors de l'ajout.";
+      setErrorMsg(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Confirmer la suppression de cet accès ?')) return;
+    setConfirmDeleteId(null);
     try {
       setIsLoading(true);
       await api.delete(`${endpoints.adminHopitaux}${id}/`);
       fetchData();
     } catch (error) {
       console.error(error);
+      setErrorMsg('Erreur lors de la suppression.');
     } finally {
       setIsLoading(false);
     }
@@ -217,7 +221,7 @@ export default function UsersPage() {
                         variant="outline" 
                         size="sm" 
                         className="h-9 w-9 p-0 rounded-lg border-2 text-slate-300 hover:text-rose-600 hover:border-rose-200"
-                        onClick={() => handleDelete(admin.id)}
+                        onClick={() => setConfirmDeleteId(admin.id)}
                      >
                         <Trash className="w-4 h-4" />
                      </Button>
@@ -330,6 +334,17 @@ export default function UsersPage() {
           </div>
         )}
       </AnimatePresence>
+
+      <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
+      <ConfirmModal
+        open={confirmDeleteId !== null}
+        title="Supprimer cet accès ?"
+        message="L'administrateur perdra l'accès à son hôpital."
+        confirmLabel="Supprimer"
+        icon="delete"
+        onConfirm={() => handleDelete(confirmDeleteId!)}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </motion.div>
   );
 }

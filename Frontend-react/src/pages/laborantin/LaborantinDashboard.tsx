@@ -75,11 +75,11 @@ export default function LaborantinDashboard() {
                   <FlaskConical className="w-5 h-5 text-cyan-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 truncate">{d.patient_nom}</p>
+                  <p className="font-medium text-slate-900 truncate">{d.patient_prenom} {d.patient_nom}</p>
                   <p className="text-sm text-slate-500">{d.type_analyse}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-xs text-slate-400">{new Date(d.date_demande).toLocaleDateString('fr-FR')}</p>
+                  <p className="text-xs text-slate-400">{d.date_inscription ? new Date(d.date_inscription).toLocaleDateString('fr-FR') : '—'}</p>
                 </div>
                 <Badge variant={d.statut === 'cloture' ? 'success' : d.statut === 'en_cours' ? 'primary' : 'warning'} size="sm">
                   {d.statut === 'cloture' ? 'Clôturé' : d.statut === 'en_cours' ? 'En cours' : 'En attente'}

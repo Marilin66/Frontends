@@ -227,12 +227,44 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                             ),
                                           ),
                                         ],
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+
+                                        // ── Bandeaux contextuels selon statut ──
+                                        if (rdv.statut == 'en_attente') ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.hourglass_top_rounded,
+                                            message: 'En attente de confirmation par le médecin',
+                                            color: Colors.amber.shade700,
+                                            bgColor: Colors.amber.shade50,
+                                          ),
+                                        ],
+                                        if (rdv.statut == 'confirme' && rdv.preEnregistrement == null) ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.edit_note_rounded,
+                                            message: 'Pensez à remplir votre fiche pré-consultation avant le RDV',
+                                            color: Colors.blue.shade700,
+                                            bgColor: Colors.blue.shade50,
+                                          ),
+                                        ],
+                                        if (rdv.statut == 'confirme' && rdv.preEnregistrement != null) ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.check_circle_rounded,
+                                            message: 'Fiche envoyée — votre médecin est informé de vos symptômes',
+                                            color: Colors.teal.shade700,
+                                            bgColor: Colors.teal.shade50,
+                                          ),
+                                        ],
+                                        if (rdv.statut == 'termine' && rdv.hasConsultation) ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.task_alt_rounded,
+                                            message: 'Consultation terminée — compte rendu disponible',
+                                            color: Colors.green.shade700,
+                                            bgColor: Colors.green.shade50,
+                                          ),
+                                        ],
                             // ── Bouton Pré-consultation ──────────────────
                             // Visible pour les RDV planifiés ou confirmés (pas encore terminé/annulé)
                             if ((rdv.statut == 'planifie' || rdv.statut == 'confirme') &&
@@ -469,6 +501,49 @@ class _StatusChip extends StatelessWidget {
       onSelected: (_) => onSelected(),
       selectedColor: AppColors.primary.withValues(alpha: 0.2),
       labelStyle: TextStyle(color: isSelected ? AppColors.primary : AppColors.textSecondary),
+    );
+  }
+}
+
+/// Bandeau contextuel affiché sous les infos du RDV selon son statut
+class _ContextBanner extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final Color color;
+  final Color bgColor;
+
+  const _ContextBanner({
+    required this.icon,
+    required this.message,
+    required this.color,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

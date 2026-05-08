@@ -33,27 +33,18 @@ class LaborantinPendingAnalysesNotifier extends AsyncNotifier<List<DemandeAnalys
   }
 
   Future<DemandeAnalyseModel?> creerDemande(Map<String, dynamic> data) async {
-    try {
-      final datasource = ref.read(laborantinDatasourceProvider);
-      final newDemande = await datasource.creerDemande(data);
-      await refresh();
-      return newDemande;
-    } catch (_) {
-      return null;
-    }
+    final datasource = ref.read(laborantinDatasourceProvider);
+    final newDemande = await datasource.creerDemande(data);
+    await refresh();
+    return newDemande;
   }
 
   Future<Map<String, dynamic>?> cloturerAnalyse(int id, FormData formData) async {
-    try {
-      final datasource = ref.read(laborantinDatasourceProvider);
-      final result = await datasource.cloturerAnalyse(id, formData);
-      await refresh();
-      // On rafraîchit aussi l'historique car l'analyse a changé de statut
-      ref.read(laborantinFinishedAnalysesProvider.notifier).refresh();
-      return result;
-    } catch (_) {
-      return null;
-    }
+    final datasource = ref.read(laborantinDatasourceProvider);
+    final result = await datasource.cloturerAnalyse(id, formData);
+    await refresh();
+    ref.read(laborantinFinishedAnalysesProvider.notifier).refresh();
+    return result;
   }
 }
 

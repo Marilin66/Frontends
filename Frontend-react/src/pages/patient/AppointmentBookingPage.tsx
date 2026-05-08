@@ -33,12 +33,11 @@ interface Doctor {
   photo?: string;
 }
 
+// Créneau libre retourné par /medecins/{id}/creneaux/
 interface Availability {
-  id: number;
-  jour_semaine: string;
-  jour_semaine_display: string;
-  heure_debut: string;
-  heure_fin: string;
+  date: string;        // ex: "2026-05-10"
+  heure_debut: string; // ex: "09:00:00"
+  heure_fin: string;   // ex: "09:30:00"
 }
 
 const steps = [
@@ -56,6 +55,7 @@ export default function AppointmentBookingPage() {
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<Availability | null>(null);
+  const [slotsLoading, setSlotsLoading] = useState(false);
   const [motif, setMotif] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,11 +102,16 @@ export default function AppointmentBookingPage() {
 
   const fetchDoctorAvailabilities = async (id: number) => {
     try {
-      const response = await api.get<any>(endpoints.medecinDisponibilites(id));
+      setSlotsLoading(true);
+      // On utilise l'endpoint /creneaux/ qui retourne des créneaux libres concrets
+      // avec date + heure_debut + heure_fin (sur les 7 prochains jours)
+      const response = await api.get<any>(endpoints.medecinCreneaux(id));
       const data = Array.isArray(response) ? response : (response.results || []);
       setAvailabilities(data);
     } catch (error) {
       console.error('Erreur planning:', error);
+    } finally {
+      setSlotsLoading(false);
     }
   };
 
@@ -118,15 +123,22 @@ export default function AppointmentBookingPage() {
     setIsSubmitting(true);
     setBookingError('');
     try {
+      // Le backend attend : medecin (int), date_heure (ISO datetime), motif (str)
+      const date_heure = `${selectedSlot.date}T${selectedSlot.heure_debut}`;
       await api.post(endpoints.rendezVous, {
         medecin: finalDoctorId,
-        disponibilite: selectedSlot.id,
+        date_heure,
         motif: motif || 'Consultation',
-        date: new Date().toISOString().split('T')[0],
       });
       setStep(4);
     } catch (error: any) {
-      const msg = error.response?.data?.detail || error.response?.data?.non_field_errors?.[0] || 'Erreur lors de la réservation. Veuillez réessayer.';
+      const data = error.response?.data;
+      const msg =
+        data?.detail ||
+        data?.non_field_errors?.[0] ||
+        data?.date_heure?.[0] ||
+        data?.medecin?.[0] ||
+        'Erreur lors de la réservation. Veuillez réessayer.';
       setBookingError(msg);
     } finally {
       setIsSubmitting(false);
@@ -268,24 +280,44 @@ export default function AppointmentBookingPage() {
                        <Button variant="ghost" onClick={() => setStep(1)} className="text-[8px] font-black uppercase tracking-widest italic text-slate-400">Retour</Button>
                     </div>
                     <div className="grid grid-cols-1 gap-4">
-                       {availabilities.map((slot) => (
-                         <button
-                           key={slot.id}
-                           onClick={() => setSelectedSlot(slot)}
-                           className={`w-full flex items-center justify-between p-6 rounded-2xl border-2 transition-all duration-300 group ${selectedSlot?.id === slot.id ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 bg-white'}`}
-                         >
-                            <div className="flex items-center gap-4">
-                               <div className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${selectedSlot?.id === slot.id ? 'bg-primary border-primary text-white shadow-xl' : 'bg-slate-50 border-slate-100 text-slate-400 group-hover:bg-slate-950 group-hover:text-white'}`}>
-                                  <Timer className="w-5 h-5" />
-                               </div>
-                               <div className="text-left">
-                                  <p className="text-sm font-black text-slate-950 uppercase tracking-tighter">{slot.jour_semaine_display}</p>
-                                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic mt-1">Disponibilité Synchro</p>
-                               </div>
-                            </div>
-                            <span className="text-xl lg:text-2xl font-black text-slate-950 tracking-tighter italic uppercase">{slot.heure_debut} — {slot.heure_fin}</span>
-                         </button>
-                       ))}
+                       {slotsLoading ? (
+                         <div className="flex items-center justify-center py-12 text-slate-400">
+                           <Clock className="w-6 h-6 animate-spin mr-3" />
+                           <span className="text-xs font-black uppercase tracking-widest italic">Chargement des créneaux...</span>
+                         </div>
+                       ) : availabilities.length === 0 ? (
+                         <div className="flex flex-col items-center justify-center py-12 text-slate-300 space-y-3">
+                           <Calendar className="w-10 h-10" />
+                           <p className="text-xs font-black uppercase tracking-widest italic">Aucun créneau disponible dans les 7 prochains jours</p>
+                         </div>
+                       ) : (
+                         availabilities.map((slot, idx) => {
+                           const slotKey = `${slot.date}-${slot.heure_debut}`;
+                           const isSelected = selectedSlot && `${selectedSlot.date}-${selectedSlot.heure_debut}` === slotKey;
+                           // Formater la date lisiblement
+                           const dateLabel = new Date(slot.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                           const heureDebut = slot.heure_debut.slice(0, 5);
+                           const heureFin = slot.heure_fin.slice(0, 5);
+                           return (
+                             <button
+                               key={slotKey}
+                               onClick={() => setSelectedSlot(slot)}
+                               className={`w-full flex items-center justify-between p-6 rounded-2xl border-2 transition-all duration-300 group ${isSelected ? 'border-primary bg-primary/5 shadow-inner' : 'border-slate-100 hover:border-slate-300 bg-white'}`}
+                             >
+                                <div className="flex items-center gap-4">
+                                   <div className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-primary text-white shadow-xl' : 'bg-slate-50 border-slate-100 text-slate-400 group-hover:bg-slate-950 group-hover:text-white'}`}>
+                                      <Timer className="w-5 h-5" />
+                                   </div>
+                                   <div className="text-left">
+                                      <p className="text-sm font-black text-slate-950 uppercase tracking-tighter capitalize">{dateLabel}</p>
+                                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest italic mt-1">Créneau disponible</p>
+                                   </div>
+                                </div>
+                                <span className="text-xl lg:text-2xl font-black text-slate-950 tracking-tighter italic uppercase">{heureDebut} — {heureFin}</span>
+                             </button>
+                           );
+                         })
+                       )}
                     </div>
                     {selectedSlot && (
                        <Button onClick={() => setStep(3)} className="w-full h-14 rounded-xl font-black italic text-[10px] uppercase shadow-2xl shadow-primary/20">
@@ -319,8 +351,10 @@ export default function AppointmentBookingPage() {
                        <div className="flex justify-between items-center p-5 bg-white/5 border border-white/10 rounded-2xl">
                           <div>
                              <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">Créneau</p>
-                             <p className="text-lg font-black text-white">{selectedSlot?.jour_semaine_display}</p>
-                             <p className="text-xs text-white/40">{selectedSlot?.heure_debut} — {selectedSlot?.heure_fin}</p>
+                             <p className="text-lg font-black text-white capitalize">
+                               {selectedSlot ? new Date(selectedSlot.date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : ''}
+                             </p>
+                             <p className="text-xs text-white/40">{selectedSlot?.heure_debut?.slice(0,5)} — {selectedSlot?.heure_fin?.slice(0,5)}</p>
                           </div>
                           <Clock className="w-8 h-8 text-primary" />
                        </div>

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, Badge, PageLoader } from '@/components/ui';
+import { ErrorModal, ConfirmModal } from '@/components/ui';
 import {
   ArrowLeft, Building, Users, Activity, Inbox,
   Mail, Phone, MapPin, Edit2, Save, X,
@@ -35,6 +36,9 @@ export default function EntityDetailPage() {
   // Action states
   const [processing, setProcessing] = useState<number | null>(null);
   const [toggling, setToggling] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [confirmDemande, setConfirmDemande] = useState<{ id: number; valider: boolean } | null>(null);
+  const [confirmDeactivate, setConfirmDeactivate] = useState<{ id: number; nom: string } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -87,7 +91,7 @@ export default function EntityDetailPage() {
       await api.patch(`${endpoints.hopitaux}${hopId}/`, payload);
       setEditing(false);
       fetchData();
-    } catch { alert('Erreur lors de la sauvegarde.'); }
+    } catch { setErrorMsg('Erreur lors de la sauvegarde.'); }
     finally { setSaving(false); }
   };
 
@@ -97,33 +101,32 @@ export default function EntityDetailPage() {
     try {
       await api.patch(`${endpoints.hopitaux}${hopId}/`, { is_active: !hopital.is_active });
       fetchData();
-    } catch { alert('Erreur.'); }
+    } catch { setErrorMsg('Erreur lors du changement de statut.'); }
     finally { setToggling(false); }
   };
 
   // ── Demandes ──────────────────────────────────────────────────────
   const handleDemande = async (demandeId: number, valider: boolean) => {
-    if (!confirm(`${valider ? 'Valider' : 'Refuser'} cette demande ?`)) return;
+    setConfirmDemande(null);
     setProcessing(demandeId);
     try {
       if (valider) {
         await api.post(endpoints.validerDemande(demandeId));
       } else {
-        const motif = prompt('Motif du refus (optionnel) :') ?? '';
-        await api.post(endpoints.refuserDemande(demandeId), { commentaire: motif });
+        await api.post(endpoints.refuserDemande(demandeId), { commentaire: '' });
       }
       fetchData();
-    } catch { alert('Erreur.'); }
+    } catch { setErrorMsg('Erreur lors du traitement de la demande.'); }
     finally { setProcessing(null); }
   };
 
   // ── Désactiver médecin ────────────────────────────────────────────
   const handleDeactivateMedecin = async (medecinId: number, nom: string) => {
-    if (!confirm(`Désactiver ${nom} ?`)) return;
+    setConfirmDeactivate(null);
     try {
       await api.post(`${endpoints.medecins}${medecinId}/desactiver/`);
       fetchData();
-    } catch { alert('Erreur.'); }
+    } catch { setErrorMsg('Erreur lors de la désactivation.'); }
   };
 
   if (loading && !hopital) return <PageLoader />;
@@ -297,7 +300,7 @@ export default function EntityDetailPage() {
                           {m.is_active !== false ? 'Actif' : 'Inactif'}
                         </span>
                         <button
-                          onClick={() => handleDeactivateMedecin(m.id, `Dr. ${m.first_name} ${m.last_name}`)}
+                          onClick={() => setConfirmDeactivate({ id: m.id, nom: `Dr. ${m.first_name} ${m.last_name}` })}
                           className="w-7 h-7 rounded-lg hover:bg-red-50 flex items-center justify-center transition group"
                           title="Désactiver"
                         >
@@ -367,14 +370,14 @@ export default function EntityDetailPage() {
                       {d.statut === 'en_attente' && (
                         <div className="flex gap-2 pt-2 border-t border-slate-100">
                           <button
-                            onClick={() => handleDemande(d.id, false)}
+                            onClick={() => setConfirmDemande({ id: d.id, valider: false })}
                             disabled={processing === d.id}
                             className="flex-1 py-2 rounded-xl border border-red-200 text-red-600 text-xs font-semibold hover:bg-red-50 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
                           >
                             <XCircle className="w-3.5 h-3.5" /> Refuser
                           </button>
                           <button
-                            onClick={() => handleDemande(d.id, true)}
+                            onClick={() => setConfirmDemande({ id: d.id, valider: true })}
                             disabled={processing === d.id}
                             className="flex-1 py-2 rounded-xl bg-green-500 text-white text-xs font-semibold hover:bg-green-600 transition disabled:opacity-50 flex items-center justify-center gap-1.5"
                           >
@@ -420,6 +423,27 @@ export default function EntityDetailPage() {
         )}
 
       </AnimatePresence>
+
+      <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
+      <ConfirmModal
+        open={confirmDemande !== null}
+        title={confirmDemande?.valider ? 'Valider cette demande ?' : 'Refuser cette demande ?'}
+        message={confirmDemande?.valider ? 'Le service sera ajouté à l\'hôpital.' : 'La demande sera refusée.'}
+        confirmLabel={confirmDemande?.valider ? 'Valider' : 'Refuser'}
+        confirmClass={confirmDemande?.valider ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}
+        icon={confirmDemande?.valider ? 'check' : 'warning'}
+        onConfirm={() => handleDemande(confirmDemande!.id, confirmDemande!.valider)}
+        onCancel={() => setConfirmDemande(null)}
+      />
+      <ConfirmModal
+        open={confirmDeactivate !== null}
+        title={`Désactiver ${confirmDeactivate?.nom} ?`}
+        message="Le médecin ne pourra plus se connecter ni recevoir de rendez-vous."
+        confirmLabel="Désactiver"
+        icon="delete"
+        onConfirm={() => handleDeactivateMedecin(confirmDeactivate!.id, confirmDeactivate!.nom)}
+        onCancel={() => setConfirmDeactivate(null)}
+      />
     </div>
   );
 }

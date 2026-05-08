@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader } from '@/components/ui';
+import { ConfirmModal } from '@/components/ui';
 import {
   ArrowLeft, Edit3, Save, X, Lock, User,
   Calendar, FileText, Stethoscope, Pill, AlertCircle
@@ -17,6 +18,7 @@ export default function ConsultationDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [showCloturerConfirm, setShowCloturerConfirm] = useState(false);
   const [form, setForm] = useState({ compte_rendu: '', diagnostic: '', prescription: '' });
   const [error, setError] = useState('');
 
@@ -47,7 +49,7 @@ export default function ConsultationDetailPage() {
   };
 
   const handleCloturer = async () => {
-    if (!confirm('Clôturer définitivement cette consultation ? Cette action est irréversible.')) return;
+    setShowCloturerConfirm(false);
     setClosing(true);
     try {
       await api.post(endpoints.cloturerConsultation(Number(id)));
@@ -174,7 +176,7 @@ export default function ConsultationDetailPage() {
       {!isClosed && !editing && (
         <div className="pt-2">
           <button
-            onClick={handleCloturer}
+            onClick={() => setShowCloturerConfirm(true)}
             disabled={closing}
             className="w-full py-3 rounded-xl border-2 border-red-200 text-red-600 font-semibold text-sm hover:bg-red-50 transition flex items-center justify-center gap-2 disabled:opacity-50"
           >
@@ -196,6 +198,17 @@ export default function ConsultationDetailPage() {
         <Lock className="w-4 h-4 shrink-0 mt-0.5" />
         Ces informations sont confidentielles et protégées par le secret médical.
       </div>
+
+      <ConfirmModal
+        open={showCloturerConfirm}
+        title="Clôturer cette consultation ?"
+        message="Cette action est irréversible. La consultation sera verrouillée et ne pourra plus être modifiée."
+        confirmLabel="Clôturer définitivement"
+        confirmClass="bg-red-500 hover:bg-red-600"
+        icon="warning"
+        onConfirm={handleCloturer}
+        onCancel={() => setShowCloturerConfirm(false)}
+      />
     </div>
   );
 }

@@ -61,6 +61,10 @@ class DemandeAnalyseCreateSerializer(serializers.ModelSerializer):
         request = self.context['request']
         user = request.user
         hopital = user.hopital
+        if not hopital:
+            raise serializers.ValidationError(
+                "Votre compte laborantin n'est pas associé à un hôpital. Contactez l'administrateur."
+            )
         return DemandeAnalyse.objects.create(
             laborantin=user,
             hopital=hopital,

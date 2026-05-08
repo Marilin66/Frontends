@@ -5,6 +5,7 @@ import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader } from '@/components/ui';
 import { ArrowLeft, Share2, Search, CheckCircle, User, Building, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ErrorModal } from '@/components/ui';
 
 export default function ResultSharePage() {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ export default function ResultSharePage() {
   const [search, setSearch] = useState('');
   const [sharing, setSharing] = useState<number | null>(null);
   const [shared, setShared] = useState<number[]>([]);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -34,7 +36,7 @@ export default function ResultSharePage() {
     try {
       await api.post(`${endpoints.resultats}${id}/partager/`, { medecin: medecinId });
       setShared(s => [...s, medecinId]);
-    } catch { alert('Erreur lors du partage.'); }
+    } catch { setErrorMsg('Erreur lors du partage. Veuillez réessayer.'); }
     finally { setSharing(null); }
   };
 
@@ -151,6 +153,7 @@ export default function ResultSharePage() {
           })}
         </div>
       )}
+      <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
     </div>
   );
 }

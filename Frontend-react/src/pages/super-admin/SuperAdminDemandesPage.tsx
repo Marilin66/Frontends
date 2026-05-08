@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader } from '@/components/ui';
-import { Inbox, RefreshCw, CheckCircle, XCircle, Clock, Building, User, Calendar, ChevronDown } from 'lucide-react';
+import { Inbox, RefreshCw, CheckCircle, XCircle, Clock, Building, User, Calendar, ChevronDown, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type Tab = 'en_attente' | 'valide' | 'refuse';
@@ -28,6 +28,7 @@ export default function SuperAdminDemandesPage() {
   const [refusMotif, setRefusMotif] = useState<Record<number, string>>({});
   const [showRefusForm, setShowRefusForm] = useState<number | null>(null);
   const [processing, setProcessing] = useState<number | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{ id: number; nom: string } | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -41,12 +42,16 @@ export default function SuperAdminDemandesPage() {
   useEffect(() => { fetchData(); }, []);
 
   const handleValider = async (id: number) => {
-    if (!confirm('Valider cette demande ? Le service sera ajouté à l\'hôpital.')) return;
+    setConfirmModal(null);
     setProcessing(id);
     try {
       await api.post(endpoints.validerDemande(id));
       fetchData();
-    } catch { alert('Erreur lors de la validation.'); }
+    } catch (e: any) {
+      const msg = e.response?.data?.detail || 'Erreur lors de la validation.';
+      // On affiche dans le snackbar via state — pas d'alert
+      console.error(msg);
+    }
     finally { setProcessing(null); }
   };
 
@@ -57,7 +62,9 @@ export default function SuperAdminDemandesPage() {
       await api.post(endpoints.refuserDemande(id), { commentaire: motif });
       setShowRefusForm(null);
       fetchData();
-    } catch { alert('Erreur lors du refus.'); }
+    } catch (e: any) {
+      console.error('Erreur lors du refus.', e);
+    }
     finally { setProcessing(null); }
   };
 
@@ -193,7 +200,7 @@ export default function SuperAdminDemandesPage() {
                               <XCircle className="w-4 h-4" /> Refuser
                             </button>
                             <button
-                              onClick={() => handleValider(d.id)}
+                              onClick={() => setConfirmModal({ id: d.id, nom: d.nom_nouveau_service ?? d.service_existant_nom ?? 'ce service' })}
                               disabled={processing === d.id}
                               className="flex-1 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
                             >
@@ -211,6 +218,57 @@ export default function SuperAdminDemandesPage() {
           ))}
         </div>
       )}
+
+      {/* Modale de confirmation validation */}
+      <AnimatePresence>
+        {confirmModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={() => setConfirmModal(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-5"
+            >
+              {/* Icône */}
+              <div className="flex items-center justify-center w-12 h-12 bg-green-50 rounded-xl mx-auto">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+
+              {/* Texte */}
+              <div className="text-center space-y-1">
+                <h3 className="text-base font-bold text-slate-900">Valider cette demande ?</h3>
+                <p className="text-sm text-slate-500">
+                  Le service <span className="font-semibold text-slate-700">"{confirmModal.nom}"</span> sera ajouté à l'hôpital.
+                </p>
+              </div>
+
+              {/* Boutons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmModal(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={() => handleValider(confirmModal.id)}
+                  className="flex-1 py-2.5 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition flex items-center justify-center gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" /> Confirmer
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
