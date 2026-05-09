@@ -68,7 +68,7 @@ export default function PatientsPage() {
               type="text"
               placeholder="Rechercher un patient..."
               value={searchTerm}
-              onChange={e => { setSearchTerm(e.target.value); setPage(1); }}}
+              onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
               className="w-64 pl-9 px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
             />
           </div>
