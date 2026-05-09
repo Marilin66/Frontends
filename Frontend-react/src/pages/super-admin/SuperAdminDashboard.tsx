@@ -17,8 +17,51 @@ export default function SuperAdminDashboard() {
   const fetchStats = () => {
     setLoading(true);
     api.get(endpoints.superAdminStats)
-      .then((res: any) => setStats(res))
-      .catch(console.error)
+      .then((res: any) => {
+        // Le backend peut retourner {} si le rôle n'est pas admin_general
+        // Dans ce cas, on charge les données manuellement depuis les endpoints individuels
+        if (res && (res.total_hopitaux !== undefined || res.total_medecins !== undefined)) {
+          setStats(res);
+        } else {
+          // Fallback : charger les données depuis les endpoints individuels
+          Promise.all([
+            api.get(endpoints.hopitaux).catch(() => ({ results: [], count: 0 })),
+            api.get(endpoints.medecins).catch(() => ({ results: [], count: 0 })),
+            api.get(endpoints.patients).catch(() => ({ results: [], count: 0 })),
+            api.get(endpoints.rendezVous).catch(() => ({ results: [], count: 0 })),
+          ]).then(([hopitaux, medecins, patients, rdvs]: any) => {
+            const countOf = (d: any) => typeof d === 'number' ? d : d?.count ?? (Array.isArray(d) ? d.length : d?.results?.length ?? 0);
+            setStats({
+              total_hopitaux: countOf(hopitaux),
+              total_medecins: countOf(medecins),
+              total_patients: countOf(patients),
+              total_rdv:      countOf(rdvs),
+              active_users:   0,
+              total_messages: 0,
+              daily_logins:   [],
+            });
+          }).catch(console.error);
+        }
+      })
+      .catch((err) => {
+        console.error('Stats error:', err);
+        // En cas d'erreur totale, charger quand même les données de base
+        Promise.all([
+          api.get(endpoints.hopitaux).catch(() => null),
+          api.get(endpoints.medecins).catch(() => null),
+        ]).then(([hopitaux, medecins]: any) => {
+          const countOf = (d: any) => d?.count ?? (Array.isArray(d) ? d.length : d?.results?.length ?? 0);
+          setStats({
+            total_hopitaux: countOf(hopitaux),
+            total_medecins: countOf(medecins),
+            total_patients: 0,
+            total_rdv: 0,
+            active_users: 0,
+            total_messages: 0,
+            daily_logins: [],
+          });
+        }).catch(() => setStats({}));
+      })
       .finally(() => setLoading(false));
   };
 
@@ -66,7 +109,7 @@ export default function SuperAdminDashboard() {
               </div>
               {s.href && <ChevronRight className="w-4 h-4 text-slate-300" />}
             </div>
-            <p className="text-3xl font-bold text-slate-900">{s.value.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-slate-900">{(s.value ?? 0).toLocaleString()}</p>
             <p className="text-xs font-medium text-slate-600 mt-1">{s.label}</p>
           </motion.div>
         ))}
