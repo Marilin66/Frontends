@@ -251,7 +251,7 @@ export default function MessagesPage() {
   if (loading && conversations.length === 0 && contacts.length === 0) return <PageLoader />;
 
   return (
-    <div className="flex h-[calc(100vh-5rem)] -mx-6 -my-8 lg:-mx-10 lg:-my-10 overflow-hidden bg-white rounded-2xl border border-slate-200 shadow-card">
+    <div className="flex h-[calc(100dvh-3.5rem)] sm:h-[calc(100dvh-4rem)] -mx-3 -my-4 sm:-mx-6 sm:-my-6 lg:-mx-10 lg:-my-8 overflow-hidden bg-white rounded-none sm:rounded-2xl border-0 sm:border border-slate-200 shadow-none sm:shadow-card">
 
       {/* ── Sidebar ──────────────────────────────────────────────────────── */}
       <div className={`w-full lg:w-80 xl:w-96 flex flex-col border-r border-slate-100 bg-white ${active ? 'hidden lg:flex' : 'flex'}`}>

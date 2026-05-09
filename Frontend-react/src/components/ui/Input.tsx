@@ -28,8 +28,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={`
-              w-full h-10 px-3 bg-white border rounded-xl text-sm text-slate-900 placeholder:text-slate-400
+              w-full h-11 px-3 bg-white border rounded-xl text-sm text-slate-900 placeholder:text-slate-400
               transition-all duration-150 outline-none
+              touch-manipulation
               ${leftIcon ? 'pl-10' : ''}
               ${rightIcon ? 'pr-10' : ''}
               ${error

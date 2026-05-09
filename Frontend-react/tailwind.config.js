@@ -15,6 +15,7 @@ export default {
         success: '#10B981',
         warning: '#F59E0B',
         error:   '#EF4444',
+        info:    '#0EA5E9',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
@@ -28,6 +29,7 @@ export default {
         'card-lg':  '0 8px 24px 0 rgb(0 0 0 / 0.10)',
         'dropdown': '0 8px 30px -4px rgb(0 0 0 / 0.12), 0 0 0 1px rgb(0 0 0 / 0.04)',
         'modal':    '0 24px 64px -12px rgb(0 0 0 / 0.18)',
+        'premium':  '0 4px 24px 0 rgb(0 0 0 / 0.08)',
       },
       borderRadius: {
         '2xl': '16px',
@@ -39,6 +41,18 @@ export default {
       },
       screens: {
         'xs': '480px',
+        // Les breakpoints Tailwind par défaut :
+        // sm: 640px, md: 768px, lg: 1024px, xl: 1280px, 2xl: 1536px
+      },
+      height: {
+        'screen-dvh': '100dvh',
+      },
+      minHeight: {
+        'screen-dvh': '100dvh',
+      },
+      spacing: {
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+        'safe-top':    'env(safe-area-inset-top)',
       },
     },
   },

@@ -1,6 +1,7 @@
 // @ts-nocheck
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Calendar, MessageCircle, FileText, Shield, MapPin, ArrowRight, CheckCircle, Star, Users, Building, Activity } from 'lucide-react';
+import { Heart, Calendar, MessageCircle, FileText, Shield, MapPin, ArrowRight, CheckCircle, Star, Users, Building, Activity, Menu, X } from 'lucide-react';
 
 const features = [
   { title: 'Prise de rendez-vous',   desc: 'Réservez une consultation en quelques clics avec les médecins disponibles.',          icon: Calendar,      color: 'text-blue-600 bg-blue-50' },
@@ -19,12 +20,14 @@ const stats = [
 ];
 
 export default function PublicHomePage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-white">
 
       {/* ── Navbar ──────────────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/60">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-base">H</span>
@@ -32,6 +35,7 @@ export default function PublicHomePage() {
             <span className="font-bold text-slate-900 text-lg">Hopitel</span>
           </div>
 
+          {/* Liens desktop */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
             <a href="#features" className="hover:text-slate-900 transition-colors">Fonctionnalités</a>
             <a href="#stats" className="hover:text-slate-900 transition-colors">Chiffres clés</a>
@@ -41,49 +45,90 @@ export default function PublicHomePage() {
             <Link to="/track-results" className="hover:text-slate-900 transition-colors">Résultats Labo</Link>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm font-semibold text-slate-700 hover:text-slate-900 px-4 py-2 rounded-xl hover:bg-slate-100 transition-all">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link to="/login" className="hidden sm:block text-sm font-semibold text-slate-700 hover:text-slate-900 px-4 py-2 rounded-xl hover:bg-slate-100 transition-all">
               Connexion
             </Link>
             <Link to="/register" className="text-sm font-semibold bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-dark transition-all shadow-sm hover:shadow-md">
-              Créer un compte
+              S'inscrire
             </Link>
+            {/* Burger mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors touch-manipulation"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Menu mobile déroulant */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 space-y-1">
+            {[
+              { label: 'Fonctionnalités', href: '#features', internal: false },
+              { label: 'Hôpitaux', href: '/hospitals', internal: true },
+              { label: 'Urgences', href: '/emergency', internal: true },
+              { label: 'Assistant IA', href: '/chatbot', internal: true },
+              { label: 'Résultats Labo', href: '/track-results', internal: true },
+              { label: 'Connexion', href: '/login', internal: true },
+            ].map((item) =>
+              item.internal ? (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block px-3 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  {item.label}
+                </a>
+              )
+            )}
+          </div>
+        )}
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/60 to-white pt-20 pb-24 lg:pt-28 lg:pb-32">
+      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50/60 to-white pt-14 pb-16 lg:pt-28 lg:pb-32">
         {/* Décoration */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100/40 rounded-full -translate-y-1/3 translate-x-1/3 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-100/30 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
         </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 text-center">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold px-4 py-2 rounded-full mb-8">
             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
             Plateforme de santé numérique — République du Bénin
           </div>
 
-          <h1 className="text-5xl lg:text-7xl font-bold text-slate-900 leading-[1.1] tracking-tight mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-slate-900 leading-[1.1] tracking-tight mb-6">
             Votre santé,{' '}
             <span className="text-primary">simplifiée.</span>
           </h1>
 
-          <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-lg sm:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
             La plateforme hospitalière connectée pour un suivi médical moderne, accessible à tous les citoyens du Bénin.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Link to="/register" className="inline-flex items-center gap-2 bg-primary text-white font-semibold px-8 py-4 rounded-2xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:-translate-y-0.5 text-base">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
+            <Link to="/register" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-white font-semibold px-8 py-4 rounded-2xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:-translate-y-0.5 text-base">
               Commencer gratuitement <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link to="/hospitals" className="inline-flex items-center gap-2 bg-white text-slate-700 font-semibold px-8 py-4 rounded-2xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all text-base">
+            <Link to="/hospitals" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-700 font-semibold px-8 py-4 rounded-2xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all text-base">
               Explorer les hôpitaux
             </Link>
-            <Link to="/chatbot" className="inline-flex items-center gap-2 bg-white text-slate-700 font-semibold px-8 py-4 rounded-2xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all text-base">
+            <Link to="/chatbot" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-slate-700 font-semibold px-8 py-4 rounded-2xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all text-base">
               Assistant IA gratuit
             </Link>
           </div>
@@ -101,13 +146,13 @@ export default function PublicHomePage() {
       </section>
 
       {/* ── Stats ───────────────────────────────────────────────────── */}
-      <section id="stats" className="py-16 bg-slate-900">
-        <div className="max-w-7xl mx-auto px-6">
+      <section id="stats" className="py-12 sm:py-16 bg-slate-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {stats.map((s, i) => (
               <div key={i} className="text-center">
                 <p className="text-2xl sm:text-3xl lg:text-5xl font-bold text-white mb-2">{s.value}</p>
-                <p className="text-slate-400 text-sm">{s.label}</p>
+                <p className="text-slate-400 text-xs sm:text-sm">{s.label}</p>
               </div>
             ))}
           </div>
@@ -115,22 +160,22 @@ export default function PublicHomePage() {
       </section>
 
       {/* ── Features ────────────────────────────────────────────────── */}
-      <section id="features" className="py-24 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Tout ce dont vous avez besoin</h2>
-            <p className="text-slate-500 text-lg max-w-xl mx-auto">
+      <section id="features" className="py-16 sm:py-24 bg-slate-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 sm:mb-16">
+            <h2 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-4">Tout ce dont vous avez besoin</h2>
+            <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto">
               Une plateforme complète pour gérer votre parcours de soins de A à Z.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {features.map((f, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-card-md hover:border-slate-300 transition-all group">
-                <div className={`w-12 h-12 ${f.color.split(' ')[1]} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-                  <f.icon className={`w-6 h-6 ${f.color.split(' ')[0]}`} />
+              <div key={i} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 hover:shadow-card-md hover:border-slate-300 transition-all group">
+                <div className={`w-11 h-11 ${f.color.split(' ')[1]} rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                  <f.icon className={`w-5 h-5 ${f.color.split(' ')[0]}`} />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{f.title}</h3>
+                <h3 className="text-base font-semibold text-slate-900 mb-2">{f.title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
@@ -139,13 +184,13 @@ export default function PublicHomePage() {
       </section>
 
       {/* ── Accès rapide sans compte ────────────────────────────────── */}
-      <section className="py-16 bg-white border-t border-slate-100">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Accès immédiat, sans compte</h2>
-            <p className="text-slate-500">Ces services sont disponibles pour tous, sans inscription.</p>
+      <section className="py-12 sm:py-16 bg-white border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8 sm:mb-10">
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Accès immédiat, sans compte</h2>
+            <p className="text-slate-500 text-sm sm:text-base">Ces services sont disponibles pour tous, sans inscription.</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             {[
               { label: 'Hôpitaux & Carte', icon: MapPin, route: '/hospitals', color: 'text-blue-600 bg-blue-50' },
               { label: 'Urgences', icon: Shield, route: '/emergency', color: 'text-red-600 bg-red-50' },
@@ -155,12 +200,12 @@ export default function PublicHomePage() {
               <Link
                 key={item.label}
                 to={item.route}
-                className="flex flex-col items-center gap-3 p-6 bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all group"
+                className="flex flex-col items-center gap-2 sm:gap-3 p-4 sm:p-6 bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all group"
               >
-                <div className={`w-12 h-12 ${item.color.split(' ')[1]} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  <item.icon className={`w-6 h-6 ${item.color.split(' ')[0]}`} />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 ${item.color.split(' ')[1]} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                  <item.icon className={`w-5 h-5 sm:w-6 sm:h-6 ${item.color.split(' ')[0]}`} />
                 </div>
-                <span className="text-sm font-semibold text-slate-700 text-center">{item.label}</span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-700 text-center">{item.label}</span>
               </Link>
             ))}
           </div>
@@ -168,23 +213,23 @@ export default function PublicHomePage() {
       </section>
 
       {/* ── CTA ─────────────────────────────────────────────────────── */}
-      <section className="py-24 bg-white">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <div className="bg-gradient-to-r from-primary to-blue-700 rounded-3xl p-12 lg:p-16 text-white relative overflow-hidden">
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <div className="bg-gradient-to-r from-primary to-blue-700 rounded-3xl p-8 sm:p-12 lg:p-16 text-white relative overflow-hidden">
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full -translate-y-1/2 translate-x-1/4" />
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full translate-y-1/2 -translate-x-1/4" />
             </div>
             <div className="relative">
-              <h2 className="text-3xl lg:text-4xl font-bold mb-4">Prêt à commencer ?</h2>
-              <p className="text-blue-100 text-lg mb-8 max-w-lg mx-auto">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4">Prêt à commencer ?</h2>
+              <p className="text-blue-100 text-base sm:text-lg mb-8 max-w-lg mx-auto">
                 Rejoignez des milliers de patients qui gèrent leur santé avec Hopitel.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/register" className="inline-flex items-center gap-2 bg-white text-primary font-semibold px-8 py-4 rounded-2xl hover:bg-blue-50 transition-all shadow-lg text-base">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                <Link to="/register" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white text-primary font-semibold px-8 py-4 rounded-2xl hover:bg-blue-50 transition-all shadow-lg text-base">
                   Créer mon compte <ArrowRight className="w-5 h-5" />
                 </Link>
-                <Link to="/emergency" className="inline-flex items-center gap-2 text-white/80 hover:text-white font-medium px-6 py-4 transition-colors text-base">
+                <Link to="/emergency" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 text-white/80 hover:text-white font-medium px-6 py-4 transition-colors text-base">
                   Numéros d'urgence
                 </Link>
               </div>
@@ -194,8 +239,8 @@ export default function PublicHomePage() {
       </section>
 
       {/* ── Footer ──────────────────────────────────────────────────── */}
-      <footer className="bg-slate-900 py-12">
-        <div className="max-w-7xl mx-auto px-6">
+      <footer className="bg-slate-900 py-10 sm:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -204,7 +249,7 @@ export default function PublicHomePage() {
               <span className="font-bold text-white">Hopitel</span>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-400">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-slate-400">
               <Link to="/terms" className="hover:text-white transition-colors">Conditions d'utilisation</Link>
               <Link to="/emergency" className="hover:text-white transition-colors">Urgences</Link>
               <Link to="/login" className="hover:text-white transition-colors">Connexion</Link>

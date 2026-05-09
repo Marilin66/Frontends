@@ -52,11 +52,11 @@ export function Header({ onMenuClick, onNotificationsClick, notificationCount = 
   };
 
   return (
-    <header className="sticky top-0 z-50 h-16 bg-white border-b border-slate-200/80 flex items-center px-6 gap-4 shadow-sm">
+    <header className="sticky top-0 z-50 h-14 sm:h-16 bg-white border-b border-slate-200/80 flex items-center px-3 sm:px-6 gap-3 sm:gap-4 shadow-sm">
       {/* Burger mobile */}
       <button
         onClick={onMenuClick}
-        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+        className="lg:hidden w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors touch-manipulation"
       >
         <Menu className="w-5 h-5" />
       </button>
