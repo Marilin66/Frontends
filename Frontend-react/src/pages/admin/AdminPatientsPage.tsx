@@ -1,14 +1,17 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
-import { Avatar, PageLoader } from '@/components/ui';
+import { Avatar, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Users, Search, RefreshCw, Phone, Mail, CheckCircle, XCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const PAGE_SIZE = 15;
 
 export default function AdminPatientsPage() {
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   const fetchData = async () => {
     setLoading(true);
@@ -29,6 +32,8 @@ export default function AdminPatientsPage() {
       (p.email ?? '').toLowerCase().includes(q)
     );
   });
+
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
 
   if (loading && patients.length === 0) return <PageLoader />;
 
@@ -51,7 +56,7 @@ export default function AdminPatientsPage() {
               type="text"
               placeholder="Rechercher un patient…"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}}
               className="w-64 pl-9 px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
             />
           </div>
@@ -94,7 +99,7 @@ export default function AdminPatientsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((p, i) => {
+          {paged.map((p, i) => {
             const initials = `${(p.first_name ?? '')[0] ?? ''}${(p.last_name ?? '')[0] ?? ''}`.toUpperCase();
             return (
               <motion.div key={p.id ?? i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
@@ -127,6 +132,17 @@ export default function AdminPatientsPage() {
             );
           })}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
     </motion.div>
   );

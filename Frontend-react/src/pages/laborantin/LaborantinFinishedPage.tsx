@@ -1,14 +1,17 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
-import { Button, PageLoader } from '@/components/ui';
+import { Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { FlaskConical, CheckCircle, Search, Download, Mail, Calendar, Key } from 'lucide-react';
 import { motion } from 'framer-motion';
+
+const PAGE_SIZE = 15;
 
 export default function LaborantinFinishedPage() {
   const [demandes, setDemandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     // On récupère les demandes clôturées (pas les résultats bruts)
@@ -28,6 +31,8 @@ export default function LaborantinFinishedPage() {
       (d.type_analyse || '').toLowerCase().includes(q)
     );
   });
+
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
 
   if (loading) return <PageLoader />;
 
@@ -50,7 +55,7 @@ export default function LaborantinFinishedPage() {
           placeholder="Rechercher un patient ou une analyse..."
           className="w-full h-10 pl-9 pr-4 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(1); }}
         />
       </div>
 
@@ -64,7 +69,7 @@ export default function LaborantinFinishedPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((d: any, i: number) => (
+          {paged.map((d: any, i: number) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
                 <div className="flex items-start gap-4">
@@ -108,6 +113,17 @@ export default function LaborantinFinishedPage() {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

@@ -2,8 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
-import { Avatar, Badge, Button, Input, PageLoader } from '@/components/ui';
-import { Plus, Mail, Phone, X, Search, Upload, Download, UserCheck, Trash2, Stethoscope, AlertCircle, CheckCircle } from 'lucide-react';
+import { Avatar, Badge, Button, Input, PageLoader, Pagination, usePagination } from '@/components/ui';
+import { Plus, Mail, Phone, X, Search, Upload, Download, UserCheck, Trash2, Stethoscope, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { ErrorModal, SuccessModal, ConfirmModal } from '@/components/ui';
+import { usePermissions } from '@/hooks/usePermissions';
+
+const PAGE_SIZE = 15;
 
 export default function AdminDoctorsPage() {
   const [doctors, setDoctors] = useState([]);
@@ -11,6 +15,7 @@ export default function AdminDoctorsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [form, setForm] = useState({ email: '', first_name: '', last_name: '', telephone: '', specialite_id: '', numero_ordre: '', date_naissance: '1985-01-01', sexe: 'M', biographie: '' });
 
   // Modales feedback
@@ -96,6 +101,10 @@ export default function AdminDoctorsPage() {
     `${d.first_name} ${d.last_name} ${d.specialite}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+
+  const { canCreateMedecin, canDeleteMedecin, canImportMedecins } = usePermissions();
+
   if (loading && doctors.length === 0) return <PageLoader />;
 
   return (
@@ -116,25 +125,31 @@ export default function AdminDoctorsPage() {
             <input
               placeholder="Rechercher un médecin..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="w-full pl-9 px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
             />
           </div>
           <div className="flex gap-2">
-            <label className="cursor-pointer">
-              <input type="file" accept=".csv" className="hidden" onChange={handleCSV} />
-              <div className="inline-flex items-center gap-2 h-10 px-4 text-sm font-semibold border border-slate-200 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition cursor-pointer">
-                <Upload className="w-4 h-4" /> Import CSV
-              </div>
-            </label>
-            <a href={`${import.meta.env.VITE_API_URL || 'https://backend-soutenance-1et0.onrender.com/api'}${endpoints.medecinsImportTemplate}`} target="_blank" rel="noopener noreferrer">
-              <div className="inline-flex items-center gap-2 h-10 px-4 text-sm font-semibold border border-slate-200 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition cursor-pointer">
-                <Download className="w-4 h-4" /> Modèle
-              </div>
-            </a>
-            <Button onClick={() => setShowModal(true)} className="h-10 px-4 rounded-xl text-sm font-semibold">
-              <Plus className="w-4 h-4 mr-2" /> Nouveau médecin
-            </Button>
+            {canImportMedecins && (
+              <label className="cursor-pointer">
+                <input type="file" accept=".csv" className="hidden" onChange={handleCSV} />
+                <div className="inline-flex items-center gap-2 h-10 px-4 text-sm font-semibold border border-slate-200 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition cursor-pointer">
+                  <Upload className="w-4 h-4" /> Import CSV
+                </div>
+              </label>
+            )}
+            {canImportMedecins && (
+              <a href={`${import.meta.env.VITE_API_URL || 'https://backend-soutenance-1et0.onrender.com/api'}${endpoints.medecinsImportTemplate}`} target="_blank" rel="noopener noreferrer">
+                <div className="inline-flex items-center gap-2 h-10 px-4 text-sm font-semibold border border-slate-200 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition cursor-pointer">
+                  <Download className="w-4 h-4" /> Modèle
+                </div>
+              </a>
+            )}
+            {canCreateMedecin && (
+              <Button onClick={() => setShowModal(true)} className="h-10 px-4 rounded-xl text-sm font-semibold">
+                <Plus className="w-4 h-4 mr-2" /> Nouveau médecin
+              </Button>
+            )}
           </div>
         </div>
       </section>
@@ -159,7 +174,7 @@ export default function AdminDoctorsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filtered.map((doc: any, i: number) => (
+                {paged.map((doc: any, i: number) => (
                   <motion.tr
                     key={doc.id}
                     initial={{ opacity: 0, y: 6 }}
@@ -188,12 +203,14 @@ export default function AdminDoctorsPage() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <button
-                        onClick={() => setConfirmDelete(doc.id)}
-                        className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canDeleteMedecin && (
+                        <button
+                          onClick={() => setConfirmDelete(doc.id)}
+                          className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </td>
                   </motion.tr>
                 ))}
@@ -203,9 +220,20 @@ export default function AdminDoctorsPage() {
         )}
       </div>
 
-      {/* Modal création */}
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
+      )}
+
+      {/* Modal création — visible seulement si droits */}
       <AnimatePresence>
-        {showModal && (
+        {showModal && canCreateMedecin && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}

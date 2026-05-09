@@ -1,13 +1,17 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
-import { Card, Button, Badge, PageLoader, ErrorModal } from '@/components/ui';import {
+import { Card, Button, Badge, PageLoader, ErrorModal, Pagination, usePagination } from '@/components/ui';
+import {
   Plus, Search, Building, MapPin, Mail, Phone,
-  ArrowRight, X, Check, RefreshCw,
-  ToggleLeft, ToggleRight, ChevronRight, Edit2
+  X, RefreshCw, ToggleLeft, ToggleRight, ChevronRight,
+  Edit2, CheckCircle
 } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
+
+const PAGE_SIZE = 12;
 
 interface Hopital {
   id: number;
@@ -29,15 +33,20 @@ const EMPTY_FORM = {
 
 export default function EntitiesPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [hopitaux, setHopitaux] = useState<Hopital[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [modal, setModal] = useState<'create' | 'edit' | null>(null);
+  const [page, setPage] = useState(1);
+  const [modal, setModal] = useState<'edit' | null>(null);
   const [selected, setSelected] = useState<Hopital | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState(
+    location.state?.created ? 'Hôpital créé avec succès !' : ''
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -50,11 +59,13 @@ export default function EntitiesPage() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const openCreate = () => {
-    setForm({ ...EMPTY_FORM });
-    setSelected(null);
-    setModal('create');
-  };
+  // Auto-dismiss du message de succès
+  useEffect(() => {
+    if (successMsg) {
+      const t = setTimeout(() => setSuccessMsg(''), 4000);
+      return () => clearTimeout(t);
+    }
+  }, [successMsg]);
 
   const openEdit = (h: Hopital) => {
     setForm({
@@ -88,9 +99,7 @@ export default function EntitiesPage() {
       if (form.latitude)   payload.latitude   = parseFloat(form.latitude);
       if (form.longitude)  payload.longitude  = parseFloat(form.longitude);
 
-      if (modal === 'create') {
-        await api.post(endpoints.hopitaux, payload);
-      } else if (modal === 'edit' && selected) {
+      if (modal === 'edit' && selected) {
         await api.patch(`${endpoints.hopitaux}${selected.id}/`, payload);
       }
       closeModal();
@@ -115,6 +124,9 @@ export default function EntitiesPage() {
     `${h.nom} ${h.ville} ${h.adresse}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+  const { canCreateHopital, canEditHopital, canToggleHopital } = usePermissions();
+
   const actifs   = hopitaux.filter(h => h.is_active).length;
   const inactifs = hopitaux.filter(h => !h.is_active).length;
 
@@ -138,18 +150,38 @@ export default function EntitiesPage() {
               type="text"
               placeholder="Rechercher par nom, ville…"
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => { setSearch(e.target.value); setPage(1); }}
               className="w-64 pl-9 px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
             />
           </div>
           <button onClick={fetchData} className="flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
             <RefreshCw className="w-4 h-4" /> Actualiser
           </button>
-          <Button onClick={openCreate} className="h-10 px-4 rounded-xl text-sm font-semibold">
-            <Plus className="w-4 h-4 mr-2" /> Nouvel hôpital
-          </Button>
+          {canCreateHopital && (
+            <Button onClick={() => navigate('/super-admin/hopitaux/nouveau')} className="h-10 px-4 rounded-xl text-sm font-semibold">
+              <Plus className="w-4 h-4 mr-2" /> Nouvel hôpital
+            </Button>
+          )}
         </div>
       </section>
+
+      {/* Toast succès création */}
+      <AnimatePresence>
+        {successMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800"
+          >
+            <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <p className="text-sm font-medium flex-1">{successMsg}</p>
+            <button onClick={() => setSuccessMsg('')} className="text-emerald-500 hover:text-emerald-700 transition">
+              <X className="w-4 h-4" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -178,14 +210,14 @@ export default function EntitiesPage() {
             {search ? `Aucun résultat pour "${search}"` : 'Aucun hôpital enregistré'}
           </p>
           {!search && (
-            <button onClick={openCreate} className="mt-4 flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-white text-sm font-semibold mx-auto hover:bg-primary/90 transition">
+            <button onClick={() => navigate('/super-admin/hopitaux/nouveau')} className="mt-4 flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-white text-sm font-semibold mx-auto hover:bg-primary/90 transition">
               <Plus className="w-4 h-4" /> Créer le premier hôpital
             </button>
           )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filtered.map((h, i) => (
+          {paged.map((h, i) => (
             <motion.div key={h.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <div className="bg-white rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-200 overflow-hidden">
 
@@ -261,9 +293,20 @@ export default function EntitiesPage() {
         </div>
       )}
 
-      {/* Modal Créer / Modifier */}
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
+      )}
+
+      {/* Modal Modifier uniquement */}
       <AnimatePresence>
-        {modal && (
+        {modal === 'edit' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
@@ -279,24 +322,17 @@ export default function EntitiesPage() {
               className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto no-scrollbar"
             >
               <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
-                {/* Modal header — white, clean */}
                 <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">
-                      {modal === 'create' ? 'Nouvel hôpital' : `Modifier — ${selected?.nom}`}
-                    </h2>
-                    <p className="text-sm text-slate-500 mt-0.5">
-                      {modal === 'create' ? 'Remplissez les informations de l\'établissement' : 'Modifiez les informations'}
-                    </p>
+                    <h2 className="text-lg font-bold text-slate-900">Modifier — {selected?.nom}</h2>
+                    <p className="text-sm text-slate-500 mt-0.5">Modifiez les informations de l'établissement</p>
                   </div>
                   <button onClick={closeModal} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSave} className="p-6 space-y-5">
-
                   <div>
                     <p className="text-xs font-medium text-slate-600 mb-3">Informations générales</p>
                     <div className="space-y-4">
@@ -364,8 +400,7 @@ export default function EntitiesPage() {
                     <button type="submit" disabled={saving}
                       className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      <Check className="w-4 h-4" />
-                      {saving ? 'Enregistrement…' : modal === 'create' ? 'Créer l\'hôpital' : 'Enregistrer'}
+                      {saving ? 'Enregistrement…' : 'Enregistrer'}
                     </button>
                   </div>
                 </form>

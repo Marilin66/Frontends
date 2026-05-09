@@ -2,312 +2,291 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent, 
-  Button, 
-  Badge,
-  Avatar,
-  Input,
-  PageLoader 
-} from '@/components/ui';
-import { 
-  UserPlus, 
-  Mail, 
-  Phone, 
-  X, 
-  Save, 
-  ShieldCheck, 
-  Trash,
-  MoreVertical,
-  Briefcase,
-  Activity,
-  UserCheck,
-  ChevronRight,
-  Zap,
-  Globe,
-  Database,
-  Filter,
-  AlertCircle,
-  Search
+import { Avatar, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
+import { ConfirmModal, ErrorModal } from '@/components/ui';
+import {
+  UserPlus, Mail, Phone, X, ShieldCheck,
+  Trash2, Search, RefreshCw, FlaskConical, AlertCircle
 } from 'lucide-react';
-import { ConfirmModal } from '@/components/ui';
+import { usePermissions } from '@/hooks/usePermissions';
 
-interface Laborantin {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  telephone: string;
-  is_active: boolean;
-  hopital_nom: string;
-}
+const PAGE_SIZE = 10;
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants: any = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1, 
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
+const inputCls = `w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm
+  text-slate-900 placeholder:text-slate-400 focus:border-primary focus:outline-none
+  focus:ring-2 focus:ring-primary/10 transition-all`;
+const labelCls = 'block text-sm font-medium text-slate-700 mb-1.5';
 
 export default function AdminStaffPage() {
-  const [staff, setStaff] = useState<Laborantin[]>([]);
+  const [staff, setStaff] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
-  
+  const [errorMsg, setErrorMsg] = useState('');
   const [formData, setFormData] = useState({
-    email: '',
-    first_name: '',
-    last_name: '',
-    telephone: '',
-    date_naissance: '1995-01-01',
-    sexe: 'M',
-    laboratoire: '',
+    email: '', first_name: '', last_name: '', telephone: '',
+    date_naissance: '1995-01-01', sexe: 'M', laboratoire: '',
   });
 
   const fetchStaff = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const data: any = await api.get(endpoints.laborantins);
       setStaff(Array.isArray(data) ? data : data.results || []);
-    } catch (error) {
-      console.error('Erreur:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setIsLoading(false); }
   };
 
-  useEffect(() => {
-    fetchStaff();
-  }, []);
+  useEffect(() => { fetchStaff(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       await api.post(endpoints.laborantins, formData);
       setIsModalOpen(false);
-      fetchStaff();
       setFormData({ email: '', first_name: '', last_name: '', telephone: '', date_naissance: '1995-01-01', sexe: 'M', laboratoire: '' });
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+      fetchStaff();
+    } catch (err: any) {
+      const data = err.response?.data;
+      const msg = data ? Object.entries(data).map(([k, v]: any) =>
+        `${k === 'non_field_errors' ? '' : k + ' : '}${Array.isArray(v) ? v.join(', ') : v}`
+      ).join('\n') : "Erreur lors de la création.";
+      setErrorMsg(msg);
+    } finally { setIsLoading(false); }
   };
 
   const handleDelete = async (id: number) => {
     setConfirmDeleteId(null);
     try {
-      setIsLoading(true);
       await api.delete(`${endpoints.laborantins}${id}/`);
       fetchStaff();
-    } catch (error: any) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { setErrorMsg('Erreur lors de la désactivation.'); }
   };
 
-  const filteredStaff = staff.filter(s => 
-    `${s.first_name} ${s.last_name}`.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = staff.filter(s =>
+    `${s.first_name} ${s.last_name} ${s.email}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-5 lg:space-y-12 pb-20"
-    >
-      {/* High-Contrast Human Capital Header */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 lg:gap-8">
-        <motion.div variants={itemVariants}>
-          <div className="flex items-center gap-3 mb-4">
-             <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center shadow-lg">
-                <Briefcase className="w-6 h-6 text-white" />
-             </div>
-             <div className="bg-slate-900 text-white border-2 border-slate-800 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest italic">
-                HUMAN_CAPITAL.
-             </div>
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Registre Expert</h1>
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Indexation des techniciens cliniques certifiés</p>
-        </motion.div>
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+  const { canCreateLaborantin, canDeleteLaborantin } = usePermissions();
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="relative w-full sm:w-64 group">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors z-10" />
-             <input 
-               placeholder="Filtrer les collaborateurs..." 
-               className="w-full pl-11 h-12 rounded-xl bg-white border-2 border-slate-200 focus:border-primary text-slate-950 text-xs font-black transition-all shadow-sm italic placeholder:text-slate-300"
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-             />
+  if (isLoading && staff.length === 0) return <PageLoader />;
+
+  return (
+    <div className="space-y-6 pb-20 animate-fade-in">
+
+      {/* ── Header ── */}
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Laborantins</h1>
+          <p className="text-slate-500 mt-1 text-sm">
+            {staff.length} laborantin{staff.length !== 1 ? 's' : ''} enregistré{staff.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              placeholder="Rechercher un laborantin…"
+              className="w-56 pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+            />
           </div>
-          <Button onClick={() => setIsModalOpen(true)} variant="primary" className="h-12 px-8 rounded-xl text-[10px] w-full sm:w-auto italic">
-            <UserPlus className="w-4 h-4 mr-2" /> NOUVEAU PROFIL
-          </Button>
+          <button onClick={fetchStaff} className="flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+            <RefreshCw className="w-4 h-4" /> Actualiser
+          </button>
+          {canCreateLaborantin && (
+            <Button onClick={() => setIsModalOpen(true)} className="h-10 px-4 rounded-xl text-sm font-semibold">
+              <UserPlus className="w-4 h-4 mr-2" /> Nouveau laborantin
+            </Button>
+          )}
         </div>
       </section>
 
-      {/* Staff Identity Architecture */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
-        {filteredStaff.length > 0 ? filteredStaff.map((member) => (
-          <motion.div key={member.id} variants={itemVariants}>
-            <Card className="relative h-full border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group p-4 sm:p-6 lg:p-10 flex flex-col items-center shadow-sm relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-primary/5 transition-colors" />
-               
-               <div className="relative z-10 w-full flex flex-col items-center">
-                  <div className="relative mb-6">
-                     <Avatar name={`${member.first_name} ${member.last_name}`} size="lg" className="ring-4 ring-white shadow-xl group-hover:scale-110 transition-transform duration-500" />
-                     <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-emerald-500 border-2 border-white rounded-lg flex items-center justify-center text-white">
-                        <UserCheck className="w-4 h-4" />
-                     </div>
-                  </div>
+      {/* ── Liste ── */}
+      {filtered.length === 0 ? (
+        <div className="py-20 text-center bg-white rounded-2xl border border-slate-200">
+          <FlaskConical className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+          <p className="text-slate-500 font-medium">
+            {searchTerm ? `Aucun résultat pour "${searchTerm}"` : 'Aucun laborantin enregistré'}
+          </p>
+          {!searchTerm && (
+            <button onClick={() => setIsModalOpen(true)} className="mt-4 flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-white text-sm font-semibold mx-auto hover:bg-primary/90 transition">
+              <UserPlus className="w-4 h-4" /> Ajouter le premier laborantin
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-600">Laborantin</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-600 hidden md:table-cell">Contact</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-600 hidden lg:table-cell">Laboratoire</th>
+                  <th className="text-left px-5 py-3 text-xs font-medium text-slate-600">Statut</th>
+                  <th className="px-5 py-3 text-right text-xs font-medium text-slate-600">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {paged.map((member: any, i: number) => (
+                  <motion.tr
+                    key={member.id}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.03 }}
+                    className="hover:bg-slate-50 transition-colors"
+                  >
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={`${member.first_name} ${member.last_name}`} size="sm" className="flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{member.first_name} {member.last_name}</p>
+                          <p className="text-xs text-slate-500 mt-0.5">{member.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 hidden md:table-cell">
+                      <span className="text-sm text-slate-600">{member.telephone || '—'}</span>
+                    </td>
+                    <td className="px-5 py-3.5 hidden lg:table-cell">
+                      <span className="text-sm text-slate-600">{member.laboratoire || '—'}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
+                        member.is_active !== false
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      }`}>
+                        {member.is_active !== false ? 'Actif' : 'Inactif'}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-right">
+                      {canDeleteLaborantin && (
+                        <button
+                          onClick={() => setConfirmDeleteId(member.id)}
+                          className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all"
+                          title="Désactiver"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </td>
+                  </motion.tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-                  <div className="space-y-2 mb-8 text-center">
-                     <div className="bg-indigo-50 text-indigo-600 border-2 border-indigo-100 px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest italic inline-block">TECH_SUP_LABO</div>
-                     <h3 className="text-xl lg:text-3xl font-black text-slate-950 tracking-tighter uppercase italic leading-none">{member.first_name} {member.last_name}</h3>
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">ID_SYSTEM: X-0{member.id}72</p>
-                  </div>
+          {/* Pagination */}
+          <div className="px-5 py-4">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+            />
+          </div>
+        </div>
+      )}
 
-                  <div className="w-full space-y-3 text-left bg-slate-50 p-5 rounded-xl border-2 border-slate-100 mb-8">
-                    <div className="flex items-center gap-3 text-[10px] font-black text-slate-900 italic">
-                      <Mail className="w-4 h-4 text-primary" /> {member.email}
-                    </div>
-                    <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                      <Phone className="w-4 h-4 text-emerald-500" /> {member.telephone}
-                    </div>
-                  </div>
-
-                  <div className="mt-auto flex items-center justify-between w-full border-t-2 border-slate-50 pt-6">
-                    <Badge variant={member.is_active ? 'success' : 'warning'} className="px-3 py-1.5 rounded-lg font-black text-[8px] uppercase tracking-widest italic">
-                      {member.is_active ? 'OPÉRATIONNEL' : 'INACTIF'}
-                    </Badge>
-                    <div className="flex items-center gap-2">
-                       <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-2 text-slate-300 hover:text-slate-950">
-                          <MoreVertical className="w-4 h-4" />
-                       </Button>
-                       <Button 
-                         variant="outline" 
-                         size="sm" 
-                         className="h-9 w-9 p-0 rounded-lg border-2 text-slate-300 hover:text-rose-600 hover:border-rose-200"
-                         onClick={() => setConfirmDeleteId(member.id)}
-                       >
-                         <Trash className="w-4 h-4" />
-                       </Button>
-                    </div>
-                  </div>
-               </div>
-            </Card>
-          </motion.div>
-        )) : (
-           <div className="col-span-full py-32 text-center bg-slate-50 rounded-3xl border-2 border-slate-100 border-dashed">
-              <AlertCircle className="w-20 h-20 text-slate-300 mx-auto mb-8" />
-              <p className="text-2xl font-black text-slate-400 uppercase tracking-[0.2em] italic">Aucun profil localisé</p>
-           </div>
-        )}
-      </div>
-
-      {/* Enrollment Modal Matrix */}
+      {/* ── Modal création — visible seulement si droits ── */}
       <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               onClick={() => setIsModalOpen(false)}
-               className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+        {isModalOpen && canCreateLaborantin && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto no-scrollbar"
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="relative w-full max-w-xl max-h-[90vh] overflow-y-auto no-scrollbar"
             >
-              <Card className="shadow-2xl rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-white/5 bg-white">
-                <CardHeader className="bg-slate-950 p-4 sm:p-6 lg:p-10 flex flex-row items-center justify-between text-white relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -mr-16 -mt-16" />
-                  <div className="relative z-10">
-                    <CardTitle className="text-2xl lg:text-3xl font-black tracking-tighter leading-none italic uppercase">Inscription Expert</CardTitle>
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mt-3 flex items-center gap-2">
-                       <Zap className="w-3.5 h-3.5 text-primary" /> Enrollment de Personnel Certifié
-                    </p>
+              <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Nouveau laborantin</h2>
+                    <p className="text-sm text-slate-500 mt-0.5">Le laborantin recevra un email pour configurer son mot de passe</p>
                   </div>
-                  <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="h-10 w-10 p-0 rounded-lg hover:bg-white/10 text-white relative z-10">
-                    <X className="w-6 h-6" />
-                  </Button>
-                </CardHeader>
-                <form onSubmit={handleCreate}>
-                  <CardContent className="p-4 sm:p-6 lg:p-10 space-y-8 text-black">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Prénom Collaborateur</label>
-                        <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="Ex: Jean..." value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Nom de Famille</label>
-                        <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="Ex: Kouassi..." value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Identifiant E-mail Corréler</label>
-                      <input type="email" required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="staff@matrix.com" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Ligne Directe</label>
-                        <input required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300" placeholder="+229 XX XX XX XX" value={formData.telephone} onChange={(e) => setFormData({...formData, telephone: e.target.value})} />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Sexe Collaborateur</label>
-                        <select 
-                          className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none cursor-pointer italic"
-                          value={formData.sexe}
-                          onChange={(e) => setFormData({...formData, sexe: e.target.value})}
-                        >
-                          <option value="M">Masculin</option>
-                          <option value="F">Féminin</option>
-                        </select>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Date de Naissance Requise</label>
-                      <input type="date" required className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic" value={formData.date_naissance} onChange={(e) => setFormData({...formData, date_naissance: e.target.value})} />
-                    </div>
+                  <button onClick={() => setIsModalOpen(false)} className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
-                    <div className="flex items-center gap-3 p-4 bg-slate-950 rounded-xl border-2 border-white/5">
-                       <ShieldCheck className="w-5 h-5 text-primary" />
-                       <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic leading-relaxed">
-                          Validation requise : En certifiant ce profil, vous engagez la responsabilité structurelle du laboratoire.
-                       </p>
+                <form onSubmit={handleCreate} className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Prénom *</label>
+                      <input required className={inputCls} placeholder="Jean"
+                        value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} />
                     </div>
+                    <div>
+                      <label className={labelCls}>Nom *</label>
+                      <input required className={inputCls} placeholder="Kpomagan"
+                        value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} />
+                    </div>
+                  </div>
 
-                    <Button type="submit" isLoading={isLoading} className="w-full h-14 rounded-xl font-black italic text-[10px] shadow-2xl shadow-primary/20">
-                       CERTIFIER COLLABORATEUR <UserCheck className="w-4 h-4 ml-2" />
+                  <div>
+                    <label className={labelCls}>Email *</label>
+                    <input required type="email" className={inputCls} placeholder="labo@hopital.bj"
+                      value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Téléphone *</label>
+                      <input required type="tel" className={inputCls} placeholder="0197000000"
+                        value={formData.telephone} onChange={(e) => setFormData({ ...formData, telephone: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Laboratoire</label>
+                      <input className={inputCls} placeholder="Ex: Biochimie"
+                        value={formData.laboratoire} onChange={(e) => setFormData({ ...formData, laboratoire: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Date de naissance *</label>
+                      <input required type="date" className={inputCls}
+                        value={formData.date_naissance} onChange={(e) => setFormData({ ...formData, date_naissance: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Sexe *</label>
+                      <select className={inputCls}
+                        value={formData.sexe} onChange={(e) => setFormData({ ...formData, sexe: e.target.value })}>
+                        <option value="M">Masculin</option>
+                        <option value="F">Féminin</option>
+                        <option value="Autre">Autre</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                    <ShieldCheck className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-xs text-blue-700">Un email avec les identifiants sera envoyé automatiquement au laborantin.</p>
+                  </div>
+
+                  <div className="flex gap-3 pt-1">
+                    <button type="button" onClick={() => setIsModalOpen(false)}
+                      className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                      Annuler
+                    </button>
+                    <Button type="submit" isLoading={isLoading} className="flex-1 h-10 rounded-xl text-sm font-semibold">
+                      Créer le laborantin
                     </Button>
-                  </CardContent>
+                  </div>
                 </form>
-              </Card>
+              </div>
             </motion.div>
           </div>
         )}
@@ -315,13 +294,14 @@ export default function AdminStaffPage() {
 
       <ConfirmModal
         open={confirmDeleteId !== null}
-        title="Supprimer ce laborantin ?"
-        message="Le compte sera désactivé et le laborantin ne pourra plus se connecter."
-        confirmLabel="Supprimer"
+        title="Désactiver ce laborantin ?"
+        message="Le laborantin ne pourra plus se connecter ni traiter des analyses."
+        confirmLabel="Désactiver"
         icon="delete"
         onConfirm={() => handleDelete(confirmDeleteId!)}
         onCancel={() => setConfirmDeleteId(null)}
       />
-    </motion.div>
+      <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
+    </div>
   );
 }

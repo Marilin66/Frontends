@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
-import { PageLoader } from '@/components/ui';
+import { PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Users, Search, Mail, Phone, Calendar, RefreshCw, MessageCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+
+const PAGE_SIZE = 15;
 
 interface Patient {
   id: number;
@@ -23,6 +25,7 @@ export default function PatientsPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
 
   useEffect(() => { fetchPatients(); }, []);
 
@@ -41,6 +44,8 @@ export default function PatientsPage() {
   const filtered = patients.filter(p =>
     `${p.first_name} ${p.last_name} ${p.email}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
 
   if (isLoading && patients.length === 0) return <PageLoader />;
 
@@ -63,7 +68,7 @@ export default function PatientsPage() {
               type="text"
               placeholder="Rechercher un patient..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); setPage(1); }}}
               className="w-64 pl-9 px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
             />
           </div>
@@ -102,7 +107,7 @@ export default function PatientsPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((p, i) => {
+          {paged.map((p, i) => {
             const initials = `${p.first_name?.[0] ?? ''}${p.last_name?.[0] ?? ''}`.toUpperCase();
             return (
               <motion.div key={p.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
@@ -145,6 +150,17 @@ export default function PatientsPage() {
             );
           })}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
     </motion.div>
   );

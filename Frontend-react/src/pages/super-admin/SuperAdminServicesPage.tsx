@@ -1,10 +1,12 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
-import { Card, Button, PageLoader } from '@/components/ui';
+import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Activity, Plus, Search, Edit2, Trash2, RefreshCw, X, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorModal, ConfirmModal } from '@/components/ui';
+
+const PAGE_SIZE = 15;
 
 type Mode = 'list' | 'create' | 'edit';
 
@@ -12,6 +14,7 @@ export default function SuperAdminServicesPage() {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [mode, setMode] = useState<Mode>('list');
   const [selected, setSelected] = useState<any>(null);
   const [form, setForm] = useState({ nom: '', description: '' });
@@ -61,6 +64,8 @@ export default function SuperAdminServicesPage() {
     s.nom.toLowerCase().includes(search.toLowerCase()) ||
     (s.description ?? '').toLowerCase().includes(search.toLowerCase())
   );
+
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
 
   if (loading && services.length === 0) return <PageLoader />;
 
@@ -123,7 +128,7 @@ export default function SuperAdminServicesPage() {
           type="text"
           placeholder="Rechercher un service…"
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(1); }}
           className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
         />
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -139,7 +144,7 @@ export default function SuperAdminServicesPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((s, i) => (
+          {paged.map((s, i) => (
             <motion.div key={s.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <Card padding="md">
                 <div className="flex items-center gap-3">
@@ -173,6 +178,17 @@ export default function SuperAdminServicesPage() {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
 
       <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />

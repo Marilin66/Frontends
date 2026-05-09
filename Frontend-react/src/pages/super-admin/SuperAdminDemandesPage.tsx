@@ -1,9 +1,11 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
-import { Card, Button, PageLoader } from '@/components/ui';
+import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Inbox, RefreshCw, CheckCircle, XCircle, Clock, Building, User, Calendar, ChevronDown, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const PAGE_SIZE = 10;
 
 type Tab = 'en_attente' | 'valide' | 'refuse';
 
@@ -25,6 +27,7 @@ export default function SuperAdminDemandesPage() {
   const [demandes, setDemandes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('en_attente');
+  const [page, setPage] = useState(1);
   const [refusMotif, setRefusMotif] = useState<Record<number, string>>({});
   const [showRefusForm, setShowRefusForm] = useState<number | null>(null);
   const [processing, setProcessing] = useState<number | null>(null);
@@ -69,6 +72,7 @@ export default function SuperAdminDemandesPage() {
   };
 
   const filtered = demandes.filter(d => d.statut === tab);
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'en_attente', label: 'En attente' },
@@ -99,7 +103,7 @@ export default function SuperAdminDemandesPage() {
           return (
             <button
               key={t.key}
-              onClick={() => setTab(t.key)}
+              onClick={() => { setTab(t.key); setPage(1); }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 ${tab === t.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             >
               {t.label}
@@ -123,7 +127,7 @@ export default function SuperAdminDemandesPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((d, i) => (
+          {paged.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <Card padding="md">
                 <div className="space-y-3">
@@ -217,6 +221,17 @@ export default function SuperAdminDemandesPage() {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
 
       {/* Modale de confirmation validation */}

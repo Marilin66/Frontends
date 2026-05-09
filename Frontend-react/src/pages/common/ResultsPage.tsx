@@ -2,15 +2,18 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Download, Search, FlaskConical, Clock, RefreshCw, Share2, User } from 'lucide-react';
-import { PageLoader } from '@/components/ui';
+import { PageLoader, Pagination, usePagination } from '@/components/ui';
 import { api, endpoints } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+
+const PAGE_SIZE = 12;
 
 export default function ResultsPage() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -42,6 +45,8 @@ export default function ResultsPage() {
     r.patient_nom.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+
   if (loading && results.length === 0) return <PageLoader />;
 
   return (
@@ -65,7 +70,7 @@ export default function ResultsPage() {
               type="text"
               placeholder="Rechercher par titre ou patient..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); setPage(1); }}}
               className="w-64 pl-9 px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
             />
           </div>
@@ -85,7 +90,7 @@ export default function ResultsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map((r, i) => (
+          {paged.map((r, i) => (
             <motion.div key={r.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:border-slate-300 transition-all duration-200">
 
@@ -154,6 +159,17 @@ export default function ResultsPage() {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
     </motion.div>
   );

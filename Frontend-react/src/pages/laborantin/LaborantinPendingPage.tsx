@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect, useRef } from 'react';
 import { api, endpoints } from '@/services/api';
-import { Card, Button, PageLoader } from '@/components/ui';
+import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { ErrorModal, ConfirmModal, SuccessModal } from '@/components/ui';
 import {
   FlaskConical, FileCheck, Clock, X, Upload,
@@ -10,10 +10,13 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const PAGE_SIZE = 12;
+
 export default function LaborantinPendingPage() {
   const [demandes, setDemandes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
 
   // Clôture
   const [selectedDemande, setSelectedDemande] = useState<any>(null);
@@ -128,6 +131,8 @@ export default function LaborantinPendingPage() {
     );
   });
 
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+
   if (loading) return <PageLoader />;
 
   return (
@@ -151,7 +156,7 @@ export default function LaborantinPendingPage() {
           type="text"
           placeholder="Rechercher un patient ou une analyse..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={e => { setSearch(e.target.value); setPage(1); }}
           className="w-full h-10 pl-9 pr-4 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
         />
       </div>
@@ -171,7 +176,7 @@ export default function LaborantinPendingPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {filtered.map((d: any, i: number) => (
+          {paged.map((d: any, i: number) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between mb-3">
@@ -214,6 +219,17 @@ export default function LaborantinPendingPage() {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
 
       {/* ── Modal : Inscrire un patient ─────────────────────────────── */}

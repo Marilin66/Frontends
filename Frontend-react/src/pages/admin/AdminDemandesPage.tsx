@@ -2,10 +2,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
-import { Button, PageLoader } from '@/components/ui';
+import { Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Inbox, RefreshCw, Plus, CheckCircle, XCircle, Clock, Building, User, Calendar, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorModal } from '@/components/ui';
+
+const PAGE_SIZE = 10;
 
 type Tab = 'en_attente' | 'valide' | 'refuse';
 
@@ -29,6 +31,7 @@ export default function AdminDemandesPage() {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('en_attente');
+  const [page, setPage] = useState(1);
   const [showForm, setShowForm] = useState(false);
   const [isNewService, setIsNewService] = useState(true);
   const [formData, setFormData] = useState({ nom: '', description: '', service_existant: '' });
@@ -66,6 +69,7 @@ export default function AdminDemandesPage() {
   };
 
   const filtered = demandes.filter(d => d.statut === tab);
+  const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
 
   const tabs: { key: Tab; label: string; count: number }[] = [
     { key: 'en_attente', label: 'En attente', count: demandes.filter(d => d.statut === 'en_attente').length },
@@ -173,7 +177,7 @@ export default function AdminDemandesPage() {
         {tabs.map(t => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setPage(1); }}
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all flex items-center gap-2 ${tab === t.key ? 'bg-slate-900 text-white' : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300'}`}
           >
             {t.label}
@@ -196,7 +200,7 @@ export default function AdminDemandesPage() {
         </div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((d, i) => (
+          {paged.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:border-slate-300 transition-all duration-200">
                 <div className="flex items-start justify-between gap-4">
@@ -230,6 +234,18 @@ export default function AdminDemandesPage() {
           ))}
         </div>
       )}
+
+      {/* Pagination */}
+      {filtered.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
+      )}
+
       <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
     </motion.div>
   );

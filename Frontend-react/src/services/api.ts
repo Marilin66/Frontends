@@ -99,6 +99,7 @@ export const endpoints = {
   logout: '/token/logout/',
   refreshToken: '/token/refresh/',
   me: '/accounts/users/me/',
+  changePassword: '/accounts/users/me/change-password/',
   requestPasswordReset: '/accounts/request-password-reset/',
   resetPasswordConfirm: '/accounts/reset-password-confirm/',
 

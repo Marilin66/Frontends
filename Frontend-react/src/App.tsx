@@ -65,6 +65,7 @@ import AdminStatsPage     from '@/pages/admin/AdminStatsPage';
 import SuperAdminDashboard    from '@/pages/super-admin/SuperAdminDashboard';
 import EntitiesPage           from '@/pages/super-admin/EntitiesPage';
 import EntityDetailPage       from '@/pages/super-admin/EntityDetailPage';
+import CreateHospitalPage     from '@/pages/super-admin/CreateHospitalPage';
 import UsersPage              from '@/pages/super-admin/UsersPage';
 import SuperAdminStatsPage    from '@/pages/super-admin/SuperAdminStatsPage';
 import SuperAdminServicesPage from '@/pages/super-admin/SuperAdminServicesPage';
@@ -199,6 +200,7 @@ function AppRoutes() {
         <Route path="/super-admin">
           <Route index              element={<RoleRoute allowedRoles={['super_admin', 'admin_general']}><SuperAdminDashboard /></RoleRoute>} />
           <Route path="hopitaux"    element={<RoleRoute allowedRoles={['super_admin', 'admin_general']}><EntitiesPage /></RoleRoute>} />
+          <Route path="hopitaux/nouveau" element={<RoleRoute allowedRoles={['super_admin', 'admin_general']}><CreateHospitalPage /></RoleRoute>} />
           <Route path="hopitaux/:id" element={<RoleRoute allowedRoles={['super_admin', 'admin_general']}><EntityDetailPage /></RoleRoute>} />
           <Route path="users"       element={<RoleRoute allowedRoles={['super_admin', 'admin_general']}><UsersPage /></RoleRoute>} />
           <Route path="stats"       element={<RoleRoute allowedRoles={['super_admin', 'admin_general']}><SuperAdminStatsPage /></RoleRoute>} />

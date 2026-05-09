@@ -11,15 +11,18 @@ import {
   MessageSquare,
   Info
 } from 'lucide-react';
-import { Button, StatusBadge } from '@/components/ui';
+import { Button, StatusBadge, Pagination, usePagination } from '@/components/ui';
 import { ConfirmModal, ErrorModal } from '@/components/ui';
 import { api, endpoints } from '@/services/api';
+
+const PAGE_SIZE = 10;
 
 export default function AppointmentsPage() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [page, setPage] = useState(1);
   const [cancelConfirm, setCancelConfirm] = useState<number | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -68,6 +71,8 @@ export default function AppointmentsPage() {
     .filter(apt => filter === 'all' || apt.statut === filter)
     .map(normalize);
 
+  const { paged: pagedAppointments, totalItems, totalPages } = usePagination(filteredAppointments, PAGE_SIZE, page);
+
   const FILTERS = [
     { key: 'all',        label: 'Tous' },
     { key: 'en_attente', label: 'En attente' },
@@ -99,7 +104,7 @@ export default function AppointmentsPage() {
           return (
             <button
               key={f.key}
-              onClick={() => setFilter(f.key)}
+              onClick={() => { setFilter(f.key); setPage(1); }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 whitespace-nowrap ${
                 filter === f.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
@@ -139,7 +144,7 @@ export default function AppointmentsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredAppointments.map((apt, idx) => (
+          {pagedAppointments.map((apt, idx) => (
             <motion.div
               key={apt.id}
               initial={{ opacity: 0, y: 6 }}
@@ -257,6 +262,17 @@ export default function AppointmentsPage() {
             </motion.div>
           ))}
         </div>
+      )}
+
+      {/* Pagination */}
+      {filteredAppointments.length > PAGE_SIZE && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          pageSize={PAGE_SIZE}
+          onPageChange={setPage}
+        />
       )}
 
       <ConfirmModal
