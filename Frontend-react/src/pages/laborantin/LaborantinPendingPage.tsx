@@ -9,6 +9,7 @@ import {
   Phone, Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const PAGE_SIZE = 12;
 
@@ -132,6 +133,7 @@ export default function LaborantinPendingPage() {
   });
 
   const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+  const { canInscrireAnalyse, canCloturerAnalyse } = usePermissions();
 
   if (loading) return <PageLoader />;
 
@@ -144,9 +146,11 @@ export default function LaborantinPendingPage() {
           <h1 className="text-2xl font-bold text-slate-900">Analyses en cours</h1>
           <p className="text-sm text-slate-500 mt-0.5">{demandes.length} demande{demandes.length !== 1 ? 's' : ''} à traiter</p>
         </div>
-        <Button onClick={() => setShowCreate(true)} leftIcon={<Plus className="w-4 h-4" />}>
-          Inscrire un patient
-        </Button>
+        {canInscrireAnalyse && (
+          <Button onClick={() => setShowCreate(true)} leftIcon={<Plus className="w-4 h-4" />}>
+            Inscrire un patient
+          </Button>
+        )}
       </div>
 
       {/* Recherche */}
@@ -168,7 +172,7 @@ export default function LaborantinPendingPage() {
           <p className="text-sm font-medium text-slate-500">
             {search ? `Aucun résultat pour "${search}"` : 'Aucune analyse en attente'}
           </p>
-          {!search && (
+          {!search && canInscrireAnalyse && (
             <Button className="mt-4" onClick={() => setShowCreate(true)} leftIcon={<Plus className="w-4 h-4" />}>
               Inscrire un patient
             </Button>
@@ -207,14 +211,16 @@ export default function LaborantinPendingPage() {
                   )}
                 </div>
 
-                <Button
-                  size="sm"
-                  className="w-full"
-                  onClick={() => { setSelectedDemande(d); setClotureData({ titre: d.type_analyse || '', fichier: null }); }}
-                  leftIcon={<FileCheck className="w-4 h-4" />}
-                >
-                  Clôturer l'analyse
-                </Button>
+                {canCloturerAnalyse && (
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={() => { setSelectedDemande(d); setClotureData({ titre: d.type_analyse || '', fichier: null }); }}
+                    leftIcon={<FileCheck className="w-4 h-4" />}
+                  >
+                    Clôturer l'analyse
+                  </Button>
+                )}
               </div>
             </motion.div>
           ))}

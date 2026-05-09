@@ -8,6 +8,7 @@ import {
   Plus, Mail, Phone, X, Users, Trash2, ShieldCheck,
   Search, Building, RefreshCw, AlertCircle, ChevronRight
 } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface Admin {
   id: number;
@@ -85,6 +86,8 @@ export default function UsersPage() {
     `${a.first_name} ${a.last_name} ${a.email} ${a.hopital_nom}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const { canCreateAdminHopital, canDeleteAdminHopital } = usePermissions();
+
   if (isLoading && admins.length === 0) return <PageLoader />;
 
   return (
@@ -114,9 +117,11 @@ export default function UsersPage() {
           >
             <RefreshCw className="w-4 h-4" /> Actualiser
           </button>
-          <Button onClick={() => setIsModalOpen(true)} className="h-10 px-4 rounded-xl text-sm font-semibold">
-            <Plus className="w-4 h-4 mr-2" /> Nouvel admin
-          </Button>
+          {canCreateAdminHopital && (
+            <Button onClick={() => setIsModalOpen(true)} className="h-10 px-4 rounded-xl text-sm font-semibold">
+              <Plus className="w-4 h-4 mr-2" /> Nouvel admin
+            </Button>
+          )}
         </div>
       </section>
 
@@ -193,13 +198,15 @@ export default function UsersPage() {
 
                 {/* Footer carte */}
                 <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end">
-                  <button
-                    onClick={() => setConfirmDeleteId(admin.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition"
-                    title="Supprimer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Supprimer
-                  </button>
+                  {canDeleteAdminHopital && (
+                    <button
+                      onClick={() => setConfirmDeleteId(admin.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Supprimer
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -207,9 +214,9 @@ export default function UsersPage() {
         </div>
       )}
 
-      {/* ── Modal création ── */}
+      {/* ── Modal création — visible seulement si droits ── */}
       <AnimatePresence>
-        {isModalOpen && (
+        {isModalOpen && canCreateAdminHopital && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

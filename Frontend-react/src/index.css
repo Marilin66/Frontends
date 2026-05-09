@@ -2,9 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Leaflet CSS — doit être importé globalement pour que la carte s'affiche correctement */
-@import 'leaflet/dist/leaflet.css';
-
 /* Fix Leaflet : tuiles et conteneur sur mobile */
 .leaflet-container {
   height: 100%;

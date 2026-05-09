@@ -6,6 +6,7 @@ import { PageLoader, Pagination, usePagination } from '@/components/ui';
 import { api, endpoints } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const PAGE_SIZE = 12;
 
@@ -46,6 +47,7 @@ export default function ResultsPage() {
   );
 
   const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+  const { canPartagerResultat, canTelechargerResultat } = usePermissions();
 
   if (loading && results.length === 0) return <PageLoader />;
 
@@ -135,7 +137,7 @@ export default function ResultsPage() {
 
                 {/* Actions */}
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
-                  {r.fichier && (
+                  {r.fichier && canTelechargerResultat && (
                     <button
                       onClick={() => window.open(r.fichier, '_blank')}
                       className="flex-1 flex items-center justify-center gap-2 h-9 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition"
@@ -143,7 +145,7 @@ export default function ResultsPage() {
                       <Download className="w-3.5 h-3.5" /> Télécharger
                     </button>
                   )}
-                  {user?.role === 'patient' && (
+                  {canPartagerResultat && (
                     <button
                       onClick={() => navigate(`/patient/results/${r.id}/share`, { state: { resultat: r } })}
                       className="flex-1 flex items-center justify-center gap-2 h-9 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:bg-slate-50 transition"
@@ -151,7 +153,7 @@ export default function ResultsPage() {
                       <Share2 className="w-3.5 h-3.5" /> Partager
                     </button>
                   )}
-                  {!r.fichier && user?.role !== 'patient' && (
+                  {!r.fichier && !canPartagerResultat && (
                     <p className="text-xs text-slate-400 py-2">Aucun fichier joint</p>
                   )}
                 </div>

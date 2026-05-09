@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, endpoints } from '@/services/api';
 // @ts-ignore
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
 // @ts-ignore
 import L from 'leaflet';
 import { Card, CardContent, Button, Badge } from '@/components/ui';

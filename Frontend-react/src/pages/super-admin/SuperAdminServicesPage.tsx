@@ -5,6 +5,7 @@ import { Card, Button, PageLoader, Pagination, usePagination } from '@/component
 import { Activity, Plus, Search, Edit2, Trash2, RefreshCw, X, Check, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorModal, ConfirmModal } from '@/components/ui';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const PAGE_SIZE = 15;
 
@@ -66,6 +67,7 @@ export default function SuperAdminServicesPage() {
   );
 
   const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+  const { canCreateService, canEditService, canDeleteService } = usePermissions();
 
   if (loading && services.length === 0) return <PageLoader />;
 
@@ -80,7 +82,9 @@ export default function SuperAdminServicesPage() {
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={fetchData} leftIcon={<RefreshCw className="w-4 h-4" />}>Actualiser</Button>
-          <Button onClick={openCreate} leftIcon={<Plus className="w-4 h-4" />}>Nouveau service</Button>
+          {canCreateService && (
+            <Button onClick={openCreate} leftIcon={<Plus className="w-4 h-4" />}>Nouveau service</Button>
+          )}
         </div>
       </div>
 
@@ -158,20 +162,24 @@ export default function SuperAdminServicesPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => openEdit(s)}
-                      className="w-8 h-8 rounded-lg hover:bg-blue-50 flex items-center justify-center transition group"
-                      title="Modifier"
-                    >
-                      <Edit2 className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDelete({ id: s.id, nom: s.nom })}
-                      className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center transition group"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="w-4 h-4 text-slate-400 group-hover:text-red-600" />
-                    </button>
+                    {canEditService && (
+                      <button
+                        onClick={() => openEdit(s)}
+                        className="w-8 h-8 rounded-lg hover:bg-blue-50 flex items-center justify-center transition group"
+                        title="Modifier"
+                      >
+                        <Edit2 className="w-4 h-4 text-slate-400 group-hover:text-blue-600" />
+                      </button>
+                    )}
+                    {canDeleteService && (
+                      <button
+                        onClick={() => setConfirmDelete({ id: s.id, nom: s.nom })}
+                        className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center transition group"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-4 h-4 text-slate-400 group-hover:text-red-600" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </Card>

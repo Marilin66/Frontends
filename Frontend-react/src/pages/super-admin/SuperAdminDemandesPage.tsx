@@ -4,6 +4,7 @@ import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Inbox, RefreshCw, CheckCircle, XCircle, Clock, Building, User, Calendar, ChevronDown, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const PAGE_SIZE = 10;
 
@@ -73,6 +74,7 @@ export default function SuperAdminDemandesPage() {
 
   const filtered = demandes.filter(d => d.statut === tab);
   const { paged, totalItems, totalPages } = usePagination(filtered, PAGE_SIZE, page);
+  const { canValiderDemande, canRefuserDemande } = usePermissions();
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'en_attente', label: 'En attente' },
@@ -159,8 +161,8 @@ export default function SuperAdminDemandesPage() {
                     <StatusPill statut={d.statut} />
                   </div>
 
-                  {/* Actions (en_attente only) */}
-                  {d.statut === 'en_attente' && (
+                  {/* Actions (en_attente only) — visibles seulement si droits */}
+                  {d.statut === 'en_attente' && (canValiderDemande || canRefuserDemande) && (
                     <div className="pt-2 border-t border-slate-100 space-y-2">
                       {/* Refus form */}
                       <AnimatePresence>
@@ -186,31 +188,37 @@ export default function SuperAdminDemandesPage() {
                             >
                               Annuler
                             </button>
-                            <button
-                              onClick={() => handleRefuser(d.id)}
-                              disabled={processing === d.id}
-                              className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                              <XCircle className="w-4 h-4" />
-                              {processing === d.id ? 'Refus…' : 'Confirmer le refus'}
-                            </button>
+                            {canRefuserDemande && (
+                              <button
+                                onClick={() => handleRefuser(d.id)}
+                                disabled={processing === d.id}
+                                className="flex-1 py-2 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                <XCircle className="w-4 h-4" />
+                                {processing === d.id ? 'Refus…' : 'Confirmer le refus'}
+                              </button>
+                            )}
                           </>
                         ) : (
                           <>
-                            <button
-                              onClick={() => setShowRefusForm(d.id)}
-                              className="flex-1 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition flex items-center justify-center gap-2"
-                            >
-                              <XCircle className="w-4 h-4" /> Refuser
-                            </button>
-                            <button
-                              onClick={() => setConfirmModal({ id: d.id, nom: d.nom_nouveau_service ?? d.service_existant_nom ?? 'ce service' })}
-                              disabled={processing === d.id}
-                              className="flex-1 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                              {processing === d.id ? 'Validation…' : 'Valider'}
-                            </button>
+                            {canRefuserDemande && (
+                              <button
+                                onClick={() => setShowRefusForm(d.id)}
+                                className="flex-1 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 transition flex items-center justify-center gap-2"
+                              >
+                                <XCircle className="w-4 h-4" /> Refuser
+                              </button>
+                            )}
+                            {canValiderDemande && (
+                              <button
+                                onClick={() => setConfirmModal({ id: d.id, nom: d.nom_nouveau_service ?? d.service_existant_nom ?? 'ce service' })}
+                                disabled={processing === d.id}
+                                className="flex-1 py-2 rounded-xl bg-green-500 text-white text-sm font-semibold hover:bg-green-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                                {processing === d.id ? 'Validation…' : 'Valider'}
+                              </button>
+                            )}
                           </>
                         )}
                       </div>

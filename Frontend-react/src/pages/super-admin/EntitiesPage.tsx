@@ -259,26 +259,30 @@ export default function EntitiesPage() {
                 {/* Card footer */}
                 <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleToggle(h)}
-                      disabled={toggling === h.id}
-                      title={h.is_active ? 'Désactiver' : 'Activer'}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
-                        h.is_active
-                          ? 'text-emerald-700 border-emerald-200 hover:bg-emerald-50'
-                          : 'text-slate-500 border-slate-200 hover:bg-slate-100'
-                      } disabled:opacity-50`}
-                    >
-                      {h.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                      {toggling === h.id ? '…' : h.is_active ? 'Actif' : 'Inactif'}
-                    </button>
-                    <button
-                      onClick={() => openEdit(h)}
-                      title="Modifier"
-                      className="p-1.5 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
+                    {canToggleHopital && (
+                      <button
+                        onClick={() => handleToggle(h)}
+                        disabled={toggling === h.id}
+                        title={h.is_active ? 'Désactiver' : 'Activer'}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+                          h.is_active
+                            ? 'text-emerald-700 border-emerald-200 hover:bg-emerald-50'
+                            : 'text-slate-500 border-slate-200 hover:bg-slate-100'
+                        } disabled:opacity-50`}
+                      >
+                        {h.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                        {toggling === h.id ? '…' : h.is_active ? 'Actif' : 'Inactif'}
+                      </button>
+                    )}
+                    {canEditHopital && (
+                      <button
+                        onClick={() => openEdit(h)}
+                        title="Modifier"
+                        className="p-1.5 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                   <button
                     onClick={() => navigate(`/super-admin/hopitaux/${h.id}`)}
@@ -304,9 +308,9 @@ export default function EntitiesPage() {
         />
       )}
 
-      {/* Modal Modifier uniquement */}
+      {/* Modal Modifier — visible seulement si droits */}
       <AnimatePresence>
-        {modal === 'edit' && (
+        {modal === 'edit' && canEditHopital && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
