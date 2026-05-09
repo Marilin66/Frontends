@@ -1,25 +1,28 @@
 // @ts-nocheck
-// User and Authentication Types
+// User and Authentication Types — alignés avec les modèles Django
+
 export interface User {
   id: number;
   email: string;
   first_name: string;
   last_name: string;
   telephone: string;
-  date_naissance?: string;
-  sexe: string;
+  date_naissance?: string | null;
+  sexe: 'M' | 'F' | 'Autre';
   role: UserRole;
-  adresse: string;
-  photo?: string;
+  adresse?: string;
+  photo?: string | null;
   is_active: boolean;
   is_email_verified: boolean;
   date_joined: string;
-  last_login?: string;
-  hopital?: number;
+  last_login?: string | null;
+  // Hôpital de rattachement (pour médecin, laborantin, admin_hopital)
+  hopital?: number | null;
   hopital_nom?: string;
-  patient_profile?: PatientProfile;
-  medecin_profile?: MedecinProfile;
-  laborantin_profile?: LaborantinProfile;
+  // Profils étendus (renvoyés par /accounts/users/me/)
+  patient_profile?: PatientProfile | null;
+  medecin_profile?: MedecinProfile | null;
+  laborantin_profile?: LaborantinProfile | null;
 }
 
 export type UserRole =
@@ -27,40 +30,28 @@ export type UserRole =
   | 'medecin'
   | 'admin_hopital'
   | 'admin_general'
-  | 'super_admin'
   | 'laborantin';
 
+// Correspond au modèle Patient Django
 export interface PatientProfile {
-  id: number;
-  utilisateur: number;
-  code_unique: string;
-  groupe_sanguin?: string;
-  allergies?: string;
-  antecedents_medicaux?: string;
   contact_urgence_nom?: string;
   contact_urgence_tel?: string;
+  groupe_sanguin?: string;
+  allergies?: string;
+  numero_secu?: string;
 }
 
+// Correspond au modèle Medecin Django
 export interface MedecinProfile {
-  id: number;
-  utilisateur: number;
-  hopital: number;
-  hopital_nom: string;
-  specialite: string;
-  matricule: string;
-  description?: string;
-  annees_experience: number;
-  is_verified: boolean;
+  numero_ordre: string;
+  biographie?: string;
+  statut: 'actif' | 'inactif';
+  duree_rdv_default: number;
 }
 
+// Correspond au modèle Laborantin Django
 export interface LaborantinProfile {
-  id: number;
-  utilisateur: number;
-  hopital: number;
-  hopital_nom: string;
-  matricule: string;
-  specialite: string;
-  is_verified: boolean;
+  laboratoire?: string;
 }
 
 export interface LoginCredentials {
@@ -75,7 +66,8 @@ export interface RegisterData {
   first_name: string;
   last_name: string;
   telephone: string;
-  sexe: string;
+  sexe: 'M' | 'F' | 'Autre';
+  role?: string;
   date_naissance?: string;
   adresse?: string;
 }

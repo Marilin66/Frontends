@@ -239,6 +239,14 @@ class OnboardingScreen extends StatelessWidget {
               ),
               _buildFeatureCard(
                 context,
+                title: 'Assistant IA',
+                description: 'Posez vos questions médicales à notre assistant intelligent, disponible sans connexion.',
+                icon: Icons.smart_toy_rounded,
+                color: Colors.deepPurple,
+                route: '/chatbot',
+              ),
+              _buildFeatureCard(
+                context,
                 title: 'Suivi Patient Centralisé',
                 description: 'Connectez-vous pour voir vos RDV, vos résultats d\'analyses labo et contacter vos médecins.',
                 icon: Icons.folder_shared,

@@ -1,9 +1,14 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:dio/dio.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../core/network/dio_client.dart';
 import '../providers/admin_hopital_provider.dart';
 
 class AdminHopitalMedecinsContent extends ConsumerWidget {
@@ -21,6 +26,12 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         actions: [
+          // Bouton import CSV
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Importer CSV',
+            onPressed: () => _importCSV(context, ref),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(adminHopitalMedecinsProvider.notifier).refresh(),
@@ -84,6 +95,33 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
       context: context,
       builder: (ctx) => EditMedecinDialogForm(medecin: medecin),
     );
+  }
+
+  void _importCSV(BuildContext context, WidgetRef ref) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+      withData: kIsWeb,
+    );
+    if (result == null) return;
+    final file = result.files.first;
+
+    try {
+      final client = ref.read(dioClientProvider);
+      final multipart = kIsWeb
+          ? MultipartFile.fromBytes(file.bytes!, filename: file.name)
+          : await MultipartFile.fromFile(file.path!, filename: file.name);
+      final formData = FormData.fromMap({'fichier': multipart});
+      await client.post(ApiConstants.medecinsImport, data: formData);
+      ref.read(adminHopitalMedecinsProvider.notifier).refresh();
+      if (context.mounted) {
+        Helpers.showSnackBar(context, 'Import CSV réussi !');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Helpers.showSnackBar(context, 'Erreur lors de l\'import CSV', isError: true);
+      }
+    }
   }
 
   void _confirmDeactivate(BuildContext context, WidgetRef ref, int id, String name) {

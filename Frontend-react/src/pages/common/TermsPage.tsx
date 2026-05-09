@@ -90,8 +90,8 @@ export default function TermsPage() {
           <FileText className="w-5 h-5" />
           <span className="text-sm">Besoin d'aide ? <a href="#" className="font-bold text-primary hover:underline">Contactez notre support</a></span>
         </div>
-        <Link to="/login">
-          <Button size="lg" className="px-10 font-bold shadow-lg shadow-primary/20">J'ai compris, retour</Button>
+        <Link to="/">
+          <Button size="lg" className="px-10 font-bold shadow-lg shadow-primary/20">Retour à l'accueil</Button>
         </Link>
       </div>
     </div>

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Input } from '@/components/ui';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -38,6 +38,14 @@ export default function LoginPage() {
 
   return (
     <div className="space-y-5">
+      {/* Bouton retour vers l'accueil */}
+      <div className="flex items-center gap-2 mb-2">
+        <Link to="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Retour à l'accueil
+        </Link>
+      </div>
+
       <div className="text-center mb-6">
         <h2 className="text-xl font-semibold text-slate-900">Connexion</h2>
         <p className="text-sm text-slate-500 mt-1">Accédez à votre espace santé</p>

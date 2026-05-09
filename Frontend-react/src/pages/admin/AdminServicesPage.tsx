@@ -3,31 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent, 
-  Button, 
-  Badge,
-  PageLoader 
-} from '@/components/ui';
+import { Button, PageLoader } from '@/components/ui';
 import { ErrorModal, SuccessModal } from '@/components/ui';
-import { 
-  Plus, 
-  Stethoscope, 
-  X, 
-  Activity, 
-  ShieldCheck, 
-  Layout, 
-  Zap, 
-  ChevronRight,
-  SendHorizontal,
-  Star,
-  MoreVertical,
-  Trash,
-  Filter,
-  Search
+import {
+  Plus, Activity, X, Search, SendHorizontal,
+  ShieldCheck, RefreshCw, Stethoscope
 } from 'lucide-react';
 
 interface HospitalService {
@@ -37,23 +17,6 @@ interface HospitalService {
   service_icone: string;
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants: any = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1, 
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
-
 export default function AdminServicesPage() {
   const { user } = useAuth();
   const [services, setServices] = useState<HospitalService[]>([]);
@@ -62,7 +25,6 @@ export default function AdminServicesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  
   const [formData, setFormData] = useState({
     nom_nouveau_service: '',
     description_nouveau_service: '',
@@ -80,9 +42,7 @@ export default function AdminServicesPage() {
     }
   };
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
+  useEffect(() => { fetchServices(); }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +56,7 @@ export default function AdminServicesPage() {
       setSuccessMsg("Demande transmise avec succès ! Elle sera examinée par l'administrateur général.");
       setIsModalOpen(false);
       setFormData({ nom_nouveau_service: '', description_nouveau_service: '' });
+      fetchServices();
     } catch (error: any) {
       setErrorMsg(error.response?.data?.error || "Erreur lors de la transmission de la demande.");
     } finally {
@@ -103,162 +64,193 @@ export default function AdminServicesPage() {
     }
   };
 
-  const filteredServices = services.filter(s => 
+  const filteredServices = services.filter(s =>
     s.service_nom.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <motion.div 
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-5 lg:space-y-12 pb-20"
-    >
-      {/* High-Contrast Header architecture */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 lg:gap-8">
-        <motion.div variants={itemVariants}>
-          <div className="flex items-center gap-3 mb-4">
-             <div className="w-10 h-10 rounded-xl bg-slate-950 flex items-center justify-center shadow-lg">
-                <Layout className="w-6 h-6 text-white" />
-             </div>
-             <div className="bg-slate-900 text-white border-2 border-slate-800 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest italic">
-                STRUCTURE_DEPT.
-             </div>
-          </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Départements Matrix</h1>
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Indexation de l'architecture clinique hospitalière</p>
-        </motion.div>
+  if (isLoading && services.length === 0) return <PageLoader />;
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="relative w-full sm:w-64 group">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors z-10" />
-             <input 
-               placeholder="Filtrer les instances..." 
-               className="w-full pl-11 h-12 rounded-xl bg-white border-2 border-slate-200 focus:border-primary text-slate-950 text-xs font-black transition-all shadow-sm italic placeholder:text-slate-300"
-               value={searchTerm}
-               onChange={(e) => setSearchTerm(e.target.value)}
-             />
+  return (
+    <div className="space-y-6 pb-20">
+
+      {/* Header */}
+      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Services de l'hôpital</h1>
+          <p className="text-slate-500 mt-1 text-sm">
+            {services.length} service{services.length !== 1 ? 's' : ''} actif{services.length !== 1 ? 's' : ''}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Rechercher un service…"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-56 pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
+            />
           </div>
-          <Button onClick={() => setIsModalOpen(true)} variant="primary" className="h-12 px-8 rounded-xl text-[10px] w-full sm:w-auto italic">
-            <Plus className="w-4 h-4 mr-2" /> NOUVELLE UNITÉ
+          <button
+            onClick={fetchServices}
+            className="flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+          >
+            <RefreshCw className="w-4 h-4" /> Actualiser
+          </button>
+          <Button onClick={() => setIsModalOpen(true)} className="h-10 px-4 rounded-xl text-sm font-semibold">
+            <Plus className="w-4 h-4 mr-2" /> Demander un service
           </Button>
         </div>
       </section>
 
-      {/* Services Operational Loop */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-10">
-        {filteredServices.length > 0 ? filteredServices.map((s) => (
-          <motion.div key={s.id} variants={itemVariants}>
-            <Card className="h-full border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group p-4 sm:p-6 lg:p-10 flex flex-col justify-between shadow-sm relative overflow-hidden">
-               <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-full -mr-12 -mt-12 group-hover:bg-primary/5 transition-colors" />
-               
-               <div className="space-y-6 relative z-10">
-                  <div className="flex items-center justify-between">
-                     <div className="w-12 h-12 bg-slate-50 border-2 border-slate-100 rounded-xl flex items-center justify-center text-slate-950 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-sm">
-                        <Zap className="w-6 h-6" />
-                     </div>
-                     <Badge variant="primary" className="text-[8px] px-3 font-black italic border-primary/20 bg-primary/10 text-primary">UNIT_0{s.id}</Badge>
-                  </div>
-                  
-                  <div className="space-y-3">
-                     <h3 className="text-xl lg:text-3xl font-black text-slate-950 tracking-tighter uppercase italic leading-none group-hover:text-primary transition-colors">{s.service_nom}</h3>
-                     <p className="text-[10px] lg:text-xs font-bold text-slate-400 italic leading-relaxed line-clamp-3 uppercase tracking-tight">
-                        {s.service_description || "Description asynchrone pour ce domaine d'expertise certifié par le protocole hospitalier."}
-                     </p>
-                  </div>
-               </div>
-
-               <div className="mt-8 pt-6 border-t-2 border-slate-50 flex items-center justify-between relative z-10">
-                  <div className="flex items-center gap-1">
-                     <Star className="w-3 h-3 text-amber-500 fill-current" />
-                     <span className="text-[9px] font-black text-slate-900 tracking-widest italic">STATUS: CERTIFIED</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                     <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-lg border-2 text-slate-300 hover:text-slate-950">
-                        <MoreVertical className="w-4 h-4" />
-                     </Button>
-                  </div>
-               </div>
-            </Card>
-          </motion.div>
-        )) : (
-            <div className="col-span-full py-32 text-center bg-slate-50 rounded-3xl border-2 border-slate-100 border-dashed">
-               <Activity className="w-20 h-20 text-slate-200 mx-auto mb-6" />
-               <p className="text-2xl font-black text-slate-300 uppercase tracking-[0.2em] italic">Aucune architecture localisée</p>
-            </div>
-        )}
+      {/* Info banner */}
+      <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
+        <ShieldCheck className="w-5 h-5 shrink-0 mt-0.5" />
+        <p>
+          Pour ajouter un nouveau service, soumettez une demande. Elle sera examinée et validée par l'administrateur général.
+        </p>
       </div>
 
-      {/* Modal Architecture Matrix */}
+      {/* Grille des services */}
+      {filteredServices.length === 0 ? (
+        <div className="py-20 text-center bg-white rounded-2xl border border-slate-200">
+          <Activity className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+          <p className="text-slate-500 font-medium">
+            {searchTerm ? `Aucun résultat pour "${searchTerm}"` : 'Aucun service enregistré'}
+          </p>
+          {!searchTerm && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="mt-4 flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-white text-sm font-semibold mx-auto hover:bg-primary/90 transition"
+            >
+              <Plus className="w-4 h-4" /> Demander le premier service
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredServices.map((s, i) => (
+            <motion.div
+              key={s.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}
+            >
+              <div className="bg-white rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-200 p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                    <Stethoscope className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900 truncate">{s.service_nom}</h3>
+                    {s.service_description ? (
+                      <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                        {s.service_description}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-slate-400 mt-1 italic">Aucune description</p>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                    Actif
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">#{s.id}</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal demande de service */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-               initial={{ opacity: 0 }}
-               animate={{ opacity: 1 }}
-               exit={{ opacity: 0 }}
-               onClick={() => setIsModalOpen(false)}
-               className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-xl"
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className="relative w-full max-w-lg"
             >
-              <Card className="shadow-2xl rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-white/5 bg-white">
-                <CardHeader className="bg-slate-950 p-4 sm:p-6 lg:p-10 flex flex-row items-center justify-between text-white relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[50px] -mr-16 -mt-16" />
-                  <div className="relative z-10">
-                    <CardTitle className="text-2xl lg:text-3xl font-black tracking-tighter leading-none italic uppercase">Nouvelle Unité</CardTitle>
-                    <p className="text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mt-3">Initialisation du segment clinique</p>
+              <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
+                {/* Modal header */}
+                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">Demander un nouveau service</h2>
+                    <p className="text-sm text-slate-500 mt-0.5">
+                      Votre demande sera transmise à l'administrateur général
+                    </p>
                   </div>
-                  <Button onClick={() => setIsModalOpen(false)} variant="ghost" className="h-10 w-10 p-0 rounded-lg hover:bg-white/10 text-white relative z-10">
-                    <X className="w-6 h-6" />
-                  </Button>
-                </CardHeader>
-                <form onSubmit={handleCreate}>
-                  <CardContent className="p-4 sm:p-6 lg:p-10 space-y-8 text-black">
-                    <div className="space-y-2">
-                       <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Nomenclature du Service</label>
-                       <input 
-                         required
-                         className="w-full h-11 px-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none italic placeholder:text-slate-300"
-                         placeholder="Ex: Neurologie Appliquée..."
-                         value={formData.nom_nouveau_service}
-                         onChange={(e) => setFormData({...formData, nom_nouveau_service: e.target.value})}
-                       />
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1 italic">Note d'Orientation Stratégique</label>
-                       <textarea 
-                         required
-                         className="w-full h-40 p-5 bg-slate-50 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-950 focus:border-primary transition-all outline-none leading-relaxed resize-none italic placeholder:text-slate-300"
-                         placeholder="Justifier l'intégration de ce nouveau département..."
-                         value={formData.description_nouveau_service}
-                         onChange={(e) => setFormData({...formData, description_nouveau_service: e.target.value})}
-                       />
-                    </div>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
 
-                    <div className="flex items-center gap-3 p-4 bg-slate-950 rounded-xl border-2 border-white/5">
-                       <ShieldCheck className="w-5 h-5 text-primary" />
-                       <p className="text-[9px] font-black text-white/40 uppercase tracking-widest italic leading-relaxed">
-                          Traitement asynchrone : Votre requête sera transmise au gouverneur général pour validation architecturelle.
-                       </p>
-                    </div>
+                {/* Form */}
+                <form onSubmit={handleCreate} className="p-6 space-y-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600">Nom du service *</label>
+                    <input
+                      required
+                      type="text"
+                      value={formData.nom_nouveau_service}
+                      onChange={e => setFormData({ ...formData, nom_nouveau_service: e.target.value })}
+                      placeholder="Ex: Cardiologie, Pédiatrie, Radiologie…"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all placeholder:text-slate-400"
+                    />
+                  </div>
 
-                    <Button type="submit" isLoading={isLoading} className="w-full h-14 rounded-xl font-black italic text-[10px] shadow-2xl shadow-primary/20">
-                       PROPOSER L'UNITÉ CLINIQUE <SendHorizontal className="w-4 h-4 ml-2" />
-                    </Button>
-                  </CardContent>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-600">Description / justification *</label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={formData.description_nouveau_service}
+                      onChange={e => setFormData({ ...formData, description_nouveau_service: e.target.value })}
+                      placeholder="Décrivez le service et justifiez son intégration dans votre hôpital…"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all placeholder:text-slate-400 resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsModalOpen(false)}
+                      className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <SendHorizontal className="w-4 h-4" />
+                      {isLoading ? 'Envoi…' : 'Envoyer la demande'}
+                    </button>
+                  </div>
                 </form>
-              </Card>
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
       <ErrorModal message={errorMsg} onClose={() => setErrorMsg('')} />
       <SuccessModal message={successMsg} onClose={() => setSuccessMsg('')} />
-    </motion.div>
+    </div>
   );
 }

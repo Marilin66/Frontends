@@ -154,6 +154,21 @@ class _AdminHopitalPatientsContentState
 
           return Column(
             children: [
+              // ── Stats ──────────────────────────────────────────────
+              Container(
+                color: AppColors.surface,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    _StatPill(label: 'Total', value: patients.length, color: AppColors.adminHopital),
+                    const SizedBox(width: 8),
+                    _StatPill(label: 'Actifs', value: patients.where((p) => p.isActive).length, color: Colors.green),
+                    const SizedBox(width: 8),
+                    _StatPill(label: 'Inactifs', value: patients.where((p) => !p.isActive).length, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
               // Compteur
               Container(
                 color: AppColors.surface,
@@ -270,6 +285,47 @@ class _PatientCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StatPill extends StatelessWidget {
+  final String label;
+  final int value;
+  final Color color;
+
+  const _StatPill({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              '$value',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

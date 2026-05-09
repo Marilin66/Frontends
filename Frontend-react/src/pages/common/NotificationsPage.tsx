@@ -31,18 +31,21 @@ export default function NotificationsPage() {
   const markAllRead = async () => {
     try {
       await api.post(endpoints.markAllRead);
-      setNotifications(notifications.map(n => ({ ...n, est_lu: true })));
+      setNotifications(notifications.map(n => ({ ...n, est_lu: true, lu: true })));
     } catch (e) { console.error(e); }
   };
 
   const markOne = async (id: number) => {
     try {
       await api.post(`/notifications/${id}/mark-read/`);
-      setNotifications(notifications.map(n => n.id === id ? { ...n, est_lu: true } : n));
+      setNotifications(notifications.map(n => n.id === id ? { ...n, est_lu: true, lu: true } : n));
     } catch (e) { console.error(e); }
   };
 
-  const unread = notifications.filter(n => !n.est_lu).length;
+  // Normalise les champs selon ce que le backend renvoie (est_lu ou lu)
+  const isRead = (n: any) => n.est_lu === true || n.lu === true;
+
+  const unread = notifications.filter(n => !isRead(n)).length;
 
   if (loading) return <PageLoader />;
 
@@ -85,11 +88,11 @@ export default function NotificationsPage() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className={`flex items-start gap-4 px-5 py-4 hover:bg-slate-50 transition-colors ${!notif.est_lu ? 'bg-primary/5' : ''}`}
+                  className={`flex items-start gap-4 px-5 py-4 hover:bg-slate-50 transition-colors ${!isRead(notif) ? 'bg-primary/5' : ''}`}
                 >
                   {/* Indicateur non lu */}
                   <div className="flex-shrink-0 mt-2.5">
-                    {!notif.est_lu
+                    {!isRead(notif)
                       ? <div className="w-2 h-2 bg-primary rounded-full" />
                       : <div className="w-2 h-2" />
                     }
@@ -102,18 +105,24 @@ export default function NotificationsPage() {
 
                   {/* Contenu */}
                   <div className="flex-1 min-w-0">
-                    <p className={`text-sm leading-relaxed ${!notif.est_lu ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
+                    <p className={`text-sm leading-relaxed ${!isRead(notif) ? 'font-semibold text-slate-900' : 'text-slate-600'}`}>
                       {notif.message}
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      {new Date(notif.created_at || notif.cree_le).toLocaleDateString('fr-FR', {
-                        day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
-                      })}
+                      {(() => {
+                        const raw = notif.created_at || notif.cree_le || notif.date_creation;
+                        if (!raw) return '';
+                        const d = new Date(raw);
+                        if (isNaN(d.getTime())) return '';
+                        return d.toLocaleDateString('fr-FR', {
+                          day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                        });
+                      })()}
                     </p>
                   </div>
 
                   {/* Action marquer lu */}
-                  {!notif.est_lu && (
+                  {!isRead(notif) && (
                     <button
                       onClick={() => markOne(notif.id)}
                       className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:text-primary hover:border-primary/30 hover:bg-primary/5 transition-all"

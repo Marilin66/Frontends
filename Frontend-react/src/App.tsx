@@ -122,6 +122,10 @@ function AppRoutes() {
         <Route path="/chatbot"         element={<PublicChatbotPage />} />
         <Route path="/track-results"   element={<TrackResultsPage />} />
         <Route path="/hopital/:id"     element={<HospitalDetailPage />} />
+        <Route path="/terms"           element={<TermsPage />} />
+        <Route path="/emergency"       element={<EmergencyNumbersPage />} />
+        <Route path="/tips"            element={<HealthTipsPage />} />
+        <Route path="/onboarding"      element={<OnboardingPage />} />
       </Route>
 
       {/* ── Auth layout ── */}
@@ -129,10 +133,6 @@ function AppRoutes() {
         <Route path="/login"           element={<LoginPage />} />
         <Route path="/register"        element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/onboarding"      element={<OnboardingPage />} />
-        <Route path="/emergency"       element={<EmergencyNumbersPage />} />
-        <Route path="/tips"            element={<HealthTipsPage />} />
-        <Route path="/terms"           element={<TermsPage />} />
       </Route>
 
       {/* ── App layout (authentifié) ── */}

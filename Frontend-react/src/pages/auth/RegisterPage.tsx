@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button, Input } from '@/components/ui';
-import { Mail, Lock, User, Phone, Eye, EyeOff, AlertCircle, ArrowRight, CheckCircle } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -67,6 +67,14 @@ export default function RegisterPage() {
 
   return (
     <div className="space-y-5">
+      {/* Bouton retour vers l'accueil */}
+      <div className="flex items-center gap-2 mb-2">
+        <Link to="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
+          <ArrowLeft className="w-4 h-4" />
+          Retour à l'accueil
+        </Link>
+      </div>
+
       {/* Titre */}
       <div className="text-center mb-2">
         <h2 className="text-xl font-bold text-primary">Créer un compte</h2>

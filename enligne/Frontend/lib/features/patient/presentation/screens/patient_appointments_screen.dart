@@ -265,6 +265,12 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                             bgColor: Colors.green.shade50,
                                           ),
                                         ],
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                             // ── Bouton Pré-consultation ──────────────────
                             // Visible pour les RDV planifiés ou confirmés (pas encore terminé/annulé)
                             if ((rdv.statut == 'planifie' || rdv.statut == 'confirme') &&
@@ -386,6 +392,30 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                   ),
                                 ),
                               ),
+                            // ── Bouton Annuler ─────────────────────────────────────────────────
+                            if (rdv.statut == 'en_attente' || rdv.statut == 'confirme')
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.04),
+                                  borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(16),
+                                    bottomRight: Radius.circular(16),
+                                  ),
+                                ),
+                                child: TextButton.icon(
+                                  onPressed: () => _showCancelDialog(context, ref, rdv.id),
+                                  icon: const Icon(Icons.cancel_outlined, size: 18),
+                                  label: Text(
+                                    'Annuler ce rendez-vous',
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.error,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       );
@@ -394,6 +424,63 @@ class PatientAppointmentsContent extends ConsumerWidget {
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelDialog(BuildContext context, WidgetRef ref, int rdvId) {
+    final commentCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Annuler ce rendez-vous ?',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Cette action est irréversible. Le médecin sera notifié.',
+              style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: commentCtrl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Motif de l\'annulation (optionnel)…',
+                hintStyle: GoogleFonts.poppins(color: AppColors.textHint),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Retour'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final ok = await ref
+                  .read(patientRendezvousProvider.notifier)
+                  .annulerRendezvous(rdvId, commentCtrl.text.trim());
+              if (context.mounted) {
+                Helpers.showSnackBar(
+                  context,
+                  ok ? 'Rendez-vous annulé' : 'Erreur lors de l\'annulation',
+                  isError: !ok,
+                );
+              }
+            },
+            child: Text('Annuler le RDV',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),

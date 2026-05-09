@@ -67,6 +67,34 @@ class AdminHopitalHomeContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // ── Alerte RDV en attente ──────────────────────────
+                if ((stats['rdv_en_attente'] ?? 0) > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.notifications_active, color: Colors.amber, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '${stats['rdv_en_attente']} rendez-vous en attente de confirmation',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.amber.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 Row(
                   children: [
                     Expanded(
@@ -233,6 +261,23 @@ class AdminHopitalHomeContent extends ConsumerWidget {
                 onTap: () => context.go('/admin-hopital/stats'),
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.biotech_outlined,
+                label: 'Laborantins',
+                color: AppColors.laborantin,
+                onTap: () => context.go('/admin-hopital/laborantins'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
           ],
         ),
       ],

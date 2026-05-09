@@ -101,6 +101,49 @@ class LaborantinDashboardScreen extends ConsumerWidget {
                     loading: () => const Center(child: CircularProgressIndicator()),
                     error: (e, _) => Text('Erreur: $e'),
                   ),
+                  const SizedBox(height: 30),
+                  // ── Liens rapides ──────────────────────────────────
+                  Text('Accès rapide', style: AppTextStyles.h3),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _QuickLinkCard(
+                          icon: Icons.science_outlined,
+                          label: 'Analyses en cours',
+                          color: AppColors.warning,
+                          count: pendingAsync.value?.length ?? 0,
+                          onTap: () {
+                            // Navigation via la barre du bas (onglet 1)
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _QuickLinkCard(
+                          icon: Icons.history_rounded,
+                          label: 'Archives',
+                          color: AppColors.success,
+                          count: finishedAsync.value?.length ?? 0,
+                          onTap: () {
+                            // Navigation via la barre du bas (onglet 2)
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _QuickLinkCard(
+                          icon: Icons.chat_bubble_outline,
+                          label: 'Messages',
+                          color: AppColors.primary,
+                          count: null,
+                          onTap: () {
+                            // Navigation via la barre du bas (onglet 3)
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -238,6 +281,77 @@ class _SmallAnalysisTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickLinkCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final int? count;
+  final VoidCallback onTap;
+
+  const _QuickLinkCard({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.count,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: color.withValues(alpha: 0.15)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (count != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

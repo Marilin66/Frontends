@@ -494,6 +494,41 @@ class _RendezVousMedecinCard extends ConsumerWidget {
                 ],
               ),
             ],
+            if (rdv.statut == 'confirme') ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () async {
+                      final consultationId = await ref
+                          .read(medecinRendezvousProvider.notifier)
+                          .terminerRendezvous(rdv.id);
+                      if (context.mounted) {
+                        Helpers.showSnackBar(
+                          context,
+                          consultationId != null
+                              ? 'Consultation créée'
+                              : 'Erreur lors de la clôture',
+                          isError: consultationId == null,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('Terminer'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      textStyle: GoogleFonts.poppins(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

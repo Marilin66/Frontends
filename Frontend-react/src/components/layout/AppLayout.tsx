@@ -19,7 +19,7 @@ export function AppLayout() {
     api.get(endpoints.notifications)
       .then((res: any) => {
         const list = Array.isArray(res) ? res : res.results || [];
-        setUnreadCount(list.filter((n: any) => !n.est_lu).length);
+        setUnreadCount(list.filter((n: any) => !n.est_lu && !n.lu).length);
       })
       .catch(() => {});
   }, [user]);

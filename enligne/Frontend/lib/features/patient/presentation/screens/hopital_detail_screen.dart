@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
@@ -143,26 +144,55 @@ class HopitalDetailScreen extends ConsumerWidget {
             _buildInfoRow(Icons.email, hopital.email),
           ],
           const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                if (hopital.latitude != null && hopital.longitude != null) {
-                  Helpers.launchMaps(hopital.latitude!, hopital.longitude!, hopital.nom);
-                } else {
-                  Helpers.showSnackBar(context, 'Coordonnées non disponibles pour cet hôpital', isError: true);
-                }
-              },
-              icon: const Icon(Icons.directions_outlined),
-              label: const Text('Voir l\'itinéraire'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
+          // ── Boutons d'action ──────────────────────────────────────
+          Row(
+            children: [
+              if (hopital.telephone.isNotEmpty) ...[
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final uri = Uri(scheme: 'tel', path: hopital.telephone);
+                      if (await canLaunchUrl(uri)) await launchUrl(uri);
+                    },
+                    icon: const Icon(Icons.phone, size: 16),
+                    label: Text(
+                      'Appeler',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (hopital.latitude != null && hopital.longitude != null) {
+                      Helpers.launchMaps(hopital.latitude!, hopital.longitude!, hopital.nom);
+                    } else {
+                      Helpers.showSnackBar(context, 'Coordonnées non disponibles pour cet hôpital', isError: true);
+                    }
+                  },
+                  icon: const Icon(Icons.directions_outlined, size: 16),
+                  label: Text(
+                    'Itinéraire',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
