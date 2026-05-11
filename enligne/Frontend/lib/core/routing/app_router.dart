@@ -50,6 +50,10 @@ import '../../features/core/presentation/screens/legal/legal_mentions_screen.dar
 import '../constants/app_constants.dart';
 import 'package:hopitel_app/core/theme/app_colors.dart';
 
+final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+final _patientNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'patient');
+
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = ValueNotifier<AuthState>(ref.read(authProvider));
 
@@ -78,6 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   ];
 
   return GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     refreshListenable: authNotifier,
     debugLogDiagnostics: true,
@@ -326,36 +331,57 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // Patient
       ShellRoute(
+        navigatorKey: _patientNavigatorKey,
         builder: (context, state, child) => PatientShell(child: child),
         routes: [
           GoRoute(
             path: '/patient',
-            builder: (context, state) => const PatientHomeContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientHomeContent(),
+            ),
           ),
           GoRoute(
             path: '/patient/result-code',
-            builder: (context, state) => const PatientResultCodeScreen(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientResultCodeScreen(),
+            ),
           ),
+
           GoRoute(
             path: '/patient/rdv/:rdvId/intake',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final rdvId = int.parse(state.pathParameters['rdvId']!);
               final medecinNom = state.uri.queryParameters['medecin'];
-              return PatientIntakeScreen(
-                rendezvousId: rdvId,
-                medecinNom: medecinNom ?? 'votre médecin',
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: PatientIntakeScreen(
+                  rendezvousId: rdvId,
+                  medecinNom: medecinNom ?? 'votre médecin',
+                ),
               );
             },
           ),
+
           GoRoute(
             path: '/patient/search',
-            builder: (context, state) => const PatientSearchContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientSearchContent(),
+            ),
           ),
+
           GoRoute(
             path: '/patient/service',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final data = state.extra as Map<String, dynamic>?;
-              if (data == null) return const PatientSearchContent();
+              if (data == null) {
+                return _buildPageWithFadeTransition(
+                  state: state,
+                  child: const PatientSearchContent(),
+                );
+              }
               HopitalServiceModel service;
               if (data['service'] is Map<String, dynamic>) {
                 service = HopitalServiceModel.fromJson(data['service'] as Map<String, dynamic>);
@@ -368,83 +394,135 @@ final routerProvider = Provider<GoRouter>((ref) {
               } else {
                 hopital = data['hopital'] as HopitalSearchModel;
               }
-              return ServiceDetailScreen(service: service, hopital: hopital);
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: ServiceDetailScreen(service: service, hopital: hopital),
+              );
             },
           ),
           GoRoute(
             path: '/patient/medecin/:id/rendezvous',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final id = int.parse(state.pathParameters['id']!);
               final medecin = state.extra as MedecinSearchModel?;
-              return RendezvousBookingScreen(medecin: medecin, medecinId: id);
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: RendezvousBookingScreen(medecin: medecin, medecinId: id),
+              );
             },
           ),
+
           GoRoute(
             path: '/patient/appointments',
-            builder: (context, state) => const PatientAppointmentsContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientAppointmentsContent(),
+            ),
           ),
           GoRoute(
             path: '/patient/results',
-            builder: (context, state) => const PatientResultsContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientResultsContent(),
+            ),
           ),
+
           GoRoute(
             path: '/patient/consultation/:id',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final id = int.parse(state.pathParameters['id']!);
-              return PatientConsultationDetailScreen(consultationId: id);
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: PatientConsultationDetailScreen(consultationId: id),
+              );
             },
           ),
+
           GoRoute(
             path: '/patient/results/:id/share',
-            builder: (context, state) {
+            pageBuilder: (context, state) {
               final resultat = state.extra as dynamic;
-              return PatientResultShareScreen(resultat: resultat);
+              return _buildPageWithFadeTransition(
+                state: state,
+                child: PatientResultShareScreen(resultat: resultat),
+              );
             },
           ),
+
           GoRoute(
             path: '/patient/messagerie',
-            builder: (context, state) => const ConversationListScreen(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const ConversationListScreen(),
+            ),
             routes: [
               GoRoute(
                 path: 'consultation/:id',
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(consultationId: id, contactName: 'Consultation');
+                  return _buildPageWithFadeTransition(
+                    state: state,
+                    child: ChatScreen(consultationId: id, contactName: 'Consultation'),
+                  );
                 },
               ),
               GoRoute(
                 path: 'direct/:id',
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
+                  return _buildPageWithFadeTransition(
+                    state: state,
+                    child: ChatScreen(destinataireId: id, contactName: 'Conversation Directe'),
+                  );
                 },
               ),
             ],
           ),
+
           GoRoute(
             path: '/patient/profile',
-            builder: (context, state) => const PatientProfileContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientProfileContent(),
+            ),
           ),
+
           GoRoute(
             path: '/patient/profile/edit',
-            builder: (context, state) => const EditProfileScreen(primaryColor: AppColors.primary),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const EditProfileScreen(primaryColor: AppColors.primary),
+            ),
           ),
           GoRoute(
             path: '/patient/change-password',
-            builder: (context, state) => const PatientChangePasswordContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientChangePasswordContent(),
+            ),
           ),
           GoRoute(
             path: '/patient/about',
-            builder: (context, state) => const PatientAboutContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientAboutContent(),
+            ),
           ),
           GoRoute(
             path: '/patient/language',
-            builder: (context, state) => const PatientLanguageContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientLanguageContent(),
+            ),
           ),
           GoRoute(
             path: '/patient/notification-settings',
-            builder: (context, state) => const PatientNotificationSettingsContent(),
+            pageBuilder: (context, state) => _buildPageWithFadeTransition(
+              state: state,
+              child: const PatientNotificationSettingsContent(),
+            ),
           ),
+
         ],
       ),
 
@@ -615,7 +693,7 @@ CustomTransitionPage<void> _buildPageWithFadeTransition({
   // routes within the same shell. Using ValueKey(state.matchedLocation)
   // guarantees each route gets a unique, stable key based on its path.
   return CustomTransitionPage<void>(
-    key: ValueKey<String>(state.matchedLocation),
+    key: ValueKey<String>(state.uri.toString()),
     child: child,
     transitionDuration: const Duration(milliseconds: 250),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {

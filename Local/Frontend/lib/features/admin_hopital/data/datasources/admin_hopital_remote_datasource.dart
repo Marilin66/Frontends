@@ -170,7 +170,7 @@ class AdminHopitalRemoteDatasource {
       throw ApiException.fromDioError(e);
     }
   }
-}
+  }
 
   /// Récupérer les demandes de service de l'hôpital
   Future<List<dynamic>> getDemandes() async {
@@ -207,3 +207,4 @@ class AdminHopitalRemoteDatasource {
       throw ApiException.fromDioError(e);
     }
   }
+}

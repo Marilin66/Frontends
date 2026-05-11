@@ -129,8 +129,5 @@ class DioClient {
       _dio.post(
         path,
         data: formData,
-        options: Options(
-          headers: {'Content-Type': 'multipart/form-data'},
-        ),
       );
 }

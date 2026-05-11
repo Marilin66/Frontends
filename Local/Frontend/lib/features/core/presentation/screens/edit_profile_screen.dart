@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -257,7 +257,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               onChanged: (_) => _markDirty(),
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(labelText: 'Téléphone', prefixIcon: Icon(Icons.phone_outlined)),
-              validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Requis';
+                if (!RegExp(r'^01\d{8}$').hasMatch(v)) return 'Format invalide (ex: 01xxxxxxxx)';
+                return null;
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -372,6 +376,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 onChanged: (_) => _markDirty(),
                 keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(labelText: 'Téléphone du contact', prefixIcon: Icon(Icons.phone_android_outlined)),
+                validator: (v) {
+                  if (v != null && v.isNotEmpty && !RegExp(r'^01\d{8}$').hasMatch(v)) return 'Format invalide (ex: 01xxxxxxxx)';
+                  return null;
+                },
               ),
             ],
           ),

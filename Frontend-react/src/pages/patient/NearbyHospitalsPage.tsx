@@ -131,9 +131,9 @@ export default function NearbyHospitalsPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-10rem)] flex flex-col lg:flex-row gap-8 overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-8 overflow-hidden" style={{ height: 'calc(100dvh - 10rem)' }}>
       {/* Sidebar */}
-      <div className="w-full lg:w-[420px] flex flex-col gap-6 overflow-hidden">
+      <div className="w-full lg:w-[420px] flex flex-col gap-6 overflow-hidden lg:h-full" style={{ maxHeight: '45vh', minHeight: '220px' }}>
         <motion.div initial="hidden" animate="visible" variants={itemVariants} className="space-y-4 shrink-0">
           <div className="flex items-center gap-3">
             <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="rounded-lg h-10 w-10 p-0 border-2">
@@ -287,7 +287,7 @@ export default function NearbyHospitalsPage() {
       </div>
 
       {/* Carte */}
-      <div className="flex-1 h-full rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-slate-100 shadow-2xl relative">
+      <div className="flex-1 rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-slate-100 shadow-2xl relative" style={{ minHeight: '300px' }}>
         <MapContainer center={mapCenter} zoom={13} className="h-full w-full z-0">
           <ChangeView center={mapCenter} />
           <TileLayer

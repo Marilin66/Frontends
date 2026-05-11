@@ -350,15 +350,37 @@ export default function AIAgentPage() {
                               // Sanitiser l'URL — l'IA peut générer des noms au lieu d'IDs
                               let target = raw;
                               const validPrefixes = ['/patient/', '/medecin/', '/admin', '/laborantin/', '/super-admin/', '/hospitals', '/emergency', '/tips', '/login', '/register', '/hopital/'];
-                              const isValid = validPrefixes.some(p => target.startsWith(p));
-                              if (!isValid) {
-                                // URL invalide générée par l'IA → rediriger vers recherche
-                                if (target.includes('hopital') || target.includes('hôpital') || target.startsWith('/hopitaux/')) {
-                                  target = '/hospitals';
-                                } else if (target.includes('medecin') || target.includes('médecin') || target.startsWith('/medecins/')) {
-                                  target = '/patient/search';
-                                } else {
-                                  target = '/patient/search';
+
+                              // Normaliser les slashes doubles
+                              target = target.replace(/\/+/g, '/');
+
+                              // Vérifier les routes avec ID numérique
+                              const hopitalWithId = /^\/hopital\/\d+/.test(target);
+                              const patientHopitalWithId = /^\/patient\/hopital\/\d+/.test(target);
+                              const patientMedecinWithId = /^\/patient\/medecin\/\d+/.test(target);
+
+                              if (!hopitalWithId && target.startsWith('/hopital/')) {
+                                target = '/hospitals';
+                              } else if (!patientHopitalWithId && target.startsWith('/patient/hopital/')) {
+                                target = '/hospitals';
+                              } else if (!patientMedecinWithId && target.startsWith('/patient/medecin/')) {
+                                target = '/patient/search';
+                              } else {
+                                const isValid = validPrefixes.some(p => target.startsWith(p));
+                                if (!isValid) {
+                                  if (target.includes('hopital') || target.includes('hôpital') || target.startsWith('/hopitaux/')) {
+                                    target = '/hospitals';
+                                  } else if (target.includes('medecin') || target.includes('médecin') || target.startsWith('/medecins/')) {
+                                    target = '/patient/search';
+                                  } else if (target === '/nearby' || target === '/map') {
+                                    target = '/patient/nearby';
+                                  } else if (target === '/appointments' || target === '/rendez-vous' || target === '/rdv') {
+                                    target = '/patient/appointments';
+                                  } else if (target === '/results' || target === '/resultats') {
+                                    target = '/patient/results';
+                                  } else {
+                                    target = '/patient/search';
+                                  }
                                 }
                               }
 

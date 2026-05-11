@@ -136,8 +136,25 @@ export default function PublicChatbotPage() {
     // Si c'est une URL externe
     if (target.startsWith('http')) return target;
 
-    // Vérifier si c'est une route valide
+    // Normaliser : supprimer les slashes en double
+    target = target.replace(/\/+/g, '/');
+
+    // Vérifier si c'est une route valide avec un ID numérique quand nécessaire
+    // Ex: /hopital/123 → valide, /hopital/nom-hopital → invalide
+    const hopitalWithId = /^\/hopital\/\d+/.test(target);
+    const patientHopitalWithId = /^\/patient\/hopital\/\d+/.test(target);
+    const patientMedecinWithId = /^\/patient\/medecin\/\d+/.test(target);
+
+    if (hopitalWithId || patientHopitalWithId || patientMedecinWithId) return target;
+
+    // Vérifier si c'est une route valide (sans paramètre dynamique)
     const isValid = validPrefixes.some(p => target.startsWith(p));
+
+    // Routes avec paramètres dynamiques non numériques → invalides
+    if (target.startsWith('/hopital/') && !hopitalWithId) return '/hospitals';
+    if (target.startsWith('/patient/hopital/') && !patientHopitalWithId) return '/hospitals';
+    if (target.startsWith('/patient/medecin/') && !patientMedecinWithId) return '/patient/search';
+
     if (isValid) return target;
 
     // L'IA a généré une URL avec un nom d'hôpital → rediriger vers la liste
@@ -148,6 +165,10 @@ export default function PublicChatbotPage() {
     if (target.startsWith('/medecins/') || target.includes('medecin') || target.includes('médecin')) {
       return '/hospitals';
     }
+    // Alias courants générés par l'IA
+    if (target === '/nearby' || target === '/map') return '/hospitals';
+    if (target === '/appointments' || target === '/rendez-vous' || target === '/rdv') return '/login';
+    if (target === '/results' || target === '/resultats') return '/track-results';
 
     // Route inconnue → page d'accueil
     return '/hospitals';

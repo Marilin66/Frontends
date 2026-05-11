@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -276,7 +276,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                   ),
                   child: Center(
                     child: Text(
-                      '${medecin.firstName[0]}${medecin.lastName[0]}'.toUpperCase(),
+                      '${medecin.firstName.isNotEmpty ? medecin.firstName[0] : ''}${medecin.lastName.isNotEmpty ? medecin.lastName[0] : ''}'.toUpperCase(),
                       style: GoogleFonts.poppins(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

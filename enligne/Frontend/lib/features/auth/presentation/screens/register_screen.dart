@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -145,7 +145,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 prefixIcon: const Icon(Icons.phone_outlined),
                 errorText: authState.validationErrors?['telephone'],
               ),
-              validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+              validator: (v) {
+                if (v == null || v.isEmpty) return 'Requis';
+                if (!RegExp(r'^01\d{8}$').hasMatch(v)) return 'Doit contenir 10 chiffres et commencer par 01';
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
