@@ -28,7 +28,8 @@ def search_doctors_rag(specialite=None, ville=None):
     for m in medecins:
         hopital_nom = m.user.hopital.nom if m.user.hopital else "Indépendant"
         results.append({
-            "id": m.user.id,
+            "id": m.user.id,          # ID utilisé dans l'URL /patient/medecin/{id}/rendezvous
+            "medecin_pk": m.pk,       # PK du modèle Medecin (pour référence)
             "nom": f"Dr. {m.user.get_full_name()}",
             "hopital": hopital_nom,
             "telephone": m.user.telephone,

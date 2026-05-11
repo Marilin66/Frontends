@@ -34,32 +34,63 @@ RÈGLES ABSOLUES pour les URLs :
 IMPORTANT: Ta réponse doit être claire, formatée proprement (Markdown autorisé), courte et rassurante.
 """
 
-def openai_chat_completion(history_messages):
+SYSTEM_PROMPT_PUBLIC = """Tu es un Assistant Médical Intelligent développé pour E-Santé Bénin.
+Tu es disponible sans connexion pour répondre aux questions médicales générales.
+
+RÈGLES STRICTES :
+1. Tu réponds aux questions médicales générales : symptômes courants, conseils de santé, informations sur les maladies.
+2. SOIS RASSURANT ET PROFESSIONNEL. Ajoute toujours : "Je suis une IA, veuillez valider ces conseils avec un professionnel de la santé." si l'utilisateur décrit des symptômes.
+3. AUCUN DIAGNOSTIC MÉDICAL.
+4. Si l'utilisateur cherche un médecin, un hôpital ou veut prendre RDV, explique-lui qu'il doit se connecter ou créer un compte pour accéder à ces fonctionnalités, et propose-lui les boutons suivants :
+```json
+[
+  {"type": "route", "label": "Trouver un hôpital", "payload": "/hospitals"},
+  {"type": "route", "label": "Se connecter", "payload": "/login"},
+  {"type": "route", "label": "Créer un compte", "payload": "/register"}
+]
+```
+5. Ne génère PAS d'autres boutons de navigation.
+
+IMPORTANT: Ta réponse doit être claire, courte et rassurante.
+"""
+
+def openai_chat_completion(history_messages, enable_tools=True):
     """
     Appelle l'API Groq (OpenAI-compatible) avec support du RAG / Function Calling.
+    
+    :param history_messages: Liste des messages à envoyer
+    :param enable_tools: Si False, désactive le function calling (pour les utilisateurs non connectés)
     """
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {settings.CHATBOT_API_KEY}"
     }
 
+    # Choisir le prompt système selon le contexte
+    system_prompt = SYSTEM_PROMPT if enable_tools else SYSTEM_PROMPT_PUBLIC
+
     # Préparation du payload initial
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history_messages
+    messages = [{"role": "system", "content": system_prompt}] + history_messages
     
     payload = {
         "model": settings.CHATBOT_MODEL,
         "messages": messages,
         "temperature": 0.5,
-        "tools": TOOLS_SCHEMA,
-        "tool_choice": "auto"
     }
+
+    # N'activer les tools que pour les utilisateurs connectés
+    if enable_tools:
+        payload["tools"] = TOOLS_SCHEMA
+        payload["tool_choice"] = "auto"
+
+    timeout = getattr(settings, "CHATBOT_TIMEOUT", 45)
 
     try:
         response = requests.post(
             settings.CHATBOT_API_URL,
             json=payload,
             headers=headers,
-            timeout=getattr(settings, "CHATBOT_TIMEOUT", 30)
+            timeout=timeout,
         )
         
         if not response.ok:
@@ -72,8 +103,8 @@ def openai_chat_completion(history_messages):
 
         message = data["choices"][0]["message"]
         
-        # Vérifier si l'IA veut appeler un ou plusieurs outils
-        if message.get("tool_calls"):
+        # Vérifier si l'IA veut appeler un ou plusieurs outils (seulement si tools activés)
+        if enable_tools and message.get("tool_calls"):
             # On ajoute le message de l'assistant (avec les tool_calls) à l'historique
             messages.append(message)
             
@@ -96,14 +127,14 @@ def openai_chat_completion(history_messages):
             final_payload = {
                 "model": settings.CHATBOT_MODEL,
                 "messages": messages,
-                "temperature": 0.5
+                "temperature": 0.5,
             }
             
             final_response = requests.post(
                 settings.CHATBOT_API_URL,
                 json=final_payload,
                 headers=headers,
-                timeout=getattr(settings, "CHATBOT_TIMEOUT", 30)
+                timeout=timeout,
             )
             
             if not final_response.ok:
@@ -117,6 +148,9 @@ def openai_chat_completion(history_messages):
             # Réponse directe sans RAG
             return message.get("content", "")
 
+    except requests.exceptions.Timeout:
+        logger.error("Timeout Groq — le modèle a mis trop de temps à répondre")
+        return "L'assistant met trop de temps à répondre. Veuillez réessayer dans quelques instants."
     except requests.exceptions.RequestException as e:
         logger.error(f"Erreur requête Groq: {str(e)}")
         if hasattr(e, 'response') and e.response is not None:

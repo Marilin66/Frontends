@@ -2,31 +2,31 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Send, 
-  Bot, 
-  User, 
-  Sparkles, 
-  BrainCircuit, 
-  Plus, 
-  MessageSquare, 
-  Clock, 
-  Menu, 
+import {
+  Send,
+  Bot,
+  User,
+  Sparkles,
+  BrainCircuit,
+  Plus,
+  MessageSquare,
+  Menu,
   X,
-  Trash,
   ChevronRight,
   AlertCircle,
-  ShieldCheck
+  ShieldCheck,
 } from 'lucide-react';
-import { Card, Button, Input, Avatar } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
+import { sanitizeAIRoute } from '@/utils/chatRoutes';
 
 interface Action {
   label: string;
   type: 'route' | 'message' | 'redirect';
   payload?: string;
   url?: string;
+  target?: string;
 }
 
 interface Message {
@@ -40,23 +40,32 @@ interface Message {
 interface Session {
   id: number;
   title: string;
-  date: string;
+  created_at?: string;
+  date?: string;
 }
+
+const WELCOME: Message = {
+  id: 'welcome',
+  role: 'assistant',
+  content: "Bonjour ! Je suis l'intelligence Hopitel. Comment puis-je vous aider aujourd'hui ?",
+  timestamp: new Date(),
+};
 
 export default function AIAgentPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<number | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // fermée par défaut sur mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // ── Initialisation ─────────────────────────────────────────────────────────
   useEffect(() => {
-    fetchSessions();
-    loadLastHistory();
+    Promise.all([fetchSessions(), loadLastHistory()]);
   }, []);
 
   useEffect(() => {
@@ -65,392 +74,449 @@ export default function AIAgentPage() {
     }
   }, [messages, isTyping]);
 
+  // ── Sessions ───────────────────────────────────────────────────────────────
   const fetchSessions = async () => {
     try {
       const response = await api.get<any>(endpoints.chatbotSessions);
-      // api.get returns data directly, not {data: ...}
-      const data = Array.isArray(response) ? response : (response?.results || response?.data || []);
+      const data = Array.isArray(response) ? response : (response?.results ?? response?.data ?? []);
       setSessions(data);
-    } catch (error) {
-      console.error('Failed to fetch sessions');
+    } catch {
       setSessions([]);
     }
   };
 
   const loadLastHistory = async () => {
+    setLoadingHistory(true);
     try {
       const response = await api.get<any>(endpoints.chatbotHistory());
-      if (response && response.messages) {
-        setCurrentSessionId(response.session_id);
-        const history = response.messages.map((m: any) => ({
-          ...m,
-          timestamp: new Date(m.timestamp)
-        }));
-        setMessages(history);
+      if (response?.messages?.length > 0) {
+        setCurrentSessionId(response.session_id ?? null);
+        setMessages(
+          response.messages.map((m: any) => ({
+            ...m,
+            timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+          }))
+        );
       } else {
-        // First time
-        setMessages([{
-          id: '1',
-          role: 'assistant',
-          content: "Bonjour ! Je suis l'intelligence Hopitel. Comment puis-je vous aider ?",
-          timestamp: new Date()
-        }]);
+        // Pas d'historique → message de bienvenue
+        setMessages([WELCOME]);
       }
-    } catch (error) {
-      console.error('Failed to load history');
+    } catch {
+      setMessages([WELCOME]);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
   const selectSession = async (id: number) => {
     try {
       const response = await api.get<any>(endpoints.chatbotHistory(id));
-      setCurrentSessionId(response.session_id);
-      const history = response.messages.map((m: any) => ({
-        ...m,
-        timestamp: new Date(m.timestamp)
-      }));
-      setMessages(history);
+      setCurrentSessionId(response.session_id ?? id);
+      setMessages(
+        (response.messages ?? []).map((m: any) => ({
+          ...m,
+          timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+        }))
+      );
       if (window.innerWidth < 1024) setSidebarOpen(false);
-    } catch (error) {
-      console.error('Failed to load session');
+    } catch {
+      // Silencieux
     }
   };
 
   const startNewChat = async () => {
     try {
       const response = await api.post<any>(endpoints.chatbotSessions);
-      setCurrentSessionId(response.id);
+      setCurrentSessionId(response.id ?? null);
       setMessages([{
-        id: 'welcome',
+        id: 'new-' + Date.now(),
         role: 'assistant',
-        content: "Nouvelle discussion lancée. En quoi puis-je vous aider ?",
-        timestamp: new Date()
+        content: 'Nouvelle discussion lancée. En quoi puis-je vous aider ?',
+        timestamp: new Date(),
       }]);
       fetchSessions();
-      if (window.innerWidth < 1024) setSidebarOpen(false);
-    } catch (error) {
-      console.error('Failed to start new chat');
+    } catch {
+      // Créer localement si l'API échoue
+      setCurrentSessionId(null);
+      setMessages([WELCOME]);
     }
+    if (window.innerWidth < 1024) setSidebarOpen(false);
   };
 
+  // ── Envoi de message ───────────────────────────────────────────────────────
   const sendMessage = async (text: string) => {
     if (!text.trim() || isTyping) return;
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: text,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMsg]);
+    setMessages(prev => [
+      ...prev,
+      { id: Date.now().toString(), role: 'user', content: text, timestamp: new Date() },
+    ]);
     setIsTyping(true);
     setInput('');
 
     try {
-      const response = await api.post<any>(endpoints.chatbot, { 
+      const data = await api.post<any>(endpoints.chatbot, {
         message: text,
-        session_id: currentSessionId
+        session_id: currentSessionId,
       });
-      
-      const data = response;
-      if (data.session_id && !currentSessionId) {
-        setCurrentSessionId(data.session_id);
-        fetchSessions();
+
+      // Mettre à jour la session si nouvelle
+      if (data.session_id) {
+        if (!currentSessionId) {
+          setCurrentSessionId(data.session_id);
+          fetchSessions();
+        }
       }
 
+      // Extraire le contenu texte
       let content = data?.message?.content ?? data?.content ?? '...';
-      
-      // Cleanup technical tags
+
+      // Nettoyer les artefacts JSON résiduels (au cas où le backend n'a pas tout nettoyé)
+      content = content.replace(/```json[\s\S]*?```/g, '').trim();
+      content = content.replace(/```[\s\S]*?```/g, '').trim();
       content = content.replace(/<function[\s\S]*?<\/function>/g, '').trim();
-      const jsonRegex = /({[\s\S]*?"buttons"[\s\S]*?}|\[[\s\S]*?\])/g;
-      const jsonMatches = content.match(jsonRegex);
-      let actions = data?.actions ?? [];
 
-      if (jsonMatches) {
-        const lastJson = jsonMatches[jsonMatches.length - 1];
-        try {
-          const parsed = JSON.parse(lastJson);
-          const raw = Array.isArray(parsed) ? parsed : (parsed.buttons || parsed.actions || []);
-          if (raw.length > 0) {
-            content = content.replace(lastJson, '').trim();
-            actions = raw;
+      // Les actions viennent du backend (déjà extraites)
+      let actions: Action[] = data?.actions ?? [];
+
+      // Fallback : si le backend n'a pas extrait les actions mais qu'il y a du JSON brut dans le texte
+      if (actions.length === 0) {
+        const lastBracket = content.lastIndexOf('[');
+        if (lastBracket !== -1) {
+          const candidate = content.slice(lastBracket);
+          const closeIdx = candidate.indexOf(']');
+          if (closeIdx !== -1) {
+            try {
+              const parsed = JSON.parse(candidate.slice(0, closeIdx + 1));
+              if (Array.isArray(parsed) && parsed.length > 0 && parsed[0]?.label) {
+                actions = parsed;
+                content = content.slice(0, lastBracket).trim();
+              }
+            } catch { /* pas du JSON valide */ }
           }
-        } catch (_) {}
+        }
       }
-      content = content.replace(/```json|```/g, '').trim();
 
-      const assistantMsg = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content,
-        timestamp: new Date(),
-        actions
-      };
-      setMessages(prev => [...prev, assistantMsg]);
-    } catch (error) {
-      setMessages(prev => [...prev, {
-        id: 'err',
-        role: 'assistant',
-        content: "Erreur technique.",
-        timestamp: new Date()
-      }]);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content,
+          timestamp: new Date(),
+          actions,
+        },
+      ]);
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: 'err-' + Date.now(),
+          role: 'assistant',
+          content: 'Une erreur technique est survenue. Veuillez réessayer.',
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
   };
 
+  // ── Gestion des actions IA ─────────────────────────────────────────────────
+  const handleAction = (action: Action) => {
+    const raw = action.payload ?? action.url ?? (action as any).target;
+    if (!raw) return;
+
+    // Action de type message → envoyer comme message utilisateur
+    if (action.type === 'message') {
+      sendMessage(raw);
+      return;
+    }
+
+    // URL externe
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      window.open(raw, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    // Sanitiser et naviguer
+    const target = sanitizeAIRoute(raw);
+    navigate(target);
+  };
+
+  // ── Titre de la session courante ───────────────────────────────────────────
+  const currentTitle =
+    sessions.find(s => s.id === currentSessionId)?.title ?? 'Agent Hopitel';
+
+  // ── Rendu ──────────────────────────────────────────────────────────────────
   return (
-    <div className="h-[calc(100vh-8rem)] sm:h-[calc(100vh-8rem)] flex overflow-hidden bg-slate-50/50 rounded-3xl border border-slate-200 relative">
-
-      {/* Overlay mobile pour fermer la sidebar */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Architecture */}
-      <motion.aside
-        initial={false}
-        animate={sidebarOpen ? { width: 280, opacity: 1 } : { width: 0, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white border-r border-slate-200 flex flex-col overflow-hidden
-                   lg:relative lg:z-auto
-                   fixed left-0 top-0 h-full z-30 lg:h-auto"
-        style={{ minWidth: sidebarOpen ? 0 : 0 }}
-      >
-        <div className="p-6 flex items-center justify-between">
-          <Button 
-            onClick={startNewChat}
-            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover shadow-lg shadow-primary/20 text-white font-bold italic"
-          >
-            <Plus className="w-5 h-5" /> NOUVELLE BULLE IA
-          </Button>
-          <button
+    <div
+      className="flex overflow-hidden bg-slate-50/50 rounded-3xl border border-slate-200 relative"
+      style={{ height: 'calc(100dvh - 8rem)' }}
+    >
+      {/* Overlay mobile */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-20 bg-black/30 lg:hidden"
             onClick={() => setSidebarOpen(false)}
-            className="lg:hidden ml-3 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ── Sidebar ── */}
+      <AnimatePresence initial={false}>
+        {sidebarOpen && (
+          <motion.aside
+            key="sidebar"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 280, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="bg-white border-r border-slate-200 flex flex-col overflow-hidden
+                       fixed left-0 top-0 h-full z-30
+                       lg:relative lg:z-auto lg:h-auto"
           >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+            {/* Bouton nouvelle conversation */}
+            <div className="p-4 flex items-center gap-2 border-b border-slate-100">
+              <button
+                onClick={startNewChat}
+                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 bg-primary text-white text-xs font-black uppercase italic shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all"
+              >
+                <Plus className="w-4 h-4" /> Nouvelle conversation
+              </button>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500 shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-        <div className="flex-1 overflow-y-auto px-4 space-y-2 no-scrollbar">
-          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 mb-4">RECENTS</div>
-          {(sessions || []).map(session => (
+            {/* Liste des sessions */}
+            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 no-scrollbar">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2">
+                Récents
+              </p>
+              {sessions.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-8 italic">Aucune conversation</p>
+              ) : (
+                sessions.map(session => (
+                  <button
+                    key={session.id}
+                    onClick={() => selectSession(session.id)}
+                    className={`w-full p-3 rounded-xl text-left group transition-all flex items-center gap-3 ${
+                      currentSessionId === session.id
+                        ? 'bg-primary/5 border-2 border-primary/20'
+                        : 'hover:bg-slate-50 border-2 border-transparent'
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        currentSessionId === session.id
+                          ? 'bg-primary text-white'
+                          : 'bg-slate-100 text-slate-400'
+                      }`}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-slate-900 truncate uppercase italic">
+                        {session.title || 'Conversation'}
+                      </p>
+                      <p className="text-[9px] text-slate-400 font-bold">
+                        {session.created_at || session.date
+                          ? new Date(session.created_at || session.date).toLocaleDateString('fr-FR')
+                          : "Aujourd'hui"}
+                      </p>
+                    </div>
+                    <ChevronRight
+                      className={`w-4 h-4 shrink-0 transition-transform ${
+                        currentSessionId === session.id
+                          ? 'text-primary'
+                          : 'text-slate-200 group-hover:translate-x-0.5'
+                      }`}
+                    />
+                  </button>
+                ))
+              )}
+            </div>
+
+            <div className="p-4 border-t border-slate-100 text-[9px] font-black text-slate-400 text-center uppercase tracking-widest italic">
+              Hopitel Intelligence
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* ── Zone principale ── */}
+      <main className="flex-1 flex flex-col bg-white overflow-hidden min-w-0">
+
+        {/* En-tête */}
+        <div className="h-16 border-b border-slate-100 px-4 lg:px-6 flex items-center justify-between bg-white/90 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-3">
             <button
-              key={session.id}
-              onClick={() => selectSession(session.id)}
-              className={`w-full p-4 rounded-xl text-left group transition-all flex items-center gap-3 relative ${
-                currentSessionId === session.id 
-                  ? 'bg-primary/5 border-2 border-primary/20' 
-                  : 'hover:bg-slate-50 border-2 border-transparent'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${currentSessionId === session.id ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}>
-                <MessageSquare className="w-4 h-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-black text-slate-900 truncate uppercase italic">{session.title || 'Session active'}</p>
-                <p className="text-[9px] text-slate-400 font-bold">{session.created_at || session.date ? new Date(session.created_at || session.date).toLocaleDateString() : 'Aujourd\'hui'}</p>
-              </div>
-              <ChevronRight className={`w-4 h-4 transition-transform ${currentSessionId === session.id ? 'text-primary' : 'text-slate-200 group-hover:translate-x-1'}`} />
-            </button>
-          ))}
-        </div>
-
-        <div className="p-6 border-t border-slate-100 italic text-[10px] font-black text-slate-400 text-center uppercase tracking-tighter">
-          Hopitel Core Intelligence v4.6
-        </div>
-      </motion.aside>
-
-      {/* Main Chat Core */}
-      <main className="flex-1 flex flex-col bg-white overflow-hidden relative">
-        {/* Chat Header */}
-        <div className="h-20 border-b border-slate-100 px-8 flex items-center justify-between bg-white/80 backdrop-blur-xl sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <button 
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-slate-100 rounded-lg text-slate-500"
-              title="Historique des conversations"
+              className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+              title="Historique"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5" />
             </button>
-            <div>
-              <h2 className="text-sm font-black text-slate-900 tracking-tight uppercase italic flex items-center gap-2">
-                <Bot className="w-5 h-5 text-primary" />
-                {currentSessionId ? sessions.find(s => s.id === currentSessionId)?.title : "Agent Hopitel"}
+            <div className="min-w-0">
+              <h2 className="text-sm font-black text-slate-900 uppercase italic flex items-center gap-2 truncate">
+                <Bot className="w-4 h-4 text-primary shrink-0" />
+                <span className="truncate">{currentTitle}</span>
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                <span className="text-[9px] text-slate-400 font-black uppercase italic tracking-widest px-1">Synchronisé</span>
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[9px] text-slate-400 font-black uppercase italic tracking-widest">
+                  Synchronisé
+                </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300">
-               <ShieldCheck className="w-5 h-5" />
-             </div>
+          <div className="w-9 h-9 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 shrink-0">
+            <ShieldCheck className="w-4 h-4" />
           </div>
         </div>
 
-        {/* Messages Architecture */}
-        <div 
+        {/* Messages */}
+        <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto p-6 lg:p-12 space-y-10 no-scrollbar bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:20px_20px]"
+          className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 no-scrollbar bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:20px_20px] min-h-0"
         >
-          {messages.map((msg, i) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div className={`flex gap-5 max-w-[85%] lg:max-w-[70%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg ${
-                  msg.role === 'assistant' ? 'bg-primary text-white' : 'bg-white border-2 border-slate-100 text-slate-400'
-                }`}>
-                  {msg.role === 'assistant' ? <BrainCircuit className="w-6 h-6" /> : <User className="w-6 h-6" />}
-                </div>
-                
-                <div className="flex flex-col gap-4">
-                  <div className={`relative p-6 rounded-2xl shadow-sm border-2 ${
-                    msg.role === 'user' 
-                      ? 'bg-primary border-primary text-white rounded-tr-none' 
-                      : 'bg-white border-slate-100 text-slate-900 rounded-tl-none'
-                  }`}>
-                    <p className="text-sm leading-relaxed font-bold italic whitespace-pre-wrap">{msg.content}</p>
-                    <span className={`text-[8px] font-black mt-4 block uppercase tracking-widest opacity-40 ${msg.role === 'user' ? 'text-right' : ''}`}>
-                      {msg.timestamp.toLocaleTimeString()} SYNC
-                    </span>
+          {loadingHistory ? (
+            <div className="flex justify-center items-center h-full">
+              <div className="flex gap-1.5">
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.15s]" />
+                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.3s]" />
+              </div>
+            </div>
+          ) : (
+            messages.map(msg => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2 }}
+                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`flex gap-3 max-w-[88%] lg:max-w-[72%] ${
+                    msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
+                  }`}
+                >
+                  {/* Avatar */}
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-sm ${
+                      msg.role === 'assistant'
+                        ? 'bg-primary text-white'
+                        : 'bg-white border-2 border-slate-100 text-slate-400'
+                    }`}
+                  >
+                    {msg.role === 'assistant' ? (
+                      <BrainCircuit className="w-5 h-5" />
+                    ) : (
+                      <User className="w-5 h-5" />
+                    )}
                   </div>
 
-                  {msg.actions && msg.actions.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                       {msg.actions.map((action, idx) => (
-                         <Button
-                           key={idx}
-                           variant="outline"
-                           size="sm"
-                           onClick={() => {
-                              const raw = action.payload || action.url || action.target;
-                              if (!raw) return;
-
-                              if (action.type === 'message') {
-                                sendMessage(raw);
-                                return;
-                              }
-
-                              if (action.type === 'redirect' || raw.startsWith('http')) {
-                                window.open(raw, '_blank');
-                                return;
-                              }
-
-                              // Sanitiser l'URL — l'IA peut générer des noms au lieu d'IDs
-                              let target = raw;
-                              const validPrefixes = ['/patient/', '/medecin/', '/admin', '/laborantin/', '/super-admin/', '/hospitals', '/emergency', '/tips', '/login', '/register', '/hopital/'];
-
-                              // Normaliser les slashes doubles
-                              target = target.replace(/\/+/g, '/');
-
-                              // Vérifier les routes avec ID numérique
-                              const hopitalWithId = /^\/hopital\/\d+/.test(target);
-                              const patientHopitalWithId = /^\/patient\/hopital\/\d+/.test(target);
-                              const patientMedecinWithId = /^\/patient\/medecin\/\d+/.test(target);
-
-                              if (!hopitalWithId && target.startsWith('/hopital/')) {
-                                target = '/hospitals';
-                              } else if (!patientHopitalWithId && target.startsWith('/patient/hopital/')) {
-                                target = '/hospitals';
-                              } else if (!patientMedecinWithId && target.startsWith('/patient/medecin/')) {
-                                target = '/patient/search';
-                              } else {
-                                const isValid = validPrefixes.some(p => target.startsWith(p));
-                                if (!isValid) {
-                                  if (target.includes('hopital') || target.includes('hôpital') || target.startsWith('/hopitaux/')) {
-                                    target = '/hospitals';
-                                  } else if (target.includes('medecin') || target.includes('médecin') || target.startsWith('/medecins/')) {
-                                    target = '/patient/search';
-                                  } else if (target === '/nearby' || target === '/map') {
-                                    target = '/patient/nearby';
-                                  } else if (target === '/appointments' || target === '/rendez-vous' || target === '/rdv') {
-                                    target = '/patient/appointments';
-                                  } else if (target === '/results' || target === '/resultats') {
-                                    target = '/patient/results';
-                                  } else {
-                                    target = '/patient/search';
-                                  }
-                                }
-                              }
-
-                              // Si l'utilisateur n'est pas connecté, rediriger vers login
-                              if (!user) {
-                                navigate('/login', { state: { message: 'Connectez-vous pour accéder à cette fonctionnalité.' } });
-                              } else {
-                                navigate(target);
-                              }
-                           }}
-                           className="h-10 px-4 rounded-xl border-2 border-primary/20 text-[10px] font-black uppercase text-primary hover:bg-primary/5 transition-all"
-                         >
-                           <Sparkles className="w-3 h-3 mr-2" />
-                           {action.label}
-                         </Button>
-                       ))}
+                  <div className="flex flex-col gap-2">
+                    {/* Bulle */}
+                    <div
+                      className={`px-5 py-4 rounded-2xl border-2 shadow-sm ${
+                        msg.role === 'user'
+                          ? 'bg-primary border-primary text-white rounded-tr-none'
+                          : 'bg-white border-slate-100 text-slate-900 rounded-tl-none'
+                      }`}
+                    >
+                      <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap">
+                        {msg.content}
+                      </p>
+                      <span
+                        className={`text-[9px] font-black mt-3 block uppercase tracking-widest opacity-40 ${
+                          msg.role === 'user' ? 'text-right' : ''
+                        }`}
+                      >
+                        {msg.timestamp.toLocaleTimeString('fr-FR', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
                     </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
 
+                    {/* Boutons d'action */}
+                    {msg.role === 'assistant' && msg.actions && msg.actions.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {msg.actions.map((action, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleAction(action)}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-primary border-2 border-primary/20 bg-white px-3 py-2 rounded-xl hover:bg-primary/5 active:scale-95 transition-all shadow-sm"
+                          >
+                            <Sparkles className="w-3 h-3 shrink-0" />
+                            {action.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            ))
+          )}
+
+          {/* Indicateur de frappe */}
           {isTyping && (
             <div className="flex justify-start">
-              <div className="flex gap-4 items-center bg-white border-2 border-slate-100 p-4 px-6 rounded-2xl shadow-xl animate-pulse">
-                <div className="flex gap-1.5">
+              <div className="flex gap-3 items-center bg-white border-2 border-slate-100 px-5 py-3 rounded-2xl shadow-sm ml-12">
+                <div className="flex gap-1">
                   <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
                   <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
                   <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
                 </div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Core Engine Analysing...</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+                  Analyse en cours...
+                </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Input Architecture */}
-        <div className="p-8 border-t border-slate-100 bg-white">
-          <form 
-            onSubmit={(e) => { e.preventDefault(); sendMessage(input); }}
-            className="relative flex gap-4 max-w-5xl mx-auto"
+        {/* Zone de saisie */}
+        <div className="p-4 lg:p-6 border-t border-slate-100 bg-white shrink-0">
+          <form
+            onSubmit={e => { e.preventDefault(); sendMessage(input); }}
+            className="flex gap-3 max-w-4xl mx-auto"
           >
             <div className="relative flex-1 group">
               <input
                 placeholder="Posez votre question à l'intelligence Hopitel..."
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
-                className="w-full h-16 pl-8 pr-16 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-black text-slate-900 focus:border-primary transition-all outline-none italic placeholder:text-slate-300"
+                onChange={e => setInput(e.target.value)}
+                className="w-full h-14 pl-5 pr-14 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-900 focus:border-primary transition-all outline-none placeholder:text-slate-300"
               />
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
                 <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                <Sparkles className="w-5 h-5 text-primary/50 group-focus-within:text-primary transition-colors" />
+                <Sparkles className="w-4 h-4 text-primary/40 group-focus-within:text-primary transition-colors" />
               </div>
             </div>
-            <Button 
-              type="submit" 
-              variant="secondary"
+            <button
+              type="submit"
               disabled={!input.trim() || isTyping}
-              className="w-16 h-16 !p-0 shadow-2xl shadow-primary/20 rounded-2xl flex items-center justify-center transition-all active:scale-95"
+              className="w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0"
             >
-              <div className="flex items-center justify-center w-full h-full">
-                <Send className="w-7 h-7 text-white" />
-              </div>
-            </Button>
+              <Send className="w-5 h-5" />
+            </button>
           </form>
-          <div className="flex items-center justify-center gap-3 mt-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] italic">
-            <AlertCircle className="w-4 h-4 text-amber-500 animate-pulse" />
+          <p className="flex items-center justify-center gap-1.5 mt-3 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             Vérifiez toujours les informations médicales critiques.
-          </div>
+          </p>
         </div>
       </main>
     </div>
