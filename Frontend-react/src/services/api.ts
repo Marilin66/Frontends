@@ -4,7 +4,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 // API Configuration
 // Utiliser le backend en ligne pour la production
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:8000/api' : 'https://backend-soutenance-1et0.onrender.com/api');
+const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? 'http://localhost:8000/api' : 'https://backend-production-fc8f.up.railway.app/api');
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({

@@ -1,6 +1,6 @@
 # 📋 Guide de Test — E-Santé Bénin (Flutter)
 
-> **Backend** : https://backend-soutenance-1et0.onrender.com/api  
+> **Backend** : https://backend-production-fc8f.up.railway.app/api  
 > **Note** : Le premier appel peut prendre ~30s (cold start Render).
 
 ---
