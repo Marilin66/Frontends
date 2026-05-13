@@ -28,13 +28,13 @@ export function BottomNav() {
       { path: '/medecin/agenda',       icon: Calendar,      label: 'Agenda' },
       { path: '/medecin/patients',     icon: Users,         label: 'Patients' },
       { path: '/medecin/messagerie',   icon: MessageCircle, label: 'Messages' },
-      { path: '/medecin/profile',      icon: Settings,      label: 'Paramètres' },
+      { path: '/medecin/settings',     icon: Settings,      label: 'Paramètres' },
     ];
     if (role === 'admin_hopital') return [
       { path: '/admin-hopital',                icon: Home,          label: 'Accueil',   end: true },
       { path: '/admin-hopital/medecins',       icon: Stethoscope,   label: 'Médecins' },
       { path: '/admin-hopital/services',       icon: Activity,      label: 'Services' },
-      { path: '/admin-hopital/messages',       icon: MessageCircle, label: 'Messages' },
+      { path: '/admin-hopital/messagerie',     icon: MessageCircle, label: 'Messages' },
       { path: '/admin-hopital/settings',       icon: Settings,      label: 'Paramètres' },
     ];
     if (role === 'super_admin' || role === 'admin_general') return [
@@ -45,11 +45,11 @@ export function BottomNav() {
       { path: '/super-admin/settings',         icon: Settings,        label: 'Paramètres' },
     ];
     if (role === 'laborantin') return [
-      { path: '/laborantin',                   icon: LayoutDashboard, label: 'Dashboard', end: true },
-      { path: '/laborantin/pending',           icon: FlaskConical,    label: 'En cours' },
-      { path: '/laborantin/finished',          icon: History,         label: 'Clôturées' },
+      { path: '/laborantin',                   icon: LayoutDashboard, label: 'Accueil',   end: true },
+      { path: '/laborantin/pending',           icon: FlaskConical,    label: 'Analyses' },
+      { path: '/laborantin/finished',          icon: History,         label: 'Archives' },
       { path: '/laborantin/messagerie',        icon: MessageCircle,   label: 'Messages' },
-      { path: '/laborantin/profile',           icon: User,            label: 'Profil' },
+      { path: '/laborantin/settings',          icon: Settings,        label: 'Paramètres' },
     ];
     return [{ path: '/', icon: Home, label: 'Accueil', end: true }];
   };
@@ -57,10 +57,10 @@ export function BottomNav() {
   const items = getItems();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200"
+    <nav className="lg:hidden fixed bottom-4 left-4 right-4 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/50 dark:border-slate-800 shadow-2xl shadow-slate-900/10 rounded-[2rem] transition-colors"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <div className="flex items-center justify-around h-16 px-1 max-w-lg mx-auto">
+      <div className="flex items-center justify-around h-16 px-2">
         {items.map((item) => {
           const Icon = item.icon;
           return (
@@ -69,21 +69,25 @@ export function BottomNav() {
               to={item.path}
               end={item.end}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 flex-1 py-1 min-w-0 transition-colors
-                ${isActive ? 'text-primary' : 'text-slate-400'}`
+                `flex flex-col items-center justify-center gap-1 flex-1 py-1 min-w-0 transition-all
+                ${isActive ? 'text-primary scale-110' : 'text-slate-400'}`
               }
             >
               {({ isActive }) =>
                 item.highlight ? (
-                  <div className="relative -mt-5">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all ${isActive ? 'bg-primary-dark' : 'bg-primary'}`}>
-                      <Icon className="w-5 h-5 text-white" />
+                  <div className="relative">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg transition-all ${isActive ? 'bg-primary-dark rotate-6' : 'bg-primary'}`}>
+                      <Icon className="w-6 h-6 text-white" />
                     </div>
                   </div>
                 ) : (
                   <>
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    <span className="text-[10px] font-medium truncate max-w-full px-1">{item.label}</span>
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${isActive ? 'bg-primary/10' : 'bg-transparent'}`}>
+                      <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'stroke-[2.5px]' : ''}`} />
+                    </div>
+                    <span className={`text-[9px] font-bold truncate max-w-full px-1 uppercase tracking-tighter transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-50'}`}>
+                      {item.label}
+                    </span>
                   </>
                 )
               }

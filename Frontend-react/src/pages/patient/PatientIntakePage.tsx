@@ -11,9 +11,12 @@ import {
   ArrowLeft,
   CheckCircle,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Info,
+  ChevronRight
 } from 'lucide-react';
 import { api, endpoints } from '@/services/api';
+import { Button, Badge, Card } from '@/components/ui';
 
 interface IntakeFormData {
   symptomes_principaux: string;
@@ -59,13 +62,8 @@ export default function PatientIntakePage() {
       }
     } catch (err: any) {
       const status = err?.response?.status;
-      if (status === 404) {
-        // Pas encore de fiche → mode création, c'est normal
-      } else if (status === 403) {
-        setError("Vous n'êtes pas autorisé à accéder à cette fiche.");
-      } else {
-        // Autre erreur → on laisse en mode création quand même
-        console.warn('Erreur chargement intake:', err?.response?.data);
+      if (status !== 404) {
+         console.warn('Erreur chargement intake:', err?.response?.data);
       }
     } finally {
       setIsLoading(false);
@@ -96,15 +94,7 @@ export default function PatientIntakePage() {
       setTimeout(() => navigate(-1), 1800);
     } catch (err: any) {
       const data = err?.response?.data;
-      let msg = 'Erreur lors de la sauvegarde. Veuillez réessayer.';
-      if (data) {
-        if (typeof data === 'string') msg = data;
-        else if (data.error) msg = data.error;
-        else if (data.detail) msg = data.detail;
-        else if (data.symptomes_principaux) msg = `Symptômes : ${data.symptomes_principaux[0]}`;
-        else msg = JSON.stringify(data);
-      }
-      setError(msg);
+      setError(data?.detail || 'Erreur lors de la sauvegarde.');
     } finally {
       setIsSaving(false);
     }
@@ -112,86 +102,95 @@ export default function PatientIntakePage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Chargement de votre fiche...</p>
       </div>
     );
   }
 
   if (saved) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center h-64 gap-4"
-      >
-        <CheckCircle className="w-16 h-16 text-teal-500" />
-        <h2 className="text-xl font-black text-slate-900 italic uppercase tracking-tight">
-          Fiche transmise !
-        </h2>
-        <p className="text-slate-400 font-bold text-sm">
-          Votre médecin sera préparé pour la consultation.
-        </p>
-      </motion.div>
+      <div className="max-w-md mx-auto py-20 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-[2.5rem] p-12 shadow-2xl border border-slate-100 flex flex-col items-center gap-6"
+        >
+          <div className="w-20 h-20 bg-emerald-500 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
+            <CheckCircle className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Fiche transmise !
+          </h2>
+          <p className="text-slate-500 font-medium leading-relaxed">
+            Votre médecin pourra consulter ces informations avant votre rendez-vous.
+          </p>
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
+    <div className="max-w-2xl mx-auto px-6 py-10 pb-24">
+      {/* ── Header ── */}
+      <div className="flex items-center gap-6 mb-10">
         <button
           onClick={() => navigate(-1)}
-          className="h-12 w-12 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all"
+          className="h-12 w-12 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center hover:bg-slate-50 transition-all group"
         >
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
+          <ArrowLeft className="w-5 h-5 text-slate-400 group-hover:text-primary transition-colors" />
         </button>
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight italic uppercase leading-none">
+          <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
             Pré-consultation
           </h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
-            {medecinNom ? `Pour Dr. ${decodeURIComponent(medecinNom)}` : 'Remplir avant la consultation'}
+          <p className="text-slate-500 font-medium mt-1">
+            {medecinNom ? `Pour le Dr. ${decodeURIComponent(medecinNom)}` : 'Remplir avant votre rendez-vous'}
           </p>
         </div>
       </div>
 
-      {/* Info banner */}
-      <div className="flex items-start gap-3 p-4 bg-teal-50 border border-teal-100 rounded-2xl mb-8">
-        <ClipboardList className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-        <p className="text-sm font-bold text-teal-700 leading-relaxed">
-          Ces informations permettent à votre médecin de mieux préparer votre consultation.
-          Ce formulaire est <span className="font-black">facultatif</span> mais fortement recommandé.
-        </p>
+      {/* ── Info Banner ── */}
+      <div className="bg-primary/5 border border-primary/10 rounded-3xl p-6 mb-10 flex items-start gap-4">
+        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
+          <Info className="w-5 h-5" />
+        </div>
+        <div>
+          <p className="text-slate-700 font-bold text-sm">Informations importantes</p>
+          <p className="text-slate-500 text-sm mt-1 leading-relaxed">
+            Ces informations aident votre médecin à mieux préparer votre consultation. Ce formulaire est <span className="text-primary font-bold">facultatif</span> mais fortement recommandé.
+          </p>
+        </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 rounded-2xl mb-6">
-          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-          <p className="text-sm font-bold text-red-700">{error}</p>
+        <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-2xl mb-8 text-rose-600 text-sm font-bold">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Symptômes */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-          <label className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest mb-3">
-            <Stethoscope className="w-4 h-4 text-red-400" />
-            Symptômes principaux <span className="text-red-500">*</span>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Symptômes Card */}
+        <Card className="p-8 rounded-[2rem] border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <label className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+            <Stethoscope className="w-4 h-4 text-primary" />
+            Symptômes principaux <span className="text-rose-500">*</span>
           </label>
           <textarea
             value={form.symptomes_principaux}
             onChange={(e) => handleChange('symptomes_principaux', e.target.value)}
             rows={4}
-            placeholder="Ex: Maux de tête, fièvre depuis 3 jours, douleurs abdominales..."
-            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 resize-none transition-all"
+            placeholder="Ex: Maux de tête persistants, fièvre modérée..."
+            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all resize-none"
           />
-        </div>
+        </Card>
 
-        {/* Date début symptômes */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-          <label className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest mb-3">
-            <Calendar className="w-4 h-4 text-orange-400" />
+        {/* Date Card */}
+        <Card className="p-8 rounded-[2rem] border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <label className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+            <Calendar className="w-4 h-4 text-primary" />
             Début des symptômes
           </label>
           <input
@@ -199,58 +198,61 @@ export default function PatientIntakePage() {
             value={form.debut_symptomes}
             onChange={(e) => handleChange('debut_symptomes', e.target.value)}
             max={new Date().toISOString().split('T')[0]}
-            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm font-medium text-slate-900 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all"
           />
-        </div>
+        </Card>
 
-        {/* Traitements */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-          <label className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest mb-3">
-            <Pill className="w-4 h-4 text-blue-400" />
+        {/* Traitements Card */}
+        <Card className="p-8 rounded-[2rem] border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <label className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+            <Pill className="w-4 h-4 text-primary" />
             Traitements en cours
           </label>
           <textarea
             value={form.traitements_en_cours}
             onChange={(e) => handleChange('traitements_en_cours', e.target.value)}
             rows={3}
-            placeholder="Ex: Paracétamol 500mg, Doliprane, aucun..."
-            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 resize-none transition-all"
+            placeholder="Ex: Paracétamol, traitements chroniques..."
+            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all resize-none"
           />
-        </div>
+        </Card>
 
-        {/* Observations */}
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-          <label className="flex items-center gap-2 text-xs font-black text-slate-500 uppercase tracking-widest mb-3">
-            <FileText className="w-4 h-4 text-purple-400" />
+        {/* Observations Card */}
+        <Card className="p-8 rounded-[2rem] border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+          <label className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+            <FileText className="w-4 h-4 text-primary" />
             Observations complémentaires
           </label>
           <textarea
             value={form.observations}
             onChange={(e) => handleChange('observations', e.target.value)}
             rows={4}
-            placeholder="Ex: Antécédents familiaux, allergies, informations pertinentes..."
-            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-sm font-bold text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 resize-none transition-all"
+            placeholder="Antécédents, allergies ou toute information utile..."
+            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 text-sm font-medium text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all resize-none"
           />
+        </Card>
+
+        {/* Submit Section */}
+        <div className="pt-4 space-y-4">
+          <Button
+            type="submit"
+            disabled={isSaving}
+            className="w-full h-16 bg-slate-900 text-white font-bold text-lg rounded-2xl shadow-2xl hover:bg-slate-800 active:scale-95 transition-all flex items-center justify-center gap-3"
+          >
+            {isSaving ? (
+              <Loader2 className="w-6 h-6 animate-spin" />
+            ) : (
+              <>
+                {isEditMode ? 'Mettre à jour ma fiche' : 'Envoyer la fiche au médecin'}
+                <ChevronRight className="w-5 h-5" />
+              </>
+            )}
+          </Button>
+
+          <p className="text-center text-[11px] font-bold text-slate-300 uppercase tracking-widest">
+            Données sécurisées et chiffrées
+          </p>
         </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="w-full h-16 bg-slate-900 text-white font-black text-lg rounded-[1.5rem] shadow-2xl hover:bg-slate-800 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-tight disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? (
-            <Loader2 className="w-6 h-6 animate-spin" />
-          ) : (
-            <>
-              {isEditMode ? 'Mettre à jour la fiche' : 'Envoyer au médecin'}
-            </>
-          )}
-        </button>
-
-        <p className="text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">
-          Formulaire facultatif — aide votre médecin à préparer la consultation
-        </p>
       </form>
     </div>
   );

@@ -22,7 +22,7 @@ const ROLE_ACCENT: Record<string, { active: string; dot: string; logo: string }>
 
 interface NavItem { path: string; icon: any; label: string; end?: boolean; badge?: number }
 
-function NavItem({ item, accent, onClose }: { item: NavItem; accent: string; onClose: () => void }) {
+function NavItem({ item, onClose }: { item: NavItem; onClose: () => void }) {
   const Icon = item.icon;
   return (
     <NavLink
@@ -30,19 +30,19 @@ function NavItem({ item, accent, onClose }: { item: NavItem; accent: string; onC
       end={item.end}
       onClick={onClose}
       className={({ isActive }) =>
-        `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
+        `group flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 mx-2
         ${isActive
-          ? `${accent} font-semibold`
-          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+          ? `bg-blue-50 dark:bg-primary/10 text-primary shadow-sm ring-1 ring-blue-100 dark:ring-primary/20`
+          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
         }`
       }
     >
       {({ isActive }) => (
         <>
-          <Icon className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${isActive ? '' : 'text-slate-400 group-hover:text-slate-600'}`} />
+          <Icon className={`w-4.5 h-4.5 flex-shrink-0 transition-colors ${isActive ? 'text-primary' : 'text-slate-400 group-hover:text-slate-600'}`} />
           <span className="flex-1 truncate">{item.label}</span>
           {item.badge ? (
-            <span className="ml-auto bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+            <span className={`ml-auto ${isActive ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600'} text-[10px] font-bold px-1.5 py-0.5 rounded-full`}>
               {item.badge}
             </span>
           ) : null}
@@ -52,16 +52,16 @@ function NavItem({ item, accent, onClose }: { item: NavItem; accent: string; onC
   );
 }
 
-function NavSection({ title, items, accent, onClose }: { title?: string; items: NavItem[]; accent: string; onClose: () => void }) {
+function NavSection({ title, items, onClose }: { title?: string; items: NavItem[]; onClose: () => void }) {
   return (
-    <div className="mb-5">
+    <div className="mb-6">
       {title && (
-        <p className="px-3 mb-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">{title}</p>
+        <p className="px-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{title}</p>
       )}
       <ul className="space-y-0.5">
         {items.map((item) => (
           <li key={item.path}>
-            <NavItem item={item} accent={accent} onClose={onClose} />
+            <NavItem item={item} onClose={onClose} />
           </li>
         ))}
       </ul>
@@ -78,38 +78,27 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
     if (role === 'patient') return [
       {
         items: [
-          { path: '/patient', icon: Home, label: 'Tableau de bord', end: true },
+          { path: '/patient', icon: LayoutDashboard, label: 'Tableau de bord', end: true },
+          { path: '/patient/messagerie', icon: MessageCircle, label: 'Messagerie' },
         ]
       },
       {
-        title: 'Santé',
+        title: 'Ma Santé',
         items: [
-          { path: '/patient/search',       icon: Search,        label: 'Trouver un médecin' },
           { path: '/patient/appointments', icon: Calendar,      label: 'Mes rendez-vous' },
-          { path: '/patient/results',      icon: FileText,      label: 'Mes résultats' },
-          { path: '/patient/nearby',       icon: Building,      label: 'Hôpitaux proches' },
+          { path: '/patient/results',      icon: FileText,      label: 'Mes documents' },
+          { path: '/patient/nearby',       icon: Building,      label: 'Hôpitaux' },
           { path: '/patient/ai-agent',     icon: Bot,           label: 'Assistant IA' },
         ]
       },
-      {
-        title: 'Communication',
-        items: [
-          { path: '/patient/messagerie',   icon: MessageCircle, label: 'Messages' },
-          { path: '/notifications',        icon: Bell,          label: 'Notifications' },
-        ]
-      },
-      {
-        title: 'Compte',
-        items: [
-          { path: '/patient/profile',      icon: User,          label: 'Mon profil' },
-        ]
-      },
+
     ];
 
     if (role === 'medecin') return [
       {
         items: [
-          { path: '/medecin', icon: Home, label: 'Tableau de bord', end: true },
+          { path: '/medecin', icon: LayoutDashboard, label: 'Tableau de bord', end: true },
+          { path: '/medecin/messagerie', icon: MessageCircle, label: 'Messagerie' },
         ]
       },
       {
@@ -120,25 +109,14 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           { path: '/medecin/results',      icon: FileText,      label: 'Résultats' },
         ]
       },
-      {
-        title: 'Communication',
-        items: [
-          { path: '/medecin/messagerie',   icon: MessageCircle, label: 'Messages' },
-          { path: '/notifications',        icon: Bell,          label: 'Notifications' },
-        ]
-      },
-      {
-        title: 'Compte',
-        items: [
-          { path: '/medecin/profile',      icon: Settings,      label: 'Paramètres' },
-        ]
-      },
+
     ];
 
     if (role === 'admin_hopital') return [
       {
         items: [
           { path: '/admin-hopital', icon: LayoutDashboard, label: 'Tableau de bord', end: true },
+          { path: '/admin-hopital/messagerie', icon: MessageCircle, label: 'Messagerie' },
         ]
       },
       {
@@ -149,28 +127,16 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           { path: '/admin-hopital/services',    icon: Activity,      label: 'Services' },
           { path: '/admin-hopital/demandes',    icon: FileText,      label: 'Demandes' },
           { path: '/admin-hopital/patients',    icon: Users,         label: 'Patients' },
-          { path: '/admin-hopital/stats',       icon: BarChart2,     label: 'Statistiques' },
         ]
       },
-      {
-        title: 'Communication',
-        items: [
-          { path: '/admin-hopital/messages',    icon: MessageCircle, label: 'Messages' },
-          { path: '/notifications',             icon: Bell,          label: 'Notifications' },
-        ]
-      },
-      {
-        title: 'Compte',
-        items: [
-          { path: '/admin-hopital/settings',    icon: Settings,      label: 'Paramètres' },
-        ]
-      },
+
     ];
 
     if (role === 'super_admin' || role === 'admin_general') return [
       {
         items: [
           { path: '/super-admin', icon: LayoutDashboard, label: 'Tableau de bord', end: true },
+          { path: '/super-admin/messagerie', icon: MessageCircle, label: 'Messagerie' },
         ]
       },
       {
@@ -180,28 +146,16 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           { path: '/super-admin/users',       icon: Users,         label: 'Administrateurs' },
           { path: '/super-admin/services',    icon: Activity,      label: 'Services globaux' },
           { path: '/super-admin/demandes',    icon: FileText,      label: 'Demandes' },
-          { path: '/super-admin/stats',       icon: BarChart2,     label: 'Statistiques' },
         ]
       },
-      {
-        title: 'Communication',
-        items: [
-          { path: '/super-admin/messagerie',  icon: MessageCircle, label: 'Messages' },
-          { path: '/notifications',           icon: Bell,          label: 'Notifications' },
-        ]
-      },
-      {
-        title: 'Compte',
-        items: [
-          { path: '/super-admin/settings',    icon: Settings,      label: 'Paramètres' },
-        ]
-      },
+
     ];
 
     if (role === 'laborantin') return [
       {
         items: [
           { path: '/laborantin', icon: LayoutDashboard, label: 'Tableau de bord', end: true },
+          { path: '/laborantin/messagerie', icon: MessageCircle, label: 'Messagerie' },
         ]
       },
       {
@@ -211,19 +165,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           { path: '/laborantin/finished',     icon: History,       label: 'Clôturées' },
         ]
       },
-      {
-        title: 'Communication',
-        items: [
-          { path: '/laborantin/messagerie',   icon: MessageCircle, label: 'Messages' },
-          { path: '/notifications',           icon: Bell,          label: 'Notifications' },
-        ]
-      },
-      {
-        title: 'Compte',
-        items: [
-          { path: '/laborantin/profile',      icon: User,          label: 'Profil' },
-        ]
-      },
+
     ];
 
     return [{ items: [{ path: '/', icon: Home, label: 'Accueil', end: true }] }];
@@ -231,61 +173,30 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
 
   const sections = getNavSections();
 
-  const profilePath = role === 'patient'    ? '/patient/profile'
-    : role === 'medecin'                    ? '/medecin/profile'
-    : role === 'laborantin'                 ? '/laborantin/profile'
-    : (role === 'super_admin' || role === 'admin_general') ? '/super-admin/settings'
-    : '/admin-hopital/settings';
-
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200/80">
-      {/* Logo */}
-      <div className="h-16 flex items-center px-5 border-b border-slate-100 flex-shrink-0">
-        <Link to="/" className="flex items-center gap-3" onClick={onClose}>
-          <div className={`w-9 h-9 ${colors.logo} rounded-xl flex items-center justify-center shadow-sm`}>
-            <span className="text-white font-bold text-base">H</span>
-          </div>
-          <div>
-            <p className="font-bold text-slate-900 text-base leading-none">Hopitel</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Santé numérique</p>
-          </div>
-        </Link>
+    <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/20 dark:shadow-none transition-colors duration-300">
+      {/* Branding mobile only (visible in drawer) */}
+      <div className="lg:hidden p-6 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
+        <img src="/logo.png" alt="Hopitel Logo" className="h-10 w-auto object-contain" />
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-5 custom-scrollbar">
+      {/* Navigation — commence directement en haut car le logo est dans le header sur desktop */}
+      <nav className="flex-1 overflow-y-auto pt-4 pb-4 custom-scrollbar">
         {sections.map((section, i) => (
           <NavSection
             key={i}
             title={section.title}
             items={section.items}
-            accent={colors.active}
             onClose={onClose}
           />
         ))}
       </nav>
 
-      {/* User card en bas */}
-      <div className="flex-shrink-0 p-3 border-t border-slate-100">
-        <Link
-          to={profilePath}
-          onClick={onClose}
-          className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group cursor-pointer"
-        >
-          <div className="relative flex-shrink-0">
-            <Avatar name={`${user?.first_name} ${user?.last_name}`} size="sm" className="w-9 h-9" />
-            <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${colors.dot} rounded-full border-2 border-white`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-900 truncate">{user?.first_name} {user?.last_name}</p>
-            <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
-        </Link>
-
+      {/* Logout en bas */}
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
         <button
           onClick={logout}
-          className="w-full flex items-center gap-3 px-3 py-2 mt-1 rounded-xl text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:text-red-600 hover:bg-white transition-all group border border-transparent hover:border-red-100 hover:shadow-sm"
         >
           <LogOut className="w-4 h-4" />
           Déconnexion
@@ -301,7 +212,7 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] lg:hidden"
             onClick={onClose}
           />
         )}
@@ -312,13 +223,13 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
         initial={false}
         animate={{ x: isOpen ? 0 : '-100%' }}
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-        className="fixed top-0 left-0 z-50 h-full w-72 lg:hidden shadow-2xl"
+        className="fixed top-0 left-0 z-[110] h-full w-72 lg:hidden shadow-2xl"
       >
         {sidebarContent}
       </motion.aside>
 
-      {/* Sidebar desktop — toujours visible, largeur fixe */}
-      <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 h-screen sticky top-0">
+      {/* Sidebar desktop — toujours visible, largeur fixe sous le header */}
+      <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 h-full bg-white dark:bg-slate-900 transition-colors">
         {sidebarContent}
       </aside>
     </>

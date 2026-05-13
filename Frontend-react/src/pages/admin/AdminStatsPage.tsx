@@ -13,7 +13,7 @@ export default function AdminStatsPage() {
     setLoading(true);
     try {
       const data: any = await api.get(endpoints.hopitalStatistiques);
-      setStats(data);
+      setStats(data?.results || data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };

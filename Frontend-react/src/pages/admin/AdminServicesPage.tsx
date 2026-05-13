@@ -149,7 +149,7 @@ export default function AdminServicesPage() {
                         {s.service_description}
                       </p>
                     ) : (
-                      <p className="text-xs text-slate-400 mt-1 italic">Aucune description</p>
+                      <p className="text-xs text-slate-400 mt-1">Aucune description</p>
                     )}
                   </div>
                 </div>

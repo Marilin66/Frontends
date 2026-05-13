@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/brand_logo.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -39,20 +40,9 @@ class OnboardingScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       elevation: 1,
       centerTitle: !isDesktop,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.health_and_safety, color: AppColors.primary, size: 32),
-          const SizedBox(width: 8),
-          Text(
-            'Hopitel',
-            style: GoogleFonts.poppins(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 22,
-            ),
-          ),
-        ],
+      title: const BrandLogo(
+        logoSize: 40,
+        fontSize: 22,
       ),
       actions: isDesktop
           ? [
@@ -340,20 +330,10 @@ class OnboardingScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.health_and_safety, color: Colors.white, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                'Hopitel',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
-              ),
-            ],
+          const BrandLogo(
+            logoSize: 28,
+            fontSize: 18,
+            textColor: Colors.white,
           ),
           const SizedBox(height: 16),
           Text(

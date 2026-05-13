@@ -99,7 +99,7 @@ export default function ConsultationDetailPage() {
               </div>
               <h3 className="font-semibold text-slate-800">{label}</h3>
             </div>
-            <p className={`text-sm leading-relaxed ${consultation[key] ? 'text-slate-700' : 'text-slate-400 italic'}`}>
+            <p className={`text-sm leading-relaxed ${consultation[key] ? 'text-slate-700' : 'text-slate-400'}`}>
               {consultation[key] || `Aucun ${label.toLowerCase()} renseigné.`}
             </p>
           </Card>

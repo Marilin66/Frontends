@@ -66,119 +66,123 @@ export default function RegisterPage() {
     }};
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Bouton retour vers l'accueil */}
-      <div className="flex items-center gap-2 mb-2">
-        <Link to="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Retour à l'accueil
+      <div className="flex items-center justify-start">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-widest">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Retour
         </Link>
       </div>
 
-      {/* Titre */}
-      <div className="text-center mb-2">
-        <h2 className="text-xl font-bold text-primary">Créer un compte</h2>
-        <p className="text-sm text-slate-500 mt-1">Inscription patient</p>
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
+          Créer un compte Hopitel
+        </h2>
+        <p className="text-sm text-slate-500 font-medium">Rejoignez notre réseau de santé numérique.</p>
       </div>
 
       {/* Erreur globale */}
       {error && (
-        <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 animate-shake">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>{error}</span>
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3">
-        {/* Prénom */}
-        <Input
-          label="Prénom"
-          placeholder="Jean"
-          value={form.first_name}
-          onChange={(e) => set('first_name', e.target.value)}
-          error={fieldErrors.first_name}
-          leftIcon={<User className="w-4 h-4" />}
-          autoComplete="given-name"
-        />
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Prénom"
+            placeholder="Jean"
+            value={form.first_name}
+            onChange={(e) => set('first_name', e.target.value)}
+            error={fieldErrors.first_name}
+            className="h-11 rounded-xl"
+            autoComplete="given-name"
+          />
+          <Input
+            label="Nom"
+            placeholder="Dupont"
+            value={form.last_name}
+            onChange={(e) => set('last_name', e.target.value)}
+            error={fieldErrors.last_name}
+            className="h-11 rounded-xl"
+            autoComplete="family-name"
+          />
+        </div>
 
-        {/* Nom */}
         <Input
-          label="Nom"
-          placeholder="Kpomagan"
-          value={form.last_name}
-          onChange={(e) => set('last_name', e.target.value)}
-          error={fieldErrors.last_name}
-          leftIcon={<User className="w-4 h-4" />}
-          autoComplete="family-name"
-        />
-
-        {/* Email */}
-        <Input
-          label="Email"
+          label="Adresse email"
           type="email"
-          placeholder="vous@exemple.com"
+          placeholder="jean.dupont@exemple.com"
           value={form.email}
           onChange={(e) => set('email', e.target.value)}
           error={fieldErrors.email}
-          leftIcon={<Mail className="w-4 h-4" />}
+          className="h-11 rounded-xl"
           autoComplete="email"
         />
 
-        {/* Téléphone */}
         <Input
           label="Téléphone"
           type="tel"
-          placeholder="0199395776"
+          placeholder="0100000000"
           value={form.telephone}
           onChange={(e) => set('telephone', e.target.value)}
           error={fieldErrors.telephone}
-          helperText="Format Bénin : 10 chiffres commençant par 01 (ex: 0199395776)"
-          leftIcon={<Phone className="w-4 h-4" />}
+          helperText="Format : 10 chiffres commençant par 01"
+          className="h-11 rounded-xl"
           autoComplete="tel"
         />
 
-        {/* Mot de passe */}
-        <Input
-          label="Mot de passe"
-          type={showPassword ? 'text' : 'password'}
-          placeholder="••••••••"
-          value={form.password}
-          onChange={(e) => set('password', e.target.value)}
-          error={fieldErrors.password}
-          leftIcon={<Lock className="w-4 h-4" />}
-          rightIcon={showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          onRightIconClick={() => setShowPassword(!showPassword)}
-          autoComplete="new-password"
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Input
+            label="Mot de passe"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={form.password}
+            onChange={(e) => set('password', e.target.value)}
+            error={fieldErrors.password}
+            rightIcon={showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            onRightIconClick={() => setShowPassword(!showPassword)}
+            className="h-11 rounded-xl"
+            autoComplete="new-password"
+          />
+          <Input
+            label="Confirmation"
+            type={showConfirm ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={form.password_confirm}
+            onChange={(e) => set('password_confirm', e.target.value)}
+            error={fieldErrors.password_confirm}
+            rightIcon={showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            onRightIconClick={() => setShowConfirm(!showConfirm)}
+            className="h-11 rounded-xl"
+            autoComplete="new-password"
+          />
+        </div>
 
-        {/* Confirmer mot de passe */}
-        <Input
-          label="Confirmer le mot de passe"
-          type={showConfirm ? 'text' : 'password'}
-          placeholder="••••••••"
-          value={form.password_confirm}
-          onChange={(e) => set('password_confirm', e.target.value)}
-          error={fieldErrors.password_confirm}
-          leftIcon={<Lock className="w-4 h-4" />}
-          rightIcon={showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          onRightIconClick={() => setShowConfirm(!showConfirm)}
-          autoComplete="new-password"
-        />
-
-        {/* Bouton */}
         <Button
           type="submit"
-          className="w-full h-12 mt-2"
+          className="w-full h-12 mt-4 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
           isLoading={isLoading}
         >
-          S'inscrire
+          Finaliser l'inscription
         </Button>
       </form>
 
-      {/* Lien connexion */}
-      <p className="text-center text-sm text-slate-500">
-        Déjà un compte ?{' '}
-        <Link to="/login" className="text-primary hover:text-primary-dark font-medium transition-colors">
+      <div className="relative pt-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-100"></div>
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-3 text-slate-400 font-bold tracking-widest">DÉJÀ INSCRIT ?</span>
+        </div>
+      </div>
+
+      <p className="text-center text-sm text-slate-500 font-medium">
+        Vous avez déjà un compte ?{' '}
+        <Link to="/login" className="text-primary hover:underline font-bold">
           Se connecter
         </Link>
       </p>

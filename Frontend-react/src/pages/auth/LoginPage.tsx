@@ -37,53 +37,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Bouton retour vers l'accueil */}
-      <div className="flex items-center gap-2 mb-2">
-        <Link to="/" className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors">
-          <ArrowLeft className="w-4 h-4" />
-          Retour à l'accueil
+      <div className="flex items-center justify-start">
+        <Link to="/" className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-primary transition-colors uppercase tracking-widest">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Retour
         </Link>
       </div>
 
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold text-slate-900">Connexion</h2>
-        <p className="text-sm text-slate-500 mt-1">Accédez à votre espace santé</p>
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-slate-900 tracking-tight mb-2">
+          Connexion à Hopitel
+        </h2>
+        <p className="text-sm text-slate-500 font-medium">Saisissez vos identifiants pour accéder à votre espace.</p>
       </div>
 
-      {/* Error */}
+      {/* Message d'erreur */}
       {error && (
-        <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 animate-shake">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>{error}</span>
+          <span className="font-medium">{error}</span>
         </div>
       )}
 
-      {/* Success */}
+      {/* Message de succès */}
       {successMessage && !error && (
-        <div className="flex items-start gap-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700">
+        <div className="flex items-start gap-3 p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-700">
           <CheckCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          <span>{successMessage}</span>
+          <span className="font-medium">{successMessage}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <Input
           label="Adresse email"
           type="email"
-          placeholder="vous@exemple.com"
+          placeholder="nom@exemple.com"
           value={email}
           onChange={(e) => { setEmail(e.target.value); if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' }); }}
           error={fieldErrors.email}
-          leftIcon={<Mail className="w-4 h-4" />}
+          className="h-11 rounded-xl"
           autoComplete="email"
         />
 
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-sm font-medium text-slate-700">Mot de passe</label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:text-primary-dark font-medium transition-colors">
-              Mot de passe oublié ?
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-semibold text-slate-700">Mot de passe</label>
+            <Link to="/forgot-password" size="sm" className="text-xs text-primary hover:underline font-bold">
+              Oublié ?
             </Link>
           </div>
           <Input
@@ -92,27 +94,35 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: '' }); }}
             error={fieldErrors.password}
-            leftIcon={<Lock className="w-4 h-4" />}
             rightIcon={showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             onRightIconClick={() => setShowPassword(!showPassword)}
+            className="h-11 rounded-xl"
             autoComplete="current-password"
           />
         </div>
 
         <Button
           type="submit"
-          className="w-full h-11 mt-2"
+          className="w-full h-12 mt-2 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
           isLoading={isLoading}
-          rightIcon={<ArrowRight className="w-4 h-4" />}
         >
           Se connecter
         </Button>
       </form>
 
-      <p className="text-center text-sm text-slate-500">
+      <div className="relative pt-4">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-100"></div>
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-white px-3 text-slate-400 font-bold tracking-widest">OU</span>
+        </div>
+      </div>
+
+      <p className="text-center text-sm text-slate-500 font-medium">
         Pas encore de compte ?{' '}
-        <Link to="/register" className="text-primary hover:text-primary-dark font-medium transition-colors">
-          Créer un compte
+        <Link to="/register" className="text-primary hover:underline font-bold">
+          Créer un accès
         </Link>
       </p>
     </div>

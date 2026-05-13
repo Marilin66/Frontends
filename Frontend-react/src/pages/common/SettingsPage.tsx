@@ -1,60 +1,38 @@
 // @ts-nocheck
 import { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
 import { Card, Avatar, Button, Input } from '@/components/ui';
 import {
-  User, Lock, Bell, Globe, Shield, FileText, Phone, Info,
+  User, Lock, Bell, Shield, FileText, Phone, Info,
   ChevronRight, LogOut, Edit2, Save, X, Camera,
   Building, Mail, MapPin, Calendar, CheckCircle, AlertCircle,
-  Stethoscope, FlaskConical
+  FlaskConical, Stethoscope, ChevronLeft, UserCircle, Settings as SettingsIcon
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const ROLE_LABELS: Record<string, string> = {
-  patient: 'Patient', medecin: 'Médecin', admin_hopital: 'Admin Hôpital',
-  admin_general: 'Admin Général', super_admin: 'Super Admin', laborantin: 'Laborantin',
+const ROLE_THEME: Record<string, { primary: string; light: string; badge: string }> = {
+  patient:       { primary: 'bg-blue-600',    light: 'bg-blue-50',    badge: 'text-blue-700 bg-blue-50 border-blue-100' },
+  medecin:       { primary: 'bg-emerald-600', light: 'bg-emerald-50', badge: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+  admin_hopital: { primary: 'bg-orange-600',  light: 'bg-orange-50',  badge: 'text-orange-700 bg-orange-50 border-orange-100' },
+  super_admin:   { primary: 'bg-violet-600',  light: 'bg-violet-50',  badge: 'text-violet-700 bg-violet-50 border-violet-100' },
+  admin_general: { primary: 'bg-orange-600',  light: 'bg-orange-50',  badge: 'text-orange-700 bg-orange-50 border-orange-100' },
+  laborantin:    { primary: 'bg-cyan-600',    light: 'bg-cyan-50',    badge: 'text-cyan-700 bg-cyan-50 border-cyan-100' },
 };
-
-const ROLE_COLORS: Record<string, string> = {
-  patient: 'text-blue-700 bg-blue-50 border-blue-200',
-  medecin: 'text-emerald-700 bg-emerald-50 border-emerald-200',
-  admin_hopital: 'text-orange-700 bg-orange-50 border-orange-200',
-  admin_general: 'text-orange-700 bg-orange-50 border-orange-200',
-  super_admin: 'text-violet-700 bg-violet-50 border-violet-200',
-  laborantin: 'text-cyan-700 bg-cyan-50 border-cyan-200',
-};
-
-function SettingItem({ icon: Icon, label, description, href, onClick, danger = false, value }: any) {
-  const navigate = useNavigate();
-  const handleClick = () => { if (onClick) onClick(); else if (href) navigate(href); };
-  return (
-    <button
-      onClick={handleClick}
-      className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 touch-manipulation text-left"
-    >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${danger ? 'bg-red-50' : 'bg-slate-100'}`}>
-        <Icon className={`w-4 h-4 ${danger ? 'text-red-500' : 'text-slate-500'}`} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${danger ? 'text-red-600' : 'text-slate-900'}`}>{label}</p>
-        {description && <p className="text-xs text-slate-400 mt-0.5">{description}</p>}
-      </div>
-      {value && <span className="text-xs text-slate-400 mr-1">{value}</span>}
-      {!danger && <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />}
-    </button>
-  );
-}
 
 export default function SettingsPage() {
   const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  
+  const [activeTab, setActiveTab] = useState('securite'); // profil, securite, aides
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState('');
+
   const [form, setForm] = useState({
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
@@ -62,14 +40,12 @@ export default function SettingsPage() {
     adresse: user?.adresse || '',
     date_naissance: user?.date_naissance || '',
     sexe: user?.sexe || 'M',
-    // Champs spécifiques médecin
     biographie: user?.medecin_profile?.biographie || '',
-    // Champs spécifiques laborantin
     laboratoire: user?.laborantin_profile?.laboratoire || '',
   });
 
   const role = user?.role || 'patient';
-  const roleColor = ROLE_COLORS[role] || ROLE_COLORS.patient;
+  const theme = ROLE_THEME[role] || ROLE_THEME.patient;
 
   const handleSave = async () => {
     setSaveError('');
@@ -83,13 +59,9 @@ export default function SettingsPage() {
         date_naissance: form.date_naissance || null,
         sexe: form.sexe,
       };
-      // Profils imbriqués
-      if (role === 'medecin') {
-        payload.medecin_profile = { biographie: form.biographie };
-      }
-      if (role === 'laborantin') {
-        payload.laborantin_profile = { laboratoire: form.laboratoire };
-      }
+      if (role === 'medecin') payload.medecin_profile = { biographie: form.biographie };
+      if (role === 'laborantin') payload.laborantin_profile = { laboratoire: form.laboratoire };
+
       await api.patch(endpoints.me, payload);
       await refreshUser();
       setIsEditing(false);
@@ -116,241 +88,181 @@ export default function SettingsPage() {
     finally { setUploadingPhoto(false); }
   };
 
-  const cancelEdit = () => {
-    setIsEditing(false);
-    setSaveError('');
-    setForm({
-      first_name: user?.first_name || '',
-      last_name: user?.last_name || '',
-      telephone: user?.telephone || '',
-      adresse: user?.adresse || '',
-      date_naissance: user?.date_naissance || '',
-      sexe: user?.sexe || 'M',
-      biographie: user?.medecin_profile?.biographie || '',
-      laboratoire: user?.laborantin_profile?.laboratoire || '',
-    });
-  };
-
-  const getChangePasswordPath = () => {
-    if (role === 'medecin') return '/medecin/profile/change-password';
-    if (role === 'admin_hopital') return '/admin-hopital/settings/change-password';
-    if (role === 'laborantin') return '/laborantin/profile/change-password';
-    return '/super-admin/settings/change-password';
-  };
-
   return (
-    <div className="space-y-5 max-w-2xl animate-fade-in pb-6">
+    <div className="max-w-4xl mx-auto space-y-6 pb-20">
+      
+      {/* ── Header Profil ── */}
+      <section className="relative group">
+        <div className={`h-32 sm:h-48 w-full ${theme.primary} rounded-[2rem] overflow-hidden relative shadow-lg`}>
+          <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent" />
+          {/* Motifs décoratifs */}
+          <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute left-10 bottom-0 w-32 h-32 bg-white/5 rounded-full blur-2xl" />
+        </div>
 
-      {/* ── En-tête ── */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
-        <p className="text-slate-500 text-sm mt-1">Gérez votre profil et vos préférences</p>
-      </div>
-
-      {/* ── Carte profil ── */}
-      <Card className="p-5">
-        <div className="flex items-start gap-4">
-          {/* Avatar + photo */}
-          <div className="relative flex-shrink-0">
-            <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center overflow-hidden">
-              {user?.photo ? (
-                <img src={user.photo} alt="Photo" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-white font-bold text-xl">
-                  {(user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')}
-                </span>
-              )}
+        <div className="px-6 -mt-12 sm:-mt-16 flex flex-col sm:flex-row items-center sm:items-end gap-6 relative z-10">
+          <div className="relative group/avatar">
+            <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-[2rem] bg-white p-1.5 shadow-2xl">
+              <div className={`w-full h-full rounded-[1.6rem] ${theme.primary} flex items-center justify-center overflow-hidden relative`}>
+                {user?.photo ? (
+                  <img src={user.photo} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-black text-3xl">
+                    {(user?.first_name?.[0] || '') + (user?.last_name?.[0] || '')}
+                  </span>
+                )}
+                {uploadingPhoto && (
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
             </div>
-            <button
+            <button 
               onClick={() => fileRef.current?.click()}
-              disabled={uploadingPhoto}
-              className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-slate-200 rounded-lg flex items-center justify-center shadow-sm hover:bg-slate-50 transition touch-manipulation"
+              className="absolute bottom-1 right-1 w-8 h-8 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-lg border border-slate-100 dark:border-slate-700 hover:scale-110 active:scale-95 transition-all"
             >
-              {uploadingPhoto
-                ? <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                : <Camera className="w-3 h-3 text-slate-500" />
-              }
+              <Camera className="w-4 h-4 text-slate-600 dark:text-slate-300" />
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-semibold text-slate-900">{user?.first_name} {user?.last_name}</p>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${roleColor}`}>
-                {ROLE_LABELS[role]}
+          <div className="text-center sm:text-left flex-1 pb-2">
+            <div className="flex items-center gap-3 justify-center sm:justify-start">
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                {user?.first_name} {user?.last_name}
+              </h1>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${theme.badge}`}>
+                {role.replace('_', ' ')}
               </span>
             </div>
-            <p className="text-sm text-slate-500 truncate mt-0.5">{user?.email}</p>
-            {user?.hopital_nom && (
-              <p className="text-xs text-slate-400 mt-1 flex items-center gap-1">
-                <Building className="w-3 h-3" /> {user.hopital_nom}
-              </p>
-            )}
+            <p className="text-slate-500 dark:text-slate-400 font-medium flex items-center gap-2 justify-center sm:justify-start mt-1">
+              <Mail className="w-3.5 h-3.5" /> {user?.email}
+            </p>
           </div>
-
-          <Button
-            size="sm"
-            variant={isEditing ? 'outline' : 'secondary'}
-            onClick={isEditing ? cancelEdit : () => setIsEditing(true)}
-            leftIcon={isEditing ? <X className="w-3.5 h-3.5" /> : <Edit2 className="w-3.5 h-3.5" />}
-            className="flex-shrink-0"
-          >
-            {isEditing ? 'Annuler' : 'Modifier'}
-          </Button>
         </div>
+      </section>
 
-        {/* Feedback */}
-        {saveSuccess && (
-          <div className="flex items-center gap-2 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 mt-4">
-            <CheckCircle className="w-4 h-4 flex-shrink-0" /> Profil mis à jour avec succès
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
+        
+        {/* ── Sidebar interne (Tabs) ── */}
+        <aside className="lg:col-span-3 space-y-2">
+          {[
+            { id: 'securite', label: 'Sécurité',    icon: Shield },
+            { id: 'aides',    label: 'Aide & Infos', icon: Info },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all font-bold text-sm ${
+                activeTab === tab.id 
+                ? `${theme.light} text-slate-900 shadow-sm ring-1 ring-slate-100` 
+                : 'text-slate-500 hover:bg-slate-50'
+              }`}
+            >
+              <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? 'text-slate-900' : 'text-slate-400'}`} />
+              {tab.label}
+            </button>
+          ))}
+          <div className="pt-4 mt-4 border-t border-slate-100">
+             <button onClick={logout} className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 font-bold text-sm transition-all">
+                <LogOut className="w-5 h-5" /> Déconnexion
+             </button>
           </div>
-        )}
-        {saveError && (
-          <div className="flex items-center gap-2 p-2.5 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 mt-4">
-            <AlertCircle className="w-4 h-4 flex-shrink-0" /> {saveError}
-          </div>
-        )}
+        </aside>
 
-        {/* Formulaire d'édition */}
-        {isEditing && (
-          <div className="mt-5 pt-5 border-t border-slate-100 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Prénom" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} leftIcon={<User className="w-4 h-4" />} />
-              <Input label="Nom" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} leftIcon={<User className="w-4 h-4" />} />
-            </div>
-            <Input label="Téléphone" type="tel" value={form.telephone} onChange={(e) => setForm({ ...form, telephone: e.target.value })} leftIcon={<Phone className="w-4 h-4" />} helperText="Format Bénin : 10 chiffres commençant par 01" />
-            <Input label="Adresse" value={form.adresse} onChange={(e) => setForm({ ...form, adresse: e.target.value })} leftIcon={<MapPin className="w-4 h-4" />} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Date de naissance" type="date" value={form.date_naissance} onChange={(e) => setForm({ ...form, date_naissance: e.target.value })} />
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Sexe</label>
-                <select value={form.sexe} onChange={(e) => setForm({ ...form, sexe: e.target.value })}
-                  className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all">
-                  <option value="M">Masculin</option>
-                  <option value="F">Féminin</option>
-                  <option value="Autre">Autre</option>
-                </select>
-              </div>
-            </div>
+        {/* ── Contenu Tab ── */}
+        <main className="lg:col-span-9">
+           <AnimatePresence mode="wait">
 
-            {/* Champs spécifiques médecin */}
-            {role === 'medecin' && (
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Biographie</label>
-                <textarea
-                  rows={3}
-                  value={form.biographie}
-                  onChange={(e) => setForm({ ...form, biographie: e.target.value })}
-                  placeholder="Décrivez votre parcours et spécialités…"
-                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all resize-none"
-                />
-              </div>
-            )}
 
-            {/* Champs spécifiques laborantin */}
-            {role === 'laborantin' && (
-              <Input
-                label="Nom du laboratoire"
-                value={form.laboratoire}
-                onChange={(e) => setForm({ ...form, laboratoire: e.target.value })}
-                leftIcon={<FlaskConical className="w-4 h-4" />}
-              />
-            )}
+              {activeTab === 'securite' && (
+                <motion.div key="securite" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                   <Card className="p-8 border-none shadow-xl bg-white dark:bg-slate-900">
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider mb-8">Sécurité du Compte</h3>
+                      <div className="space-y-4">
+                         <SettingLink 
+                            icon={Lock} 
+                            label="Mot de passe" 
+                            description="Changer votre mot de passe pour plus de sécurité"
+                            onClick={() => {
+                               navigate(`/${role.replace('_', '-')}/settings/change-password`);
+                            }}
+                         />
+                         <SettingLink 
+                            icon={Shield} 
+                            label="Vérification Email" 
+                            description={user?.is_email_verified ? "Votre compte est sécurisé et vérifié" : "Veuillez vérifier votre email"}
+                            value={user?.is_email_verified ? "✓ Vérifié" : "! À vérifier"}
+                            status={user?.is_email_verified ? 'success' : 'warning'}
+                         />
+                      </div>
+                   </Card>
+                </motion.div>
+              )}
 
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" className="flex-1" onClick={cancelEdit} type="button">Annuler</Button>
-              <Button className="flex-1" isLoading={saving} onClick={handleSave} leftIcon={<Save className="w-4 h-4" />}>
-                Enregistrer
-              </Button>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* ── Informations du compte ── */}
-      {!isEditing && (
-        <div>
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Informations</p>
-          <Card className="overflow-hidden p-0">
-            {[
-              { icon: Mail,     label: 'Email',           value: user?.email,         color: 'text-slate-400' },
-              { icon: Phone,    label: 'Téléphone',       value: user?.telephone,     color: 'text-blue-500' },
-              { icon: MapPin,   label: 'Adresse',         value: user?.adresse || '—', color: 'text-rose-500' },
-              { icon: Calendar, label: 'Membre depuis',   value: user?.date_joined ? new Date(user.date_joined).toLocaleDateString('fr-FR') : null, color: 'text-violet-500' },
-            ].filter(i => i.value).map((item, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-slate-50 last:border-0">
-                <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center flex-shrink-0">
-                  <item.icon className={`w-4 h-4 ${item.color}`} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-slate-400">{item.label}</p>
-                  <p className="text-sm font-medium text-slate-900 truncate">{item.value}</p>
-                </div>
-              </div>
-            ))}
-            {/* Profil médecin */}
-            {role === 'medecin' && user?.medecin_profile && (
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-50 last:border-0">
-                <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                  <Stethoscope className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">N° d'ordre</p>
-                  <p className="text-sm font-medium text-slate-900">{user.medecin_profile.numero_ordre}</p>
-                </div>
-              </div>
-            )}
-            {/* Profil laborantin */}
-            {role === 'laborantin' && user?.laborantin_profile?.laboratoire && (
-              <div className="flex items-center gap-3 px-4 py-3">
-                <div className="w-8 h-8 rounded-lg bg-cyan-50 flex items-center justify-center flex-shrink-0">
-                  <FlaskConical className="w-4 h-4 text-cyan-600" />
-                </div>
-                <div>
-                  <p className="text-xs text-slate-400">Laboratoire</p>
-                  <p className="text-sm font-medium text-slate-900">{user.laborantin_profile.laboratoire}</p>
-                </div>
-              </div>
-            )}
-          </Card>
-        </div>
-      )}
-
-      {/* ── Sécurité ── */}
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Sécurité</p>
-        <Card className="overflow-hidden p-0">
-          <SettingItem icon={Lock} label="Changer le mot de passe" description="Modifier votre mot de passe" href={getChangePasswordPath()} />
-          <SettingItem icon={Shield} label="Email vérifié" description={user?.is_email_verified ? 'Votre email est vérifié' : 'Email non vérifié'} value={user?.is_email_verified ? '✓' : '!'} />
-        </Card>
+              {activeTab === 'aides' && (
+                <motion.div key="aides" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+                   <Card className="p-8 border-none shadow-xl bg-white dark:bg-slate-900">
+                      <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider mb-8">Support & Informations</h3>
+                      <div className="space-y-4">
+                         <SettingLink icon={FileText} label="Conditions d'utilisation" description="Consulter les CGU de la plateforme" />
+                         <SettingLink icon={Info} label="À propos de Hopitel" description="Version 1.0.0 — Système National de Supervision" />
+                         <div className="p-6 bg-slate-900 rounded-[2rem] text-white relative overflow-hidden mt-8">
+                            <div className="relative z-10">
+                               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Besoin d'aide ?</p>
+                               <p className="text-sm font-medium opacity-80 mb-4">Notre support technique est disponible 24/7 pour vous accompagner.</p>
+                               <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">Contacter le support</Button>
+                            </div>
+                            <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
+                         </div>
+                      </div>
+                   </Card>
+                </motion.div>
+              )}
+           </AnimatePresence>
+        </main>
       </div>
-
-      {/* ── Préférences ── */}
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Préférences</p>
-        <Card className="overflow-hidden p-0">
-          <SettingItem icon={Bell} label="Notifications" description="Gérer mes alertes" href="/notifications" />
-          <SettingItem icon={Globe} label="Langue" description="Français" value="FR" />
-        </Card>
-      </div>
-
-      {/* ── Informations ── */}
-      <div>
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Informations</p>
-        <Card className="overflow-hidden p-0">
-          <SettingItem icon={FileText} label="Conditions d'utilisation" href="/terms" />
-          <SettingItem icon={Phone} label="Numéros d'urgence" href="/emergency" />
-          <SettingItem icon={Info} label="À propos" description="Hopitel v1.0.0" />
-        </Card>
-      </div>
-
-      {/* ── Déconnexion ── */}
-      <Card className="overflow-hidden p-0">
-        <SettingItem icon={LogOut} label="Déconnexion" onClick={logout} danger />
-      </Card>
-
-      <p className="text-center text-xs text-slate-400">Hopitel v1.0.0 — République du Bénin</p>
     </div>
+  );
+}
+
+function InfoBox({ icon: Icon, label, value }: any) {
+  return (
+    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 transition-all hover:bg-white dark:hover:bg-slate-800 hover:shadow-md group">
+      <div className="flex items-center gap-3 mb-2">
+         <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+            <Icon className="w-4 h-4 text-slate-400" />
+         </div>
+         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+      </div>
+      <p className="text-sm font-bold text-slate-900 dark:text-white pl-1">{value}</p>
+    </div>
+  );
+}
+
+function SettingLink({ icon: Icon, label, description, value, status, onClick }: any) {
+  return (
+    <button 
+      onClick={onClick}
+      className="w-full flex items-center gap-4 p-4 rounded-2xl border border-slate-50 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all group text-left"
+    >
+      <div className="w-10 h-10 rounded-xl bg-white dark:bg-slate-800 flex items-center justify-center shadow-sm border border-slate-100 dark:border-slate-700 group-hover:scale-110 transition-transform">
+         <Icon className="w-5 h-5 text-slate-500" />
+      </div>
+      <div className="flex-1 min-w-0">
+         <p className="text-sm font-bold text-slate-900 dark:text-white">{label}</p>
+         <p className="text-xs text-slate-400 font-medium mt-0.5">{description}</p>
+      </div>
+      {value && (
+        <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${
+          status === 'success' ? 'bg-emerald-50 text-emerald-600' : 
+          status === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-slate-100 text-slate-500'
+        }`}>
+          {value}
+        </span>
+      )}
+      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary transition-colors" />
+    </button>
   );
 }

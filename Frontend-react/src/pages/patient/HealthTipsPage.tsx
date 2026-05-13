@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
-import { Card, CardContent, Badge, Button } from '@/components/ui';
+import { Card, Badge, Button } from '@/components/ui';
 import { 
   Heart, 
   Zap, 
@@ -12,7 +12,8 @@ import {
   Sparkles,
   ShieldCheck,
   Activity,
-  ArrowRight
+  ArrowRight,
+  BookOpen
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -30,7 +31,7 @@ const itemVariants = {
   visible: { 
     y: 0, 
     opacity: 1, 
-    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+    transition: { duration: 0.5, ease: 'easeOut' }
   }
 };
 
@@ -68,57 +69,59 @@ export default function HealthTipsPage() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="max-w-5xl mx-auto space-y-5 lg:space-y-12 pb-20"
+      className="max-w-6xl mx-auto space-y-8 lg:space-y-16 pb-24"
     >
-      {/* High-Contrast Knowledge Header */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 lg:gap-8">
-        <motion.div variants={itemVariants}>
-          <div className="flex items-center gap-3 mb-4">
-             <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="rounded-lg h-10 w-10 p-0 border-2">
-                <ArrowLeft className="w-4 h-4 text-slate-950" />
+      {/* ── Header ── */}
+      <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-4 lg:px-0">
+        <motion.div variants={itemVariants} className="space-y-4">
+          <div className="flex items-center gap-3">
+             <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="rounded-xl h-10 w-10 p-0 border-slate-200">
+                <ArrowLeft className="w-4 h-4 text-slate-600" />
              </Button>
-             <div className="bg-slate-950 text-white border-2 border-slate-900 px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest italic">
-                HEALTH_INTEL.
-             </div>
+             <Badge className="bg-primary/10 text-primary border-transparent font-bold text-[10px] uppercase tracking-wider">Guide Santé</Badge>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">Protocole Préventif</h1>
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Optimisation du segment de santé quotidien</p>
+          <div className="space-y-2">
+            <h1 className="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">Nos services & conseils</h1>
+            <p className="text-slate-500 font-medium text-lg lg:text-xl">
+              Découvrez les spécialités médicales disponibles sur Hopitel.
+            </p>
+          </div>
         </motion.div>
       </section>
 
-      {/* Recommendations Architecture */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+      {/* ── Services Cards ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 px-4 lg:px-0">
         {isLoading ? (
-          [...Array(6)].map((_, i) => <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />)
+          [...Array(6)].map((_, i) => <div key={i} className="h-72 bg-slate-50 rounded-3xl animate-pulse border border-slate-100" />)
         ) : services.map((service, i) => {
           const Icon = getIconForService(service.nom);
           return (
             <motion.div key={i} variants={itemVariants}>
-              <Card className="border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group overflow-hidden shadow-sm p-8">
-                <div className="flex flex-col h-full space-y-8">
+              <Card className="h-full border border-slate-100 bg-white hover:border-primary transition-all duration-300 group overflow-hidden shadow-sm hover:shadow-xl p-8 rounded-[2.5rem] flex flex-col justify-between">
+                <div className="space-y-8">
                   <div className="flex justify-between items-start">
-                    <div className="w-12 h-12 bg-slate-50 border-2 border-slate-100 rounded-xl flex items-center justify-center text-slate-950 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-sm">
-                      <Icon className="w-6 h-6" />
+                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                      <Icon className="w-7 h-7" />
                     </div>
-                    <Badge variant="primary" className="text-[8px] px-3 font-black italic border-primary/20 bg-primary/10 text-primary uppercase tracking-widest leading-none">Segment_Expert</Badge>
+                    <Badge className="text-[10px] px-3 font-bold bg-emerald-50 text-emerald-600 border-transparent uppercase tracking-wider">Expertise</Badge>
                   </div>
                   
-                  <div className="space-y-4 flex-1">
-                    <h3 className="text-xl lg:text-2xl font-black text-slate-950 uppercase italic tracking-tighter leading-none">{service.nom}</h3>
-                    <p className="text-[10px] lg:text-xs font-bold text-slate-400 italic leading-relaxed uppercase tracking-tight line-clamp-3">
-                      {service.description || "Découvrez nos protocoles spécialisés et prenez rendez-vous avec nos experts certifiés pour une analyse approfondie."}
+                  <div className="space-y-4">
+                    <h3 className="text-xl lg:text-2xl font-bold text-slate-900 group-hover:text-primary transition-colors tracking-tight leading-tight">{service.nom}</h3>
+                    <p className="text-slate-500 text-sm font-medium leading-relaxed line-clamp-4">
+                      {service.description || "Découvrez nos protocoles de soins spécialisés et bénéficiez de l'accompagnement de nos experts certifiés pour votre suivi médical."}
                     </p>
                   </div>
+                </div>
 
-                  <div className="pt-8 border-t-2 border-slate-50">
-                    <Button 
-                      onClick={() => navigate('/patient/search')}
-                      variant="ghost" 
-                      className="text-[9px] font-black italic uppercase tracking-widest p-0 h-auto hover:bg-transparent text-primary hover:text-primary-dark group-hover:translate-x-1 transition-all"
-                    >
-                      INITIALISER LE RDV <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
+                <div className="pt-8 mt-4 border-t border-slate-50">
+                  <Button 
+                    onClick={() => navigate('/patient/search')}
+                    variant="ghost" 
+                    className="text-primary hover:text-primary-dark font-bold text-sm p-0 h-auto flex items-center gap-2 group-hover:translate-x-1 transition-all"
+                  >
+                    Trouver un praticien <ArrowRight className="w-4 h-4" />
+                  </Button>
                 </div>
               </Card>
             </motion.div>
@@ -126,29 +129,34 @@ export default function HealthTipsPage() {
         })}
       </div>
 
-      {/* AI Integration Tactical Banner */}
-      <motion.div variants={itemVariants}>
-        <Card className="bg-slate-950 text-white border-2 border-slate-900 shadow-2xl rounded-2xl lg:rounded-3xl overflow-hidden relative group p-8 lg:p-14">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/20 rounded-full blur-[100px] -mr-40 -mt-40 transition-transform group-hover:scale-125 duration-700" />
+      {/* ── AI Banner Premium ── */}
+      <motion.div variants={itemVariants} className="px-4 lg:px-0">
+        <div className="bg-slate-900 text-white rounded-[3rem] overflow-hidden relative group p-8 lg:p-16 shadow-2xl">
+          <div className="absolute top-0 right-0 w-full h-full pointer-events-none">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -mr-48 -mt-48" />
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[80px] -ml-24 -mb-24" />
+          </div>
           
-          <div className="relative z-10 flex flex-col lg:flex-row items-center gap-10">
-             <div className="w-20 h-20 bg-white/5 backdrop-blur-3xl border-2 border-white/10 rounded-2xl flex items-center justify-center flex-shrink-0 animate-float shadow-2xl">
+          <div className="relative z-10 flex flex-col lg:flex-row items-center gap-12">
+             <div className="w-20 h-20 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl flex items-center justify-center flex-shrink-0 shadow-2xl">
                 <Sparkles className="w-10 h-10 text-primary" />
              </div>
              <div className="flex-1 space-y-6 text-center lg:text-left">
-                <div className="space-y-2">
-                   <Badge variant="primary" className="text-[9px] font-black italic border-white/20">Protocol_Bio_Optimization</Badge>
-                   <h2 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tighter leading-none italic">Assistance Algorithmique</h2>
+                <div className="space-y-4">
+                   <Badge className="bg-primary/20 text-blue-400 border-transparent font-bold text-[10px] uppercase tracking-wider">Assistant IA Hopitel</Badge>
+                   <h2 className="text-3xl lg:text-5xl font-extrabold tracking-tight leading-tight">Une question de santé ?</h2>
                 </div>
-                <p className="text-white/40 font-black text-xs lg:text-sm uppercase tracking-widest italic leading-relaxed max-w-2xl">
-                  Besoin d'un suivi analytique précis ? Interagissez avec notre Hub IA pour obtenir des recommandations synchronisées à votre dataset de santé.
+                <p className="text-slate-400 text-lg lg:text-xl font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                  Besoin d'un conseil rapide ou d'une recommandation personnalisée ? Discutez avec notre intelligence artificielle pour un premier niveau d'analyse.
                 </p>
+                <div className="pt-4">
+                  <Button onClick={() => navigate('/patient/ai-agent')} className="w-full lg:w-auto h-16 px-12 bg-primary text-white hover:bg-primary-dark rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                    Démarrer la discussion <Zap className="w-5 h-5 ml-2" />
+                  </Button>
+                </div>
              </div>
-             <Button onClick={() => navigate('/patient/ai-agent')} className="w-full lg:w-auto h-14 px-10 bg-white text-slate-950 hover:bg-white/90 rounded-xl font-black italic uppercase tracking-widest text-[10px] shadow-2xl">
-                LANCER L'AGENT <Zap className="w-4 h-4 ml-3" />
-             </Button>
           </div>
-        </Card>
+        </div>
       </motion.div>
     </motion.div>
   );

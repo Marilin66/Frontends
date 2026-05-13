@@ -5,13 +5,9 @@ import { motion } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
 import { 
   Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent, 
   Button, 
   Badge, 
-  PageLoader,
-  Avatar
+  PageLoader
 } from '@/components/ui';
 import { 
   MapPin, 
@@ -19,17 +15,14 @@ import {
   Globe, 
   ArrowLeft, 
   Activity,
-  CheckCircle,
-  ChevronRight,
-  ShieldCheck,
-  Clock,
-  Mail,
   Share,
-  Zap,
   Building,
   Stethoscope,
   Star,
-  ArrowRight
+  ArrowRight,
+  Clock,
+  ExternalLink,
+  Calendar
 } from 'lucide-react';
 
 interface HospitalService {
@@ -60,7 +53,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants: any = {
+const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   visible: { 
     y: 0, 
@@ -102,106 +95,125 @@ export default function HospitalDetailPage() {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-5 lg:space-y-12 pb-20"
+      className="max-w-7xl mx-auto space-y-8 lg:space-y-12 pb-20"
     >
-      {/* High-Contrast Navigation architecture */}
-      <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 sm:gap-6 lg:gap-8">
-        <motion.div variants={itemVariants}>
-          <div className="flex items-center gap-3 mb-4">
-             <Link to="/patient/search">
-                <Button variant="outline" className="h-10 w-10 p-0 rounded-lg border-2">
-                   <ArrowLeft className="w-5 h-5 text-slate-950" />
-                </Button>
-             </Link>
-             <div className="bg-slate-900 text-white border-2 border-slate-800 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest italic">
-                HOSPITAL_INTEL.
-             </div>
+      {/* ── Header & Navigation ── */}
+      <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <motion.div variants={itemVariants} className="space-y-4">
+          <Link to="/patient/search" className="inline-flex items-center gap-2 text-slate-500 hover:text-primary font-bold text-sm transition-colors group">
+            <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-primary/10 group-hover:text-primary transition-all">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            Retour à la recherche
+          </Link>
+          <div className="space-y-2">
+            <h1 className="text-3xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
+              {hospital.nom}
+            </h1>
+            <div className="flex items-center gap-2 text-slate-500 font-medium">
+              <MapPin className="w-4 h-4 text-primary" />
+              <span>{hospital.ville}, Bénin</span>
+            </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-black text-slate-950 tracking-tighter italic uppercase leading-none">{hospital.nom}</h1>
-          <p className="text-[11px] font-black text-slate-500 uppercase tracking-[0.4em] mt-4 italic">Indexation & Spécialités du Segment Clinique</p>
         </motion.div>
 
-        <div className="flex items-center gap-3">
-           <Button variant="outline" className="h-12 px-6 rounded-xl border-2 italic text-[10px] font-black">
-             <Share className="w-4 h-4 mr-2" /> PARTAGER
-           </Button>
-           <Button className="h-12 px-8 rounded-xl font-black italic text-[10px] shadow-2xl shadow-primary/20">
-             <MapPin className="w-4 h-4 mr-2" /> ITINÉRAIRE
-           </Button>
-        </div>
+        <motion.div variants={itemVariants} className="flex items-center gap-3">
+          <Button variant="outline" className="h-12 px-6 rounded-2xl border-slate-200 text-slate-600 font-bold hover:bg-slate-50">
+            <Share className="w-4 h-4 mr-2" /> Partager
+          </Button>
+          <Button 
+            onClick={() => navigate(`/patient/hopital/${hospital.id}/rendezvous`)}
+            className="h-12 px-8 rounded-2xl bg-primary text-white font-bold shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+          >
+            <Calendar className="w-4 h-4 mr-2" /> Prendre rendez-vous
+          </Button>
+        </motion.div>
       </section>
 
-      {/* Hospital Identity Grid */}
+      {/* ── Hospital Identity Card ── */}
       <motion.div variants={itemVariants}>
-        <Card className="border-2 border-slate-950 bg-slate-950 text-white rounded-2xl lg:rounded-3xl p-8 lg:p-14 overflow-hidden shadow-2xl relative group">
-           <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none overflow-hidden underline-none">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-primary rounded-full blur-[100px] -mr-48 -mt-48 transition-transform group-hover:scale-125 duration-700" />
-           </div>
-           
-           <div className="relative z-10 flex flex-col lg:flex-row gap-12 lg:items-center">
-              <div className="w-32 h-32 lg:w-48 lg:h-48 bg-white/5 backdrop-blur-3xl border-2 border-white/10 rounded-2xl flex items-center justify-center p-8 shadow-2xl group-hover:bg-white group-hover:border-white transition-all duration-500">
-                 {hospital.logo ? (
-                   <img src={hospital.logo} alt={hospital.nom} className="w-full h-full object-contain" />
-                 ) : (
-                   <Building className="w-16 h-16 text-white group-hover:text-slate-950 transition-colors" />
-                 )}
+        <div className="relative bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl p-8 lg:p-12 group">
+          <div className="absolute top-0 right-0 w-full h-full pointer-events-none overflow-hidden">
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -mr-48 -mt-48" />
+            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-emerald-500/10 rounded-full blur-[80px] -ml-24 -mb-24" />
+          </div>
+
+          <div className="relative z-10 flex flex-col lg:flex-row gap-10 lg:items-center">
+            {/* Logo Wrapper */}
+            <div className="w-32 h-32 lg:w-48 lg:h-48 bg-white rounded-3xl flex items-center justify-center p-6 shadow-2xl transition-transform duration-500 group-hover:scale-105">
+               {hospital.logo ? (
+                 <img src={hospital.logo} alt={hospital.nom} className="w-full h-full object-contain" />
+               ) : (
+                 <Building className="w-16 h-16 text-slate-200" />
+               )}
+            </div>
+
+            <div className="flex-1 space-y-8">
+              <div className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-transparent px-4 py-1.5 font-bold rounded-xl text-[10px] uppercase tracking-wider">
+                    Opérationnel 24/7
+                  </Badge>
+                  <Badge className="bg-primary/20 text-primary-foreground border-transparent px-4 py-1.5 font-bold rounded-xl text-[10px] uppercase tracking-wider">
+                    Centre Agréé Hopitel
+                  </Badge>
+                </div>
+                <p className="text-slate-300 text-lg lg:text-xl font-medium leading-relaxed max-w-3xl">
+                  {hospital.description || "Établissement de santé partenaire engagé dans l'excellence opérationnelle et la prise en charge patient de haute qualité."}
+                </p>
               </div>
 
-              <div className="flex-1 space-y-8">
-                 <div className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                       <Badge variant="success" className="bg-emerald-500/10 text-emerald-500 border-2 border-emerald-500/20 px-4 py-1.5 font-black rounded-lg text-[9px] italic uppercase tracking-widest">Opérationnel 24/7</Badge>
-                       <Badge variant="primary" className="bg-primary/10 text-primary border-2 border-primary/20 px-4 py-1.5 font-black rounded-lg text-[9px] italic uppercase tracking-widest">Centre Agréé</Badge>
-                    </div>
-                    <p className="text-white/40 font-black text-xs lg:text-base uppercase tracking-widest italic leading-relaxed max-w-2xl">
-                       {hospital.description || "Établissement clinique de haute précision indexé dans le réseau Hopitel."}
-                    </p>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t-2 border-white/5">
-                    <div className="space-y-2">
-                       <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">Coordonnées GPS</p>
-                       <p className="text-sm font-black italic tracking-tight">{hospital.adresse}, {hospital.ville}</p>
-                    </div>
-                    <div className="space-y-2">
-                       <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">Protocole Vocal</p>
-                       <p className="text-sm font-black italic tracking-tight">{hospital.telephone || "+229 01 00 00 00"}</p>
-                    </div>
-                    <div className="space-y-2">
-                       <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] italic">Flux Web</p>
-                       <a href={hospital.site_web} className="text-sm font-black italic text-primary hover:underline tracking-tight">{hospital.site_web || "www.hopitel.bj"}</a>
-                    </div>
-                 </div>
+              {/* Info Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-white/10">
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Localisation</p>
+                  <p className="text-white font-bold text-sm flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary" /> {hospital.adresse}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Contact</p>
+                  <p className="text-white font-bold text-sm flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-primary" /> {hospital.telephone || "+229 01 00 00 00"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Plateforme Web</p>
+                  <a href={hospital.site_web || "#"} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-white font-bold text-sm flex items-center gap-2 transition-colors">
+                    <Globe className="w-4 h-4" /> {hospital.site_web ? hospital.site_web.replace(/^https?:\/\//, '') : "hopitel.bj"}
+                  </a>
+                </div>
               </div>
-           </div>
-        </Card>
+            </div>
+          </div>
+        </div>
       </motion.div>
 
-      {/* Services Operational Loop */}
-      <div className="space-y-8">
-        <motion.div variants={itemVariants} className="flex items-center justify-between">
-           <div className="space-y-1">
-             <h3 className="text-2xl lg:text-3xl font-black text-slate-950 tracking-tighter uppercase italic flex items-center gap-4 leading-none">
-               <Stethoscope className="w-8 h-8 text-primary" />
-               Services Cliniques
-             </h3>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic mt-4 pl-12">
-               {services.length} unités de spécialisation synchronisées
-             </p>
-           </div>
+      {/* ── Services Section ── */}
+      <section className="space-y-8">
+        <motion.div variants={itemVariants} className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+              <Stethoscope className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">Services Cliniques</h2>
+          </div>
+          <p className="text-slate-500 font-medium pl-14">
+            {services.length} unités de spécialisation disponibles pour vous.
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {services.map((s) => (
             <motion.div key={s.id} variants={itemVariants}>
               <Card 
-                className="h-full border-2 border-slate-100 bg-white hover:border-primary transition-all duration-300 group p-6 lg:p-8 flex flex-col justify-between shadow-sm cursor-pointer"
+                className="h-full border border-slate-100 bg-white dark:bg-slate-900 hover:border-primary transition-all duration-300 group p-8 flex flex-col justify-between shadow-sm hover:shadow-xl rounded-[2rem] cursor-pointer"
                 onClick={() => navigate(`/patient/hopital/${hospital.id}/service/${s.service}`)}
               >
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 bg-slate-50 border-2 border-slate-100 rounded-xl flex items-center justify-center text-slate-900 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-sm">
-                      <Zap className="w-6 h-6" />
+                    <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-primary group-hover:text-white transition-all">
+                      <Building className="w-7 h-7" />
                     </div>
                     <div className="flex items-center gap-1">
                        {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 text-amber-400 fill-current" />)}
@@ -209,27 +221,29 @@ export default function HospitalDetailPage() {
                   </div>
                   
                   <div className="space-y-3">
-                    <h4 className="text-xl lg:text-2xl font-black text-slate-950 group-hover:text-primary transition-colors tracking-tighter uppercase italic leading-none">{s.service_nom}</h4>
-                    <p className="text-[10px] lg:text-xs font-bold text-slate-400 italic leading-relaxed line-clamp-3 uppercase tracking-tight">
-                      {s.service_description || "Unité clinique opérationnelle pour des protocoles de soins individualisés."}
+                    <h3 className="text-xl lg:text-2xl font-bold text-slate-900 group-hover:text-primary transition-colors tracking-tight leading-tight">
+                      {s.service_nom}
+                    </h3>
+                    <p className="text-slate-500 text-sm font-medium leading-relaxed line-clamp-3">
+                      {s.service_description || "Prise en charge spécialisée avec des protocoles cliniques de pointe."}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-8 pt-6 border-t-2 border-slate-50 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                     <Clock className="w-4 h-4 text-emerald-500" />
-                     <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Segments Disponibles</span>
+                <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-500 font-bold text-[10px] uppercase tracking-wider">
+                     <Clock className="w-4 h-4" />
+                     Disponible
                   </div>
-                  <Button variant="outline" size="sm" className="h-10 w-10 p-0 rounded-lg border-2 text-slate-300 hover:text-slate-950 group-hover:border-slate-300">
+                  <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-primary/10 group-hover:text-primary transition-all">
                     <ArrowRight className="w-5 h-5" />
-                  </Button>
+                  </div>
                 </div>
               </Card>
             </motion.div>
           ))}
         </div>
-      </div>
+      </section>
     </motion.div>
   );
 }

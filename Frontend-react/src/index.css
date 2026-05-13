@@ -23,7 +23,7 @@
   }
 
   body {
-    @apply bg-[#F8FAFC] text-slate-900 font-sans;
+    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans transition-colors duration-300;
     min-height: 100vh;
     min-height: 100dvh; /* dynamic viewport height pour mobile */
     /* Padding safe area pour les téléphones avec encoche */
@@ -37,6 +37,7 @@
 
   /* Empêche le zoom sur les inputs sur iOS (font-size >= 16px) */
   input, select, textarea {
+    @apply bg-transparent;
     font-size: max(16px, 1em);
   }
 
@@ -45,6 +46,7 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { @apply bg-slate-200 rounded-full; }
   ::-webkit-scrollbar-thumb:hover { @apply bg-slate-300; }
+  .dark ::-webkit-scrollbar-thumb { @apply bg-slate-800; }
 }
 
 @layer components {
@@ -60,15 +62,20 @@
     @apply mb-6 sm:mb-8;
   }
   .page-title {
-    @apply text-xl sm:text-2xl font-bold text-slate-900 tracking-tight;
+    @apply text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight;
   }
   .page-subtitle {
-    @apply text-sm text-slate-500 mt-1;
+    @apply text-sm text-slate-500 dark:text-slate-400 mt-1;
   }
 
   /* Stats card */
   .stat-card {
-    @apply bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 hover:shadow-md transition-shadow;
+    @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 hover:shadow-md transition-all;
+  }
+
+  /* Section Card (Défaut pour les listes et conteneurs) */
+  .section-card {
+    @apply bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden transition-colors;
   }
 
   /* Cibles tactiles minimum 44px */
@@ -84,7 +91,7 @@
 
   /* Modal responsive */
   .modal-container {
-    @apply w-full max-w-lg max-h-[90vh] overflow-y-auto;
+    @apply w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800;
   }
 }
 

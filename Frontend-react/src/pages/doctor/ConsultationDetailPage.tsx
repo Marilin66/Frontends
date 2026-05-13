@@ -164,7 +164,7 @@ export default function ConsultationDetailPage() {
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none transition"
               />
             ) : (
-              <p className={`text-sm leading-relaxed ${consultation[key] ? 'text-slate-700' : 'text-slate-400 italic'}`}>
+              <p className={`text-sm leading-relaxed ${consultation[key] ? 'text-slate-700' : 'text-slate-400'}`}>
                 {consultation[key] || `Aucun ${label.toLowerCase()} renseigné.`}
               </p>
             )}

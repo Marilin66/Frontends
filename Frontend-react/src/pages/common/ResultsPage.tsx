@@ -54,30 +54,34 @@ export default function ResultsPage() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-20">
 
-      {/* Header */}
+      {/* Header style ENT */}
       <section className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">
             {user?.role === 'medecin' ? 'Résultats partagés' : 'Mes résultats'}
           </h1>
-          <p className="text-slate-500 mt-1 text-sm">
-            {results.length} résultat{results.length !== 1 ? 's' : ''} disponible{results.length !== 1 ? 's' : ''}
+          <p className="text-slate-500 font-medium">
+            Consultez et partagez vos analyses biologiques ({results.length} documents disponibles)
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <div className="relative group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
             <input
               type="text"
-              placeholder="Rechercher par titre ou patient..."
+              placeholder="Rechercher une analyse..."
               value={searchTerm}
               onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-64 pl-9 px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all bg-white placeholder:text-slate-400"
+              className="w-64 pl-9 px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all bg-white"
             />
           </div>
-          <button onClick={fetchResults} className="flex items-center gap-2 h-10 px-4 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
-            <RefreshCw className="w-4 h-4" /> Actualiser
+          <button 
+            onClick={fetchResults} 
+            className="flex items-center justify-center w-12 h-12 rounded-2xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95 shadow-sm"
+            title="Actualiser"
+          >
+            <RefreshCw className="w-5 h-5" />
           </button>
         </div>
       </section>

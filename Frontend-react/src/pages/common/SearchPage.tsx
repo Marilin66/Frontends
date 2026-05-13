@@ -39,10 +39,12 @@ export default function SearchPage() {
   return (
     <div className="space-y-6 animate-fade-in">
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Trouver un médecin</h1>
-        <p className="text-slate-500 mt-1">Recherchez un hôpital ou une spécialité médicale</p>
+      {/* Header style ENT */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">
+          Trouver un médecin
+        </h1>
+        <p className="text-slate-500 font-medium">Recherchez un hôpital ou une spécialité médicale dans le réseau Hopitel</p>
       </div>
 
       {/* Barre de recherche */}

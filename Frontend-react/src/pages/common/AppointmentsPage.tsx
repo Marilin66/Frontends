@@ -84,15 +84,21 @@ export default function AppointmentsPage() {
   return (
     <div className="space-y-6 animate-fade-in">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Mes Rendez-Vous</h1>
-          <p className="text-slate-500 mt-1">{appointments.length} rendez-vous au total</p>
+      {/* Header style ENT */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tighter leading-none">
+            Mes Rendez-Vous
+          </h1>
+          <p className="text-slate-500 font-medium">{appointments.length} rendez-vous au total dans votre historique</p>
         </div>
-        <Button onClick={() => navigate('/patient/search')} leftIcon={<Plus className="w-4 h-4" />}>
+        <button 
+          onClick={() => navigate('/patient/search')} 
+          className="group inline-flex items-center gap-3 px-6 py-3.5 bg-primary text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
+        >
           Nouveau RDV
-        </Button>
+          <Plus className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Filtres */}
@@ -188,7 +194,7 @@ export default function AppointmentsPage() {
                     )}
 
                     {apt.motif && (
-                      <p className="text-xs text-slate-400 italic mt-1">"{apt.motif}"</p>
+                      <p className="text-xs text-slate-400 mt-1">"{apt.motif}"</p>
                     )}
 
                     {/* Bandeaux contextuels */}

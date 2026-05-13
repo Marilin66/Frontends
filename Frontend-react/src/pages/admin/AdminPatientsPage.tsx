@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { Avatar, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Users, Search, RefreshCw, Phone, Mail, CheckCircle, XCircle } from 'lucide-react';
@@ -8,6 +9,7 @@ import { motion } from 'framer-motion';
 const PAGE_SIZE = 15;
 
 export default function AdminPatientsPage() {
+  const navigate = useNavigate();
   const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -123,9 +125,17 @@ export default function AdminPatientsPage() {
                         )}
                       </div>
                     </div>
-                    <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
-                      {p.is_active ? 'Actif' : 'Inactif'}
-                    </span>
+                    <div className="flex items-center gap-2">
+                       <button 
+                         onClick={() => navigate(`/admin-hopital/patient/${p.id}/journey`)}
+                         className="h-9 px-4 rounded-xl bg-slate-50 text-slate-600 hover:bg-primary hover:text-white transition-all text-[10px] font-bold uppercase tracking-widest flex items-center gap-2"
+                       >
+                         Voir le parcours
+                       </button>
+                       <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                         {p.is_active ? 'Actif' : 'Inactif'}
+                       </span>
+                    </div>
                   </div>
                 </div>
               </motion.div>

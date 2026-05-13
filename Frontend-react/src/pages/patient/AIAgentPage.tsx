@@ -15,8 +15,9 @@ import {
   ChevronRight,
   AlertCircle,
   ShieldCheck,
+  Loader2,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, Badge } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
 import { sanitizeAIRoute } from '@/utils/chatRoutes';
@@ -57,13 +58,12 @@ export default function AIAgentPage() {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // ── Initialisation ─────────────────────────────────────────────────────────
   useEffect(() => {
     Promise.all([fetchSessions(), loadLastHistory()]);
   }, []);
@@ -74,13 +74,14 @@ export default function AIAgentPage() {
     }
   }, [messages, isTyping]);
 
-  // ── Sessions ───────────────────────────────────────────────────────────────
   const fetchSessions = async () => {
     try {
       const response = await api.get<any>(endpoints.chatbotSessions);
-      const data = Array.isArray(response) ? response : (response?.results ?? response?.data ?? []);
+      console.log('Chatbot sessions response:', response);
+      const data = Array.isArray(response) ? response : (response?.results ?? response?.data ?? response?.sessions ?? []);
       setSessions(data);
-    } catch {
+    } catch (err) {
+      console.error('Failed to fetch sessions:', err);
       setSessions([]);
     }
   };
@@ -98,7 +99,6 @@ export default function AIAgentPage() {
           }))
         );
       } else {
-        // Pas d'historique → message de bienvenue
         setMessages([WELCOME]);
       }
     } catch {
@@ -120,7 +120,7 @@ export default function AIAgentPage() {
       );
       if (window.innerWidth < 1024) setSidebarOpen(false);
     } catch {
-      // Silencieux
+      // Ignore
     }
   };
 
@@ -136,14 +136,12 @@ export default function AIAgentPage() {
       }]);
       fetchSessions();
     } catch {
-      // Créer localement si l'API échoue
       setCurrentSessionId(null);
       setMessages([WELCOME]);
     }
     if (window.innerWidth < 1024) setSidebarOpen(false);
   };
 
-  // ── Envoi de message ───────────────────────────────────────────────────────
   const sendMessage = async (text: string) => {
     if (!text.trim() || isTyping) return;
 
@@ -160,26 +158,26 @@ export default function AIAgentPage() {
         session_id: currentSessionId,
       });
 
-      // Mettre à jour la session si nouvelle
-      if (data.session_id) {
-        if (!currentSessionId) {
-          setCurrentSessionId(data.session_id);
-          fetchSessions();
-        }
+      console.log('Chatbot response:', data);
+
+      if (data.session_id && data.session_id !== currentSessionId) {
+        setCurrentSessionId(data.session_id);
+        fetchSessions();
+      } else if (!currentSessionId && data.session_id) {
+         setCurrentSessionId(data.session_id);
+         fetchSessions();
+      } else {
+        // Rafraîchir quand même pour mettre à jour le titre si c'est le premier message
+        if (messages.length <= 2) fetchSessions();
       }
 
-      // Extraire le contenu texte
       let content = data?.message?.content ?? data?.content ?? '...';
-
-      // Nettoyer les artefacts JSON résiduels (au cas où le backend n'a pas tout nettoyé)
       content = content.replace(/```json[\s\S]*?```/g, '').trim();
       content = content.replace(/```[\s\S]*?```/g, '').trim();
       content = content.replace(/<function[\s\S]*?<\/function>/g, '').trim();
 
-      // Les actions viennent du backend (déjà extraites)
       let actions: Action[] = data?.actions ?? [];
 
-      // Fallback : si le backend n'a pas extrait les actions mais qu'il y a du JSON brut dans le texte
       if (actions.length === 0) {
         const lastBracket = content.lastIndexOf('[');
         if (lastBracket !== -1) {
@@ -192,7 +190,7 @@ export default function AIAgentPage() {
                 actions = parsed;
                 content = content.slice(0, lastBracket).trim();
               }
-            } catch { /* pas du JSON valide */ }
+            } catch { }
           }
         }
       }
@@ -222,46 +220,39 @@ export default function AIAgentPage() {
     }
   };
 
-  // ── Gestion des actions IA ─────────────────────────────────────────────────
   const handleAction = (action: Action) => {
     const raw = action.payload ?? action.url ?? (action as any).target;
     if (!raw) return;
 
-    // Action de type message → envoyer comme message utilisateur
     if (action.type === 'message') {
       sendMessage(raw);
       return;
     }
 
-    // URL externe
     if (raw.startsWith('http://') || raw.startsWith('https://')) {
       window.open(raw, '_blank', 'noopener,noreferrer');
       return;
     }
 
-    // Sanitiser et naviguer
     const target = sanitizeAIRoute(raw);
     navigate(target);
   };
 
-  // ── Titre de la session courante ───────────────────────────────────────────
-  const currentTitle =
-    sessions.find(s => s.id === currentSessionId)?.title ?? 'Agent Hopitel';
+  const currentTitle = sessions.find(s => s.id === currentSessionId)?.title ?? 'Assistant Hopitel';
 
-  // ── Rendu ──────────────────────────────────────────────────────────────────
   return (
     <div
-      className="flex overflow-hidden bg-slate-50/50 rounded-3xl border border-slate-200 relative"
+      className="flex overflow-hidden bg-white rounded-3xl border border-slate-200 relative"
       style={{ height: 'calc(100dvh - 8rem)' }}
     >
-      {/* Overlay mobile */}
+      {/* Mobile Overlay */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-20 bg-black/30 lg:hidden"
+            className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -273,128 +264,119 @@ export default function AIAgentPage() {
           <motion.aside
             key="sidebar"
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
+            animate={{ width: 300, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            className="bg-white border-r border-slate-200 flex flex-col overflow-hidden
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="bg-slate-50 border-r border-slate-200 flex flex-col overflow-hidden
                        fixed left-0 top-0 h-full z-30
                        lg:relative lg:z-auto lg:h-auto"
           >
-            {/* Bouton nouvelle conversation */}
-            <div className="p-4 flex items-center gap-2 border-b border-slate-100">
-              <button
+            <div className="p-6 flex items-center gap-2 border-b border-slate-100">
+              <Button
                 onClick={startNewChat}
-                className="flex-1 h-11 rounded-xl flex items-center justify-center gap-2 bg-primary text-white text-xs font-black uppercase italic shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all"
+                className="flex-1 h-12 rounded-2xl bg-primary text-white font-bold shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
               >
-                <Plus className="w-4 h-4" /> Nouvelle conversation
-              </button>
+                <Plus className="w-4 h-4 mr-2" /> Nouveau chat
+              </Button>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-500 shrink-0"
+                className="lg:hidden w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-slate-200 text-slate-500 shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Liste des sessions */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 no-scrollbar">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-2 mb-2">
-                Récents
+            <div className="flex-1 overflow-y-auto px-4 py-6 space-y-2 no-scrollbar">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-4">
+                Conversations récentes
               </p>
               {sessions.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-8 italic">Aucune conversation</p>
+                <div className="text-center py-12">
+                   <MessageSquare className="w-8 h-8 text-slate-200 mx-auto mb-3" />
+                   <p className="text-xs text-slate-400 font-medium">Aucun historique</p>
+                </div>
               ) : (
                 sessions.map(session => (
                   <button
                     key={session.id}
                     onClick={() => selectSession(session.id)}
-                    className={`w-full p-3 rounded-xl text-left group transition-all flex items-center gap-3 ${
+                    className={`w-full p-4 rounded-2xl text-left group transition-all flex items-center gap-3 ${
                       currentSessionId === session.id
-                        ? 'bg-primary/5 border-2 border-primary/20'
-                        : 'hover:bg-slate-50 border-2 border-transparent'
-                    }`}
+                        ? 'bg-white border-primary/20 shadow-sm'
+                        : 'hover:bg-white/50 border-transparent'
+                    } border-2`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         currentSessionId === session.id
-                          ? 'bg-primary text-white'
-                          : 'bg-slate-100 text-slate-400'
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'bg-white text-slate-400 shadow-sm'
                       }`}
                     >
                       <MessageSquare className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black text-slate-900 truncate uppercase italic">
-                        {session.title || 'Conversation'}
+                      <p className="text-sm font-bold text-slate-900 truncate">
+                        {session.title || 'Discussion'}
                       </p>
-                      <p className="text-[9px] text-slate-400 font-bold">
+                      <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                         {session.created_at || session.date
                           ? new Date(session.created_at || session.date).toLocaleDateString('fr-FR')
                           : "Aujourd'hui"}
                       </p>
                     </div>
-                    <ChevronRight
-                      className={`w-4 h-4 shrink-0 transition-transform ${
-                        currentSessionId === session.id
-                          ? 'text-primary'
-                          : 'text-slate-200 group-hover:translate-x-0.5'
-                      }`}
-                    />
                   </button>
                 ))
               )}
             </div>
 
-            <div className="p-4 border-t border-slate-100 text-[9px] font-black text-slate-400 text-center uppercase tracking-widest italic">
-              Hopitel Intelligence
+            <div className="p-6 border-t border-slate-100 flex items-center justify-center">
+               <Badge className="bg-primary/5 text-primary border-transparent font-bold text-[9px] uppercase tracking-wider">Hopitel Intelligence v2</Badge>
             </div>
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* ── Zone principale ── */}
+      {/* ── Main Chat Area ── */}
       <main className="flex-1 flex flex-col bg-white overflow-hidden min-w-0">
-
-        {/* En-tête */}
-        <div className="h-16 border-b border-slate-100 px-4 lg:px-6 flex items-center justify-between bg-white/90 backdrop-blur-xl shrink-0">
-          <div className="flex items-center gap-3">
+        {/* Header */}
+        <div className="h-20 border-b border-slate-100 px-6 flex items-center justify-between bg-white/80 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
-              title="Historique"
+              className="w-10 h-10 flex items-center justify-center hover:bg-slate-100 rounded-xl text-slate-500 transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
             <div className="min-w-0">
-              <h2 className="text-sm font-black text-slate-900 uppercase italic flex items-center gap-2 truncate">
-                <Bot className="w-4 h-4 text-primary shrink-0" />
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 truncate">
+                <Bot className="w-5 h-5 text-primary shrink-0" />
                 <span className="truncate">{currentTitle}</span>
               </h2>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-[9px] text-slate-400 font-black uppercase italic tracking-widest">
-                  Synchronisé
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                  Connecté
                 </span>
               </div>
             </div>
           </div>
-          <div className="w-9 h-9 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 shrink-0">
-            <ShieldCheck className="w-4 h-4" />
+          <div className="w-10 h-10 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center text-slate-300 shrink-0">
+            <ShieldCheck className="w-5 h-5" />
           </div>
         </div>
 
-        {/* Messages */}
+        {/* Chat Messages */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 no-scrollbar bg-[radial-gradient(#f1f5f9_1px,transparent_1px)] [background-size:20px_20px] min-h-0"
+          className="flex-1 overflow-y-auto p-6 lg:p-10 space-y-8 no-scrollbar bg-white min-h-0"
         >
           {loadingHistory ? (
-            <div className="flex justify-center items-center h-full">
-              <div className="flex gap-1.5">
-                <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.15s]" />
-                <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.3s]" />
+            <div className="flex flex-col items-center justify-center h-full gap-4">
+              <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center">
+                 <Loader2 className="w-6 h-6 text-primary animate-spin" />
               </div>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Chargement...</p>
             </div>
           ) : (
             messages.map(msg => (
@@ -402,20 +384,18 @@ export default function AIAgentPage() {
                 key={msg.id}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2 }}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`flex gap-3 max-w-[88%] lg:max-w-[72%] ${
+                  className={`flex gap-4 max-w-[90%] lg:max-w-[75%] ${
                     msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'
                   }`}
                 >
-                  {/* Avatar */}
                   <div
-                    className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-1 shadow-sm ${
+                    className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 mt-1 shadow-sm ${
                       msg.role === 'assistant'
                         ? 'bg-primary text-white'
-                        : 'bg-white border-2 border-slate-100 text-slate-400'
+                        : 'bg-slate-100 text-slate-400'
                     }`}
                   >
                     {msg.role === 'assistant' ? (
@@ -425,98 +405,87 @@ export default function AIAgentPage() {
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    {/* Bulle */}
+                  <div className={`flex flex-col gap-3 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                     <div
-                      className={`px-5 py-4 rounded-2xl border-2 shadow-sm ${
+                      className={`px-6 py-4 rounded-[2rem] shadow-sm text-sm leading-relaxed font-medium ${
                         msg.role === 'user'
-                          ? 'bg-primary border-primary text-white rounded-tr-none'
-                          : 'bg-white border-slate-100 text-slate-900 rounded-tl-none'
+                          ? 'bg-primary text-white rounded-tr-none'
+                          : 'bg-slate-50 text-slate-900 rounded-tl-none border border-slate-100'
                       }`}
                     >
-                      <p className="text-sm leading-relaxed font-medium whitespace-pre-wrap">
-                        {msg.content}
-                      </p>
-                      <span
-                        className={`text-[9px] font-black mt-3 block uppercase tracking-widest opacity-40 ${
-                          msg.role === 'user' ? 'text-right' : ''
-                        }`}
-                      >
-                        {msg.timestamp.toLocaleTimeString('fr-FR', {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                      <p className="whitespace-pre-wrap">{msg.content}</p>
                     </div>
 
-                    {/* Boutons d'action */}
                     {msg.role === 'assistant' && msg.actions && msg.actions.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {msg.actions.map((action, idx) => (
                           <button
                             key={idx}
                             onClick={() => handleAction(action)}
-                            className="flex items-center gap-1.5 text-xs font-semibold text-primary border-2 border-primary/20 bg-white px-3 py-2 rounded-xl hover:bg-primary/5 active:scale-95 transition-all shadow-sm"
+                            className="flex items-center gap-2 text-xs font-bold text-primary bg-primary/5 border border-primary/10 px-4 py-2 rounded-xl hover:bg-primary/10 active:scale-95 transition-all"
                           >
-                            <Sparkles className="w-3 h-3 shrink-0" />
+                            <Sparkles className="w-3 h-3" />
                             {action.label}
                           </button>
                         ))}
                       </div>
                     )}
+                    
+                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest px-2">
+                      {msg.timestamp.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
                 </div>
               </motion.div>
             ))
           )}
 
-          {/* Indicateur de frappe */}
           {isTyping && (
             <div className="flex justify-start">
-              <div className="flex gap-3 items-center bg-white border-2 border-slate-100 px-5 py-3 rounded-2xl shadow-sm ml-12">
+              <div className="flex gap-4 items-center bg-slate-50 border border-slate-100 px-6 py-4 rounded-[2rem] ml-14">
                 <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce" />
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
-                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" />
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce [animation-delay:0.4s]" />
                 </div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-                  Analyse en cours...
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  L'intelligence analyse votre demande...
                 </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Zone de saisie */}
-        <div className="p-4 lg:p-6 border-t border-slate-100 bg-white shrink-0">
+        {/* Input Area */}
+        <div className="p-6 lg:p-10 border-t border-slate-100 bg-white shrink-0">
           <form
             onSubmit={e => { e.preventDefault(); sendMessage(input); }}
-            className="flex gap-3 max-w-4xl mx-auto"
+            className="flex gap-4 max-w-4xl mx-auto"
           >
-            <div className="relative flex-1 group">
+            <div className="relative flex-1">
               <input
-                placeholder="Posez votre question à l'intelligence Hopitel..."
+                placeholder="Posez une question santé..."
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                className="w-full h-14 pl-5 pr-14 bg-slate-50 border-2 border-slate-100 rounded-2xl text-sm font-medium text-slate-900 focus:border-primary transition-all outline-none placeholder:text-slate-300"
+                className="w-full h-16 pl-6 pr-16 bg-slate-50 border border-slate-200 rounded-[2rem] text-sm font-medium text-slate-900 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all outline-none"
               />
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-                <Sparkles className="w-4 h-4 text-primary/40 group-focus-within:text-primary transition-colors" />
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-3">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <Sparkles className="w-5 h-5 text-slate-300" />
               </div>
             </div>
             <button
               type="submit"
               disabled={!input.trim() || isTyping}
-              className="w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 shrink-0"
+              className="w-16 h-16 bg-primary text-white rounded-[2rem] flex items-center justify-center shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 disabled:cursor-not-allowed shrink-0"
             >
-              <Send className="w-5 h-5" />
+              <Send className="w-6 h-6" />
             </button>
           </form>
-          <p className="flex items-center justify-center gap-1.5 mt-3 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">
-            <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-            Vérifiez toujours les informations médicales critiques.
-          </p>
+          <div className="flex items-center justify-center gap-2 mt-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+            Assistant IA : Informations indicatives uniquement.
+          </div>
         </div>
       </main>
     </div>

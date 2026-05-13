@@ -26,32 +26,88 @@ export default function LaborantinDashboard() {
   const finished = resultats.length;
 
   return (
-    <div className="space-y-5 lg:space-y-8 animate-fade-in">
-
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Console Laboratoire</h1>
-        <p className="text-slate-500 mt-1">Gestion des analyses biologiques</p>
+    <div className="animate-fade-in space-y-8 lg:space-y-10">
+      {/* ── Header Laboratoire Premium ────────────────────────────────── */}
+      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+        <div className="relative z-10 flex-1">
+          <Badge className="bg-cyan-50 text-cyan-700 border-cyan-100 font-bold px-3 mb-4 uppercase tracking-wider text-[10px]">Unité Biologique</Badge>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+            Plateforme de Laboratoire
+          </h1>
+          <p className="text-slate-500 mt-2 max-w-xl leading-relaxed">
+            Gérez les prélèvements, saisissez les résultats d'analyses et validez les rapports biologiques de vos patients.
+          </p>
+        </div>
+        <div className="relative z-10 w-20 h-20 bg-cyan-50 rounded-2xl flex items-center justify-center border border-cyan-100">
+           <FlaskConical className="w-10 h-10 text-cyan-600" />
+        </div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-50/50 rounded-full translate-x-1/4 -translate-y-1/4 blur-3xl -z-0" />
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* ── Statistiques Labo ────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
-          { label: 'Analyses en attente',   value: pending,  icon: Clock,         color: 'text-amber-600',   bg: 'bg-amber-50',   href: '/laborantin/pending' },
-          { label: 'Analyses clôturées',    value: finished, icon: CheckCircle,   color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/laborantin/finished' },
-          { label: 'Total demandes',        value: demandes.length, icon: FlaskConical, color: 'text-cyan-600', bg: 'bg-cyan-50', href: null },
-        ].map((s, i) => (
-          <div
-            key={i}
-            onClick={() => s.href && (window.location.href = s.href)}
-            className={`bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-card-md transition-all ${s.href ? 'cursor-pointer hover:border-slate-300' : ''}`}
-          >
-            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center mb-4`}>
-              <s.icon className={`w-5 h-5 ${s.color}`} />
+          { label: 'Analyses en attente', value: pending, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50' },
+          { label: 'Analyses clôturées', value: finished, icon: FileCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+          { label: 'Dernière activité', value: 'Aujourd\'hui', icon: History, color: 'text-blue-600', bg: 'bg-blue-50' },
+        ].map((stat, i) => (
+          <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-5">
+            <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center shrink-0`}>
+              <stat.icon className={`w-6 h-6 ${stat.color}`} />
             </div>
-            <p className="text-3xl font-bold text-slate-900">{s.value}</p>
-            <p className="text-sm text-slate-500 mt-1">{s.label}</p>
+            <div>
+              <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-0.5">{stat.label}</p>
+            </div>
           </div>
+        ))}
+      </div>
+
+      {/* ── Actions Métier SaaS ───────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {[
+          { 
+            title: 'Analyses en cours', 
+            desc: 'Traitez les nouvelles demandes reçues.', 
+            icon: Clock, 
+            color: 'text-amber-600',
+            bg: 'bg-amber-50',
+            href: '/laborantin/pending',
+          },
+          { 
+            title: 'Historique Labo', 
+            desc: 'Consultez les analyses déjà traitées.', 
+            icon: History, 
+            color: 'text-emerald-600',
+            bg: 'bg-emerald-50',
+            href: '/laborantin/finished',
+          },
+          { 
+            title: 'Messagerie', 
+            desc: 'Communiquez avec les prescripteurs.', 
+            icon: MessageCircle, 
+            color: 'text-blue-600',
+            bg: 'bg-blue-50',
+            href: '/laborantin/messagerie',
+          },
+        ].map((service, i) => (
+          <Link 
+            key={i} 
+            to={service.href} 
+            className="group bg-white p-8 rounded-2xl border border-slate-200 hover:border-cyan-200 hover:shadow-xl transition-all h-full flex flex-col"
+          >
+            <div className={`w-14 h-14 ${service.bg} rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
+               <service.icon className={`w-7 h-7 ${service.color}`} />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">{service.title}</h3>
+            <p className="text-sm text-slate-500 leading-relaxed font-medium mb-6 flex-1">
+              {service.desc}
+            </p>
+            <div className="flex items-center gap-2 text-cyan-600 text-sm font-bold opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all">
+              <span>Traiter</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </Link>
         ))}
       </div>
 

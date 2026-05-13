@@ -430,7 +430,7 @@ export default function DoctorAgendaPage() {
                       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</span>
                     </div>
                     <p className="text-sm text-slate-800 bg-slate-50 rounded-xl px-4 py-3 leading-relaxed">
-                      {showIntake[key] || <span className="text-slate-400 italic">Non renseigné</span>}
+                      {showIntake[key] || <span className="text-slate-400">Non renseigné</span>}
                     </p>
                   </div>
                 ))}
