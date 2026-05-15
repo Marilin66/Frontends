@@ -126,10 +126,89 @@ class _MedecinConsultationDetailScreenState
     }
   }
 
+  Future<void> _showPrescriptionDialog(ConsultationModel consultation) async {
+    final formKey = GlobalKey<FormState>();
+    final typeAnalyseCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Prescrire une analyse',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: typeAnalyseCtrl,
+                decoration: InputDecoration(
+                  labelText: 'Type d\'analyse',
+                  hintText: 'Ex: Prise de sang, IRM...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: notesCtrl,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Notes pour le laboratoire',
+                  hintText: 'Instructions spécifiques...',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.medecin),
+            onPressed: () async {
+              if (!formKey.currentState!.validate()) return;
+              
+              final data = {
+                'consultation': consultation.rendezVousId,
+                'patient': consultation.patientId,
+                'type_analyse': typeAnalyseCtrl.text.trim(),
+                'notes_medecin': notesCtrl.text.trim(),
+              };
+
+              Navigator.pop(ctx);
+              
+              final success = await ref
+                  .read(medecinConsultationsListProvider.notifier)
+                  .prescrireAnalyse(data);
+              
+              if (mounted) {
+                Helpers.showSnackBar(
+                  context,
+                  success ? 'Analyse prescrite au laboratoire' : 'Erreur lors de la prescription',
+                  isError: !success,
+                );
+              }
+            },
+            child: const Text('Prescrire', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final consultationAsync =
         ref.watch(consultationDetailProvider(widget.consultationId));
+    final preenregistrementAsync =
+        ref.watch(medecinPreenregistrementProvider(widget.consultationId));
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -203,6 +282,61 @@ class _MedecinConsultationDetailScreenState
                       : 'Non renseigné',
                 ),
                 const SizedBox(height: 20),
+
+                // ── Pré-enregistrement Patient ──────────────────────────
+                preenregistrementAsync.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => const SizedBox(), // On ignore silencieusement
+                  data: (preData) {
+                    if (preData == null) return const SizedBox();
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.assignment_ind_outlined, color: AppColors.secondary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Formulaire de Pré-consultation',
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.secondary,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          if (preData['symptomes'] != null && preData['symptomes'].toString().isNotEmpty)
+                            _buildDetailRow('Symptômes', preData['symptomes']),
+                          if (preData['duree_symptomes'] != null && preData['duree_symptomes'].toString().isNotEmpty)
+                            _buildDetailRow('Durée', preData['duree_symptomes']),
+                          if (preData['antecedents'] != null && preData['antecedents'].toString().isNotEmpty)
+                            _buildDetailRow('Antécédents', preData['antecedents']),
+                          if (preData['traitements_en_cours'] != null && preData['traitements_en_cours'].toString().isNotEmpty)
+                            _buildDetailRow('Traitements', preData['traitements_en_cours']),
+                          if (preData['notes_patient'] != null && preData['notes_patient'].toString().isNotEmpty)
+                            _buildDetailRow('Notes', preData['notes_patient']),
+                        ],
+                      ),
+                    );
+                  },
+                ),
 
                 // ── Sections médicales ──────────────────────────────────
                 _buildSectionTitle('Compte rendu'),
@@ -281,6 +415,27 @@ class _MedecinConsultationDetailScreenState
                     ),
                   ),
                 ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showPrescriptionDialog(consultation),
+                      icon: const Icon(Icons.science_outlined, color: Colors.white),
+                      label: Text(
+                        'Prescrire une analyse',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.secondary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
                     height: 52,
@@ -383,6 +538,38 @@ class _MedecinConsultationDetailScreenState
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: AppColors.textHint,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

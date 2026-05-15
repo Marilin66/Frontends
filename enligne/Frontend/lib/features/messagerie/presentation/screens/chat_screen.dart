@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,12 +14,14 @@ class ChatScreen extends ConsumerStatefulWidget {
   final int? consultationId;
   final int? destinataireId;
   final String contactName;
+  final String? contactPhoto;
 
   const ChatScreen({
     super.key,
     this.consultationId,
     this.destinataireId,
     required this.contactName,
+    this.contactPhoto,
   });
 
   @override
@@ -218,15 +220,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           CircleAvatar(
             radius: 18,
             backgroundColor: Colors.white.withValues(alpha: 0.2),
-            child: Text(
-              widget.contactName.isNotEmpty
-                  ? widget.contactName[0].toUpperCase()
-                  : '?',
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  fontSize: 16),
-            ),
+            backgroundImage: widget.contactPhoto != null && widget.contactPhoto!.isNotEmpty
+                ? NetworkImage(
+                    widget.contactPhoto!.startsWith('http') 
+                      ? widget.contactPhoto! 
+                      : '${AppColors.primary}${widget.contactPhoto}') // fallback simpliste
+                : null,
+            child: widget.contactPhoto == null || widget.contactPhoto!.isEmpty
+                ? Text(
+                    widget.contactName.isNotEmpty
+                        ? widget.contactName[0].toUpperCase()
+                        : '?',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontSize: 16),
+                  )
+                : null,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -497,16 +507,21 @@ class _MessageBubble extends StatelessWidget {
               CircleAvatar(
                 radius: 14,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                child: Text(
-                  message.expediteurNom.isNotEmpty
-                      ? message.expediteurNom[0].toUpperCase()
-                      : '?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+                backgroundImage: message.expediteurPhoto != null && message.expediteurPhoto!.isNotEmpty
+                    ? NetworkImage(message.expediteurPhoto!)
+                    : null,
+                child: message.expediteurPhoto == null || message.expediteurPhoto!.isEmpty
+                    ? Text(
+                        message.expediteurNom.isNotEmpty
+                            ? message.expediteurNom[0].toUpperCase()
+                            : '?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 6),
             ],

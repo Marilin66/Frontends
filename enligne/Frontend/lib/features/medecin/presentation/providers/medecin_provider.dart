@@ -80,6 +80,13 @@ final medecinConsultationProvider =
   return await datasource.getConsultation(rendezVousId);
 });
 
+final medecinPreenregistrementProvider =
+    FutureProvider.family<Map<String, dynamic>?, int>((ref, rendezVousId) async {
+  final datasource = ref.read(medecinDatasourceProvider);
+  final data = await datasource.getPreenregistrement(rendezVousId);
+  return data.isEmpty ? null : data;
+});
+
 final medecinDisponibilitesProvider =
     AsyncNotifierProvider<MedecinDisponibilitesNotifier, List<DisponibiliteModel>>(
   MedecinDisponibilitesNotifier.new,
@@ -194,6 +201,16 @@ class MedecinConsultationsListNotifier
       final datasource = ref.read(medecinDatasourceProvider);
       await datasource.cloturerConsultation(id);
       await refresh();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> prescrireAnalyse(Map<String, dynamic> data) async {
+    try {
+      final datasource = ref.read(medecinDatasourceProvider);
+      await datasource.createAnalyse(data);
       return true;
     } catch (_) {
       return false;

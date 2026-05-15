@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -215,76 +216,87 @@ class _PatientCard extends StatelessWidget {
     final initials = '${patient.firstName.isNotEmpty ? patient.firstName[0] : ''}${patient.lastName.isNotEmpty ? patient.lastName[0] : ''}'
         .toUpperCase();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 2))
-        ],
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: AppColors.adminHopital.withValues(alpha: 0.15),
-            child: Text(initials,
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.adminHopital,
-                    fontSize: 16)),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(patient.fullName,
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600, fontSize: 15)),
-                const SizedBox(height: 2),
-                Text(patient.email,
-                    style: GoogleFonts.poppins(
-                        fontSize: 13, color: AppColors.textSecondary)),
-                if (patient.telephone.isNotEmpty) ...[
+    return GestureDetector(
+      onTap: () {
+        // Redirige vers l'écran du parcours patient
+        context.push(
+          '/admin-hopital/patients/${patient.id}/journey',
+          extra: patient.fullName,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 6,
+                offset: const Offset(0, 2))
+          ],
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: AppColors.adminHopital.withValues(alpha: 0.15),
+              child: Text(initials,
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.adminHopital,
+                      fontSize: 16)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(patient.fullName,
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600, fontSize: 15)),
                   const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.phone,
-                          size: 13, color: AppColors.textHint),
-                      const SizedBox(width: 4),
-                      Text(patient.telephone,
-                          style: GoogleFonts.poppins(
-                              fontSize: 12, color: AppColors.textHint)),
-                    ],
-                  ),
+                  Text(patient.email,
+                      style: GoogleFonts.poppins(
+                          fontSize: 13, color: AppColors.textSecondary)),
+                  if (patient.telephone.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        const Icon(Icons.phone,
+                            size: 13, color: AppColors.textHint),
+                        const SizedBox(width: 4),
+                        Text(patient.telephone,
+                            style: GoogleFonts.poppins(
+                                fontSize: 12, color: AppColors.textHint)),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: patient.isActive
-                  ? Colors.green.withValues(alpha: 0.1)
-                  : AppColors.error.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: patient.isActive
+                    ? Colors.green.withValues(alpha: 0.1)
+                    : AppColors.error.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                patient.isActive ? 'Actif' : 'Inactif',
+                style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: patient.isActive ? Colors.green : AppColors.error),
+              ),
             ),
-            child: Text(
-              patient.isActive ? 'Actif' : 'Inactif',
-              style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: patient.isActive ? Colors.green : AppColors.error),
-            ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: AppColors.textHint),
+          ],
+        ),
       ),
     );
   }

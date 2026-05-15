@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -278,6 +278,49 @@ class AdminHopitalHomeContent extends ConsumerWidget {
             const Expanded(child: SizedBox()),
             const SizedBox(width: 12),
             const Expanded(child: SizedBox()),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Supervision',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.event,
+                label: 'Suivi RDV',
+                color: AppColors.primary,
+                onTap: () => context.go('/admin-hopital/supervision/rdv'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.medical_information_outlined,
+                label: 'Consultations',
+                color: AppColors.medecin,
+                onTap: () => context.go('/admin-hopital/supervision/consultations'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.science_outlined,
+                label: 'Laboratoire',
+                color: AppColors.laborantin,
+                onTap: () => context.go('/admin-hopital/supervision/laboratoire'),
+              ),
+            ),
           ],
         ),
       ],

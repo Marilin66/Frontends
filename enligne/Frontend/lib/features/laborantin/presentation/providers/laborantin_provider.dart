@@ -89,3 +89,9 @@ class PatientSearchNotifier extends AsyncNotifier<List<UserModel>> {
     });
   }
 }
+
+/// Provider pour récupérer les patients suivis ou inscrits par le laborantin
+final laborantinMyPatientsProvider = FutureProvider<List<UserModel>>((ref) async {
+  final datasource = ref.read(laborantinDatasourceProvider);
+  return await datasource.getMyPatients();
+});

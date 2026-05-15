@@ -173,12 +173,14 @@ class ContactModel {
   final String nom;
   final String role;
   final String? hopitalNom;
+  final String? photo;
 
   const ContactModel({
     required this.id,
     required this.nom,
     required this.role,
     this.hopitalNom,
+    this.photo,
   });
 }
 
@@ -215,6 +217,7 @@ final contactsDisponiblesProvider =
         nom: '${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
         role: 'admin_hopital',
         hopitalNom: m['hopital_nom'] as String?,
+        photo: m['photo'] as String?,
       );
     }).toList();
   }
@@ -237,6 +240,7 @@ final contactsDisponiblesProvider =
         nom: 'Dr. ${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
         role: 'medecin',
         hopitalNom: m['hopital_nom'] as String?,
+        photo: m['photo'] as String?,
       ));
     }
     for (final e in labList) {
@@ -246,6 +250,7 @@ final contactsDisponiblesProvider =
         nom: '${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
         role: 'laborantin',
         hopitalNom: m['hopital_nom'] as String?,
+        photo: m['photo'] as String?,
       ));
     }
     return contacts;
@@ -271,6 +276,7 @@ final contactsDisponiblesProvider =
             nom: '${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
             role: 'admin_hopital',
             hopitalNom: m['hopital_nom'] as String?,
+            photo: m['photo'] as String?,
           );
         })
         .toList();

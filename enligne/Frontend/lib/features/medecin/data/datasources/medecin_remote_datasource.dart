@@ -195,4 +195,33 @@ class MedecinRemoteDatasource {
       throw ApiException.fromDioError(e);
     }
   }
+
+  Future<Map<String, dynamic>> createAnalyse(Map<String, dynamic> data) async {
+    try {
+      final response = await _client.post(ApiConstants.analyses, data: data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) {
+        throw const FormatException('Réponse inattendue');
+      }
+      return responseData;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getPreenregistrement(int rendezVousId) async {
+    try {
+      final response = await _client.get('${ApiConstants.rendezvous}$rendezVousId/preenregistrement/');
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) {
+        throw const FormatException('Réponse inattendue');
+      }
+      return responseData;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return {}; // Pas de pré-enregistrement trouvé
+      }
+      throw ApiException.fromDioError(e);
+    }
+  }
 }

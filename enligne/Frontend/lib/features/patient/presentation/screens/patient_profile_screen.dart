@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -181,6 +181,12 @@ class PatientProfileContent extends ConsumerWidget {
                   title: Text('Changer le mot de passe', style: GoogleFonts.poppins()),
                   trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
                   onTap: () => context.go('/patient/change-password'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.help_outline, color: AppColors.textSecondary),
+                  title: Text('FAQ & Guide d\'utilisation', style: GoogleFonts.poppins()),
+                  trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
+                  onTap: () => context.push('/faq'),
                 ),
                 ListTile(
                   leading: const Icon(Icons.info_outline, color: AppColors.textSecondary),

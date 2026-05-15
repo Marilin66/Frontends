@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:hopitel_app/core/theme/app_colors.dart';
@@ -54,6 +54,25 @@ class LaborantinDashboardScreen extends ConsumerWidget {
                           color: AppColors.success,
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatCard(
+                          title: 'Patients',
+                          count: ref.watch(laborantinMyPatientsProvider).when(
+                            data: (list) => list.length.toString(),
+                            loading: () => '...',
+                            error: (error, stackTrace) => '!',
+                          ),
+                          icon: Icons.people_outline_rounded,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      const Expanded(child: SizedBox()), // Placeholder to keep the same size
                     ],
                   ),
                   const SizedBox(height: 30),

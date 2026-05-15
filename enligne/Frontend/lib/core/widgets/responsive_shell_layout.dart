@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'global_ai_bubble.dart';
+
 class ResponsiveShellLayout extends StatelessWidget {
   final Widget child;
   final int selectedIndex;
@@ -23,10 +25,12 @@ class ResponsiveShellLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 600;
-        final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1100;
+    return Stack(
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1100;
 
         if (isMobile) {
           final state = GoRouterState.of(context);
@@ -268,6 +272,9 @@ class ResponsiveShellLayout extends StatelessWidget {
           ),
         );
       },
+    ),
+    const GlobalAIBubble(),
+      ],
     );
   }
 

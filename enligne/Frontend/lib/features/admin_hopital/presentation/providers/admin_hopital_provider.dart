@@ -222,3 +222,35 @@ final adminHopitalDashboardStatsProvider =
   final datasource = ref.read(adminHopitalDatasourceProvider);
   return await datasource.getDashboardStats();
 });
+
+// ── Supervision providers ─────────────────────────────────────────────────
+
+final adminSupervisionDashboardProvider =
+    FutureProvider<Map<String, dynamic>>((ref) async {
+  final datasource = ref.read(adminHopitalDatasourceProvider);
+  return await datasource.getSupervisionDashboard();
+});
+
+final adminSupervisionRendezvousProvider =
+    FutureProvider.family<List<dynamic>, String?>((ref, statut) async {
+  final datasource = ref.read(adminHopitalDatasourceProvider);
+  return await datasource.getSupervisionRendezvous(statut: statut);
+});
+
+final adminSupervisionConsultationsProvider =
+    FutureProvider<List<dynamic>>((ref) async {
+  final datasource = ref.read(adminHopitalDatasourceProvider);
+  return await datasource.getSupervisionConsultations();
+});
+
+final adminSupervisionLaboratoireProvider =
+    FutureProvider<List<dynamic>>((ref) async {
+  final datasource = ref.read(adminHopitalDatasourceProvider);
+  return await datasource.getSupervisionLaboratoire();
+});
+
+final adminPatientParcoursProvider =
+    FutureProvider.family<Map<String, dynamic>, int>((ref, patientId) async {
+  final datasource = ref.read(adminHopitalDatasourceProvider);
+  return await datasource.getPatientParcours(patientId);
+});

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -240,6 +240,7 @@ class _ConversationListScreenState
                           nonLus: conv.nonLus,
                           estCloture: conv.estCloture,
                           couleur: AppColors.primary,
+                          photo: conv.contactPhoto,
                           onTap: () => _openChat(
                             context,
                             consultationId: conv.consultationId,
@@ -294,6 +295,7 @@ class _ConversationListScreenState
                           roleLabel: _roleLabel(contact.role),
                           hopitalNom: contact.hopitalNom,
                           couleur: color,
+                          photo: contact.photo,
                           onTap: () => _openChat(
                             context,
                             destinataireId: contact.id,
@@ -323,6 +325,7 @@ class _ConversationTile extends StatelessWidget {
   final int nonLus;
   final bool estCloture;
   final Color couleur;
+  final String? photo;
   final VoidCallback onTap;
 
   const _ConversationTile({
@@ -333,6 +336,7 @@ class _ConversationTile extends StatelessWidget {
     required this.nonLus,
     required this.estCloture,
     required this.couleur,
+    this.photo,
     required this.onTap,
   });
 
@@ -350,14 +354,19 @@ class _ConversationTile extends StatelessWidget {
                 CircleAvatar(
                   radius: 26,
                   backgroundColor: couleur.withValues(alpha: 0.15),
-                  child: Text(
-                    initials,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: couleur,
-                    ),
-                  ),
+                  backgroundImage: photo != null && photo!.isNotEmpty
+                      ? NetworkImage(photo!.startsWith('http') ? photo! : '${AppColors.primary}$photo')
+                      : null,
+                  child: photo == null || photo!.isEmpty
+                      ? Text(
+                          initials,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: couleur,
+                          ),
+                        )
+                      : null,
                 ),
                 if (!estCloture)
                   Positioned(
@@ -474,6 +483,7 @@ class _ContactTile extends StatelessWidget {
   final String roleLabel;
   final String? hopitalNom;
   final Color couleur;
+  final String? photo;
   final VoidCallback onTap;
 
   const _ContactTile({
@@ -482,6 +492,7 @@ class _ContactTile extends StatelessWidget {
     required this.roleLabel,
     this.hopitalNom,
     required this.couleur,
+    this.photo,
     required this.onTap,
   });
 
@@ -497,14 +508,19 @@ class _ContactTile extends StatelessWidget {
             CircleAvatar(
               radius: 26,
               backgroundColor: couleur.withValues(alpha: 0.15),
-              child: Text(
-                initials,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: couleur,
-                ),
-              ),
+              backgroundImage: photo != null && photo!.isNotEmpty
+                  ? NetworkImage(photo!.startsWith('http') ? photo! : '${AppColors.primary}$photo')
+                  : null,
+              child: photo == null || photo!.isEmpty
+                  ? Text(
+                      initials,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: couleur,
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 14),
             // Infos

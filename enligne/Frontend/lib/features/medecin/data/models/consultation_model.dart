@@ -8,6 +8,7 @@ class ConsultationModel {
   final String diagnostic;
   final String prescription;
   final DateTime dateConsultation;
+  final int patientId;
 
   ConsultationModel({
     required this.rendezVousId,
@@ -19,6 +20,7 @@ class ConsultationModel {
     required this.diagnostic,
     required this.prescription,
     required this.dateConsultation,
+    this.patientId = 0,
   });
 
   factory ConsultationModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class ConsultationModel {
       diagnostic: json['diagnostic'] as String? ?? '',
       prescription: json['prescription'] as String? ?? '',
       dateConsultation: DateTime.tryParse(json['date_consultation']?.toString() ?? '') ?? DateTime.now(),
+      patientId: json['patient_id'] as int? ?? (json['patient'] is Map ? json['patient']['id'] as int? ?? 0 : json['patient'] as int? ?? 0),
     );
   }
 
@@ -46,6 +49,7 @@ class ConsultationModel {
       'diagnostic': diagnostic,
       'prescription': prescription,
       'date_consultation': dateConsultation.toIso8601String(),
+      'patient_id': patientId,
     };
   }
 
@@ -59,6 +63,7 @@ class ConsultationModel {
     String? diagnostic,
     String? prescription,
     DateTime? dateConsultation,
+    int? patientId,
   }) {
     return ConsultationModel(
       rendezVousId: rendezVousId ?? this.rendezVousId,
@@ -70,6 +75,7 @@ class ConsultationModel {
       diagnostic: diagnostic ?? this.diagnostic,
       prescription: prescription ?? this.prescription,
       dateConsultation: dateConsultation ?? this.dateConsultation,
+      patientId: patientId ?? this.patientId,
     );
   }
 }

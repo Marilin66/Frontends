@@ -17,6 +17,7 @@ import '../../features/medecin/presentation/screens/medecin_shell.dart';
 import '../../features/admin_hopital/presentation/screens/admin_hopital_shell.dart';
 import '../../features/super_admin/presentation/screens/super_admin_shell.dart';
 import '../../features/super_admin/presentation/screens/super_admin_hopital_detail_screen.dart';
+import '../../features/super_admin/presentation/screens/super_admin_create_hopital_screen.dart';
 import '../../features/super_admin/data/models/hopital_model.dart' hide HopitalServiceModel;
 import 'package:hopitel_app/features/laborantin/presentation/screens/laborantin_shell.dart';
 import 'package:hopitel_app/features/laborantin/presentation/screens/laborantin_dashboard_screen.dart';
@@ -47,8 +48,14 @@ import '../../features/core/presentation/screens/public_hospital_search_screen.d
 import '../../features/core/presentation/screens/legal/privacy_policy_screen.dart';
 import '../../features/core/presentation/screens/legal/terms_of_use_screen.dart';
 import '../../features/core/presentation/screens/legal/legal_mentions_screen.dart';
+import '../../features/core/presentation/screens/faq_screen.dart';
 import '../constants/app_constants.dart';
 import 'package:hopitel_app/core/theme/app_colors.dart';
+
+import '../../features/admin_hopital/presentation/screens/admin_hopital_supervision_rdv_screen.dart';
+import '../../features/admin_hopital/presentation/screens/admin_hopital_supervision_consultations_screen.dart';
+import '../../features/admin_hopital/presentation/screens/admin_hopital_supervision_laboratoire_screen.dart';
+import '../../features/admin_hopital/presentation/screens/admin_hopital_patient_journey_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 final _patientNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'patient');
@@ -79,6 +86,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     '/privacy',
     '/terms',
     '/legal-mentions',
+    '/faq',
   ];
 
   return GoRouter(
@@ -234,6 +242,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (context, state) => _buildPageWithFadeTransition(
           state: state,
           child: const PatientChatbotScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/faq',
+        pageBuilder: (context, state) => _buildPageWithFadeTransition(
+          state: state,
+          child: const FaqScreen(),
         ),
       ),
       GoRoute(
@@ -581,7 +596,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/admin-hopital/services', builder: (context, state) => const AdminHopitalServicesContent()),
           GoRoute(path: '/admin-hopital/demandes', builder: (context, state) => const AdminHopitalDemandesContent()),
           GoRoute(path: '/admin-hopital/patients', builder: (context, state) => const AdminHopitalPatientsContent()),
+          GoRoute(
+            path: '/admin-hopital/patients/:id/journey',
+            builder: (context, state) {
+              final id = int.parse(state.pathParameters['id']!);
+              final nom = state.extra as String?;
+              return AdminHopitalPatientJourneyScreen(patientId: id, patientNom: nom);
+            },
+          ),
           GoRoute(path: '/admin-hopital/stats', builder: (context, state) => const AdminHopitalStatsContent()),
+          GoRoute(path: '/admin-hopital/supervision/rdv', builder: (context, state) => const AdminHopitalSupervisionRdvScreen()),
+          GoRoute(path: '/admin-hopital/supervision/consultations', builder: (context, state) => const AdminHopitalSupervisionConsultationsScreen()),
+          GoRoute(path: '/admin-hopital/supervision/laboratoire', builder: (context, state) => const AdminHopitalSupervisionLaboratoireScreen()),
           GoRoute(path: '/admin-hopital/messages', builder: (context, state) => const AdminHopitalMessagesContent()),
           GoRoute(
             path: '/admin-hopital/messagerie',
@@ -618,6 +644,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/super-admin', builder: (context, state) => const SuperAdminHomeContent()),
           GoRoute(path: '/super-admin/hopitaux', builder: (context, state) => const SuperAdminHopitauxContent()),
+          GoRoute(path: '/super-admin/hopitaux/nouveau', builder: (context, state) => const SuperAdminCreateHopitalScreen()),
           GoRoute(
             path: '/super-admin/hopitaux/:id',
             builder: (context, state) {
