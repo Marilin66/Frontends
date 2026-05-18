@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -19,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscurePassword = true;
+  bool _isStayLoggedInChecked = false;
 
   @override
   void dispose() {
@@ -32,6 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await ref.read(authProvider.notifier).login(
           _emailController.text.trim(),
           _passwordController.text,
+          stayLoggedIn: _isStayLoggedInChecked,
         );
   }
 
@@ -109,6 +111,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
               validator: (v) => v == null || v.isEmpty ? 'Mot de passe requis' : null,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _isStayLoggedInChecked,
+                    onChanged: (val) => setState(() => _isStayLoggedInChecked = val ?? false),
+                    activeColor: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Rester connecté(e)',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             SizedBox(

@@ -14,6 +14,15 @@ class DioClient {
   late final Dio _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
+  // Cache en mémoire pour les tokens temporaires (stayLoggedIn == false)
+  static String? _tempAccessToken;
+  static String? _tempRefreshToken;
+
+  static void setTempTokens({String? access, String? refresh}) {
+    _tempAccessToken = access;
+    _tempRefreshToken = refresh;
+  }
+
   DioClient() {
     _dio = Dio(
       BaseOptions(
@@ -30,7 +39,8 @@ class DioClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await _storage.read(key: AppConstants.accessTokenKey);
+          var token = await _storage.read(key: AppConstants.accessTokenKey);
+          token ??= _tempAccessToken;
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
           }
@@ -41,8 +51,8 @@ class DioClient {
             final refreshed = await _refreshToken();
             if (refreshed) {
               // Réessayer la requête originale
-              final token =
-                  await _storage.read(key: AppConstants.accessTokenKey);
+              var token = await _storage.read(key: AppConstants.accessTokenKey);
+              token ??= _tempAccessToken;
               error.requestOptions.headers['Authorization'] = 'Bearer $token';
               final response = await _dio.fetch(error.requestOptions);
               return handler.resolve(response);
@@ -67,8 +77,8 @@ class DioClient {
 
   Future<bool> _refreshToken() async {
     try {
-      final refreshToken =
-          await _storage.read(key: AppConstants.refreshTokenKey);
+      var refreshToken = await _storage.read(key: AppConstants.refreshTokenKey);
+      refreshToken ??= _tempRefreshToken;
       if (refreshToken == null) return false;
 
       final response = await Dio().post(
@@ -77,15 +87,26 @@ class DioClient {
       );
 
       if (response.statusCode == 200) {
-        await _storage.write(
-          key: AppConstants.accessTokenKey,
-          value: response.data['access'],
-        );
-        if (response.data['refresh'] != null) {
+        final newAccess = response.data['access'];
+        final newRefresh = response.data['refresh'];
+
+        final hasPersistentTokens = await _storage.read(key: AppConstants.accessTokenKey) != null;
+        if (hasPersistentTokens) {
           await _storage.write(
-            key: AppConstants.refreshTokenKey,
-            value: response.data['refresh'],
+            key: AppConstants.accessTokenKey,
+            value: newAccess,
           );
+          if (newRefresh != null) {
+            await _storage.write(
+              key: AppConstants.refreshTokenKey,
+              value: newRefresh,
+            );
+          }
+        } else {
+          _tempAccessToken = newAccess;
+          if (newRefresh != null) {
+            _tempRefreshToken = newRefresh;
+          }
         }
         return true;
       }

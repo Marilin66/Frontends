@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [stayLoggedIn, setStayLoggedIn] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const successMessage = location.state?.message;
@@ -30,7 +31,7 @@ export default function LoginPage() {
     clearError();
     if (!validate()) return;
     try {
-      await login({ email, password });
+      await login({ email, password }, stayLoggedIn);
       // Redirection gérée par DashboardRedirect dans App.tsx
       navigate('/dashboard');
     } catch {}
@@ -101,9 +102,22 @@ export default function LoginPage() {
           />
         </div>
 
+        <div className="flex items-center py-1">
+          <input
+            id="stay-logged-in"
+            type="checkbox"
+            checked={stayLoggedIn}
+            onChange={(e) => setStayLoggedIn(e.target.checked)}
+            className="w-4.5 h-4.5 text-primary border-slate-300 rounded focus:ring-primary focus:ring-offset-0 cursor-pointer"
+          />
+          <label htmlFor="stay-logged-in" className="ml-2 text-sm font-semibold text-slate-600 hover:text-slate-800 cursor-pointer select-none">
+            Rester connecté(e)
+          </label>
+        </div>
+
         <Button
           type="submit"
-          className="w-full h-12 mt-2 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+          className="w-full h-12 bg-primary text-white font-bold rounded-xl hover:bg-primary-dark shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
           isLoading={isLoading}
         >
           Se connecter

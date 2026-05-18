@@ -83,21 +83,26 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   /// Connexion
-  Future<void> login(String email, String password) async {
+  Future<void> login(String email, String password, {bool stayLoggedIn = false}) async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true, clearValidationErrors: true);
 
     try {
-      final response = await _datasource.login(email, password);
+      final response = await _datasource.login(email, password, stayLoggedIn: stayLoggedIn);
 
-      // Stocker les tokens
-      await _storage.write(
-        key: AppConstants.accessTokenKey,
-        value: response.access,
-      );
-      await _storage.write(
-        key: AppConstants.refreshTokenKey,
-        value: response.refresh,
-      );
+      if (stayLoggedIn) {
+        // Stocker de manière permanente
+        await _storage.write(
+          key: AppConstants.accessTokenKey,
+          value: response.access,
+        );
+        await _storage.write(
+          key: AppConstants.refreshTokenKey,
+          value: response.refresh,
+        );
+      } else {
+        // Garder temporairement en RAM via le cache statique de DioClient
+        DioClient.setTempTokens(access: response.access, refresh: response.refresh);
+      }
 
       // Récupérer le profil
       final user = await _datasource.getMe();
@@ -262,6 +267,7 @@ class AuthNotifier extends Notifier<AuthState> {
     await _storage.delete(key: AppConstants.accessTokenKey);
     await _storage.delete(key: AppConstants.refreshTokenKey);
     await _storage.delete(key: AppConstants.userDataKey);
+    DioClient.setTempTokens(access: null, refresh: null);
   }
 }
 

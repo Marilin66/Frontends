@@ -6,7 +6,7 @@ import { api, endpoints } from '@/services/api';
 // Initial state
 const initialState: AuthState = {
   user: null,
-  token: localStorage.getItem('auth_token'),
+  token: localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token'),
   isAuthenticated: false,
   isLoading: true,
   error: null,
@@ -47,7 +47,7 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 
 // Context
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials, stayLoggedIn?: boolean) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   clearError: () => void;
@@ -68,8 +68,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Check for existing auth on mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token');
-      const savedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
 
       if (token && savedUser) {
         try {
@@ -79,7 +79,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Optionally verify token with backend
           try {
             const freshUser = await api.get<User>(endpoints.me);
-            localStorage.setItem('user', JSON.stringify(freshUser));
+            if (localStorage.getItem('auth_token')) {
+              localStorage.setItem('user', JSON.stringify(freshUser));
+            } else {
+              sessionStorage.setItem('user', JSON.stringify(freshUser));
+            }
             dispatch({ type: 'SET_USER', payload: { user: freshUser, token } });
           } catch (e) {
             console.error('Failed to refresh user data', e);
@@ -88,6 +92,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch {
           localStorage.removeItem('auth_token');
           localStorage.removeItem('user');
+          sessionStorage.removeItem('auth_token');
+          sessionStorage.removeItem('user');
           dispatch({ type: 'SET_LOADING', payload: false });
         }
       } else {
@@ -102,8 +108,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshUser = async () => {
     try {
       const user = await api.get<User>(endpoints.me);
-      const token = localStorage.getItem('auth_token') || '';
-      localStorage.setItem('user', JSON.stringify(user));
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+      if (localStorage.getItem('auth_token')) {
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        sessionStorage.setItem('user', JSON.stringify(user));
+      }
       dispatch({ type: 'SET_USER', payload: { user, token } });
     } catch (error: any) {
       console.error('Refresh user error:', error);
@@ -111,18 +121,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Real login
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (credentials: LoginCredentials, stayLoggedIn = false) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     dispatch({ type: 'CLEAR_ERROR' });
 
     try {
-      const response = await api.post<{ access: string; refresh: string }>(endpoints.login, credentials);
+      const response = await api.post<{ access: string; refresh: string }>(endpoints.login, {
+        ...credentials,
+        stay_logged_in: stayLoggedIn,
+      });
       const { access, refresh } = response;
-      localStorage.setItem('auth_token', access);
-      localStorage.setItem('refresh_token', refresh);
+      
+      if (stayLoggedIn) {
+        localStorage.setItem('auth_token', access);
+        localStorage.setItem('refresh_token', refresh);
+      } else {
+        sessionStorage.setItem('auth_token', access);
+        sessionStorage.setItem('refresh_token', refresh);
+      }
 
       const user = await api.get<User>(endpoints.me);
-      localStorage.setItem('user', JSON.stringify(user));
+      
+      if (stayLoggedIn) {
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        sessionStorage.setItem('user', JSON.stringify(user));
+      }
+      
       dispatch({ type: 'SET_USER', payload: { user, token: access } });
     } catch (error: any) {
       let message = 'Identifiants invalides ou erreur serveur';
@@ -184,6 +209,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('refresh_token');
+    sessionStorage.removeItem('user');
     dispatch({ type: 'LOGOUT' });
   };
 

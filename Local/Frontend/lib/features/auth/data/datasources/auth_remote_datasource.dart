@@ -12,11 +12,15 @@ class AuthRemoteDatasource {
   AuthRemoteDatasource(this._client);
 
   /// Connexion avec email et mot de passe
-  Future<LoginResponse> login(String email, String password) async {
+  Future<LoginResponse> login(String email, String password, {bool stayLoggedIn = false}) async {
     try {
       final response = await _client.post(
         ApiConstants.login,
-        data: {'email': email, 'password': password},
+        data: {
+          'email': email,
+          'password': password,
+          'stay_logged_in': stayLoggedIn,
+        },
       );
       final responseData = response.data;
       if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
