@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -49,9 +49,81 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
     }
   }
 
+  String _sanitizeAndMapRoute(String rawRoute) {
+    // 1. Rendez-vous
+    if (rawRoute == '/rendezvous' ||
+        rawRoute == '/patient/rendezvous' ||
+        rawRoute == '/appointments' ||
+        rawRoute == '/patient/appointments') {
+      return '/patient/appointments';
+    }
+
+    // 2. Résultats d'analyses
+    if (rawRoute == '/resultats' ||
+        rawRoute == '/patient/resultats' ||
+        rawRoute == '/results' ||
+        rawRoute == '/patient/results') {
+      return '/patient/results';
+    }
+
+    // 3. Recherche
+    if (rawRoute == '/search' || rawRoute == '/patient/search') {
+      return '/patient/search';
+    }
+
+    // 4. Profil
+    if (rawRoute == '/profile' || rawRoute == '/patient/profile') {
+      return '/patient/profile';
+    }
+
+    // 5. Messagerie
+    if (rawRoute == '/messagerie' ||
+        rawRoute == '/patient/messagerie' ||
+        rawRoute == '/messages' ||
+        rawRoute == '/patient/messages') {
+      return '/patient/messagerie';
+    }
+
+    // 6. Proximité / Carte
+    if (rawRoute == '/nearby' || rawRoute == '/patient/nearby') {
+      return '/nearby';
+    }
+
+    // 7. Chatbot
+    if (rawRoute == '/chatbot' ||
+        rawRoute == '/patient/chatbot' ||
+        rawRoute == '/patient/ai-agent' ||
+        rawRoute == '/ai-agent') {
+      return '/chatbot';
+    }
+
+    // 8. Hôpitaux
+    if (rawRoute == '/hospitals' || rawRoute == '/hopitaux') {
+      return '/hospitals';
+    }
+
+    // 9. Accès par code
+    if (rawRoute == '/result-code' ||
+        rawRoute == '/track-results' ||
+        rawRoute == '/patient/result-code') {
+      return '/result-code';
+    }
+
+    // 10. Si c'est une route du genre /patient/hopital/ID ou /hopital/ID
+    if (rawRoute.startsWith('/patient/hopital/')) {
+      return rawRoute.replaceFirst('/patient/hopital/', '/hopital/');
+    }
+
+    return rawRoute;
+  }
+
   void _handleAction(ChatAction action) {
-    final payload = action.payload;
-    if (payload == null) return;
+    final rawPayload = action.payload;
+    if (rawPayload == null) return;
+    
+    // Assainir et mapper le payload de l'IA vers les routes de l'app Flutter
+    final payload = _sanitizeAndMapRoute(rawPayload);
+    
     // Supporte 'route' (boutons statiques) et 'redirect' (venant du backend)
     if (action.type == 'route' || action.type == 'redirect') {
       // Vérifier si l'utilisateur est connecté avant de naviguer

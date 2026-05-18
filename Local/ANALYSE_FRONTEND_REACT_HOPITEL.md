@@ -1,4 +1,4 @@
-﻿
+
 
 ---
 
@@ -10,7 +10,7 @@
 ## 1. INFORMATIONS GÉNÉRALES
 
 **Application** : Hopitel — Plateforme de santé numérique (Bénin)  
-**Backend** : `https://backend-production-fc8f.up.railway.app/api`  
+**Backend** : `https://backend-soutenance-1et0.onrender.com/api`  
 **Auth** : JWT (Bearer token) — SimpleJWT Django  
 **Stack** : React 18 + TypeScript + Vite + Tailwind CSS + Framer Motion + React Router v6  
 **Stockage local** : `localStorage` → clés `auth_token`, `refresh_token`, `user`
