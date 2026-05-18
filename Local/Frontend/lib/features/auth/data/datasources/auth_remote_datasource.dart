@@ -79,4 +79,27 @@ class AuthRemoteDatasource {
       throw ApiException.fromDioError(e);
     }
   }
+
+  /// Vérifier le compte avec le code à 6 chiffres
+  Future<LoginResponse?> verifyCode(String email, String code) async {
+    try {
+      final response = await _client.post(ApiConstants.verifyCode, data: {'email': email, 'code': code});
+      final responseData = response.data;
+      if (responseData is Map<String, dynamic> && responseData.containsKey('access')) {
+        return LoginResponse.fromJson(responseData);
+      }
+      return null;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Renvoyer le code de vérification
+  Future<void> resendCode(String email) async {
+    try {
+      await _client.post(ApiConstants.resendCode, data: {'email': email});
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }

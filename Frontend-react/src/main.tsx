@@ -49,7 +49,7 @@ class ErrorBoundary extends React.Component<
 const rootElement = document.getElementById('root');
 
 // Ping silencieux pour réveiller le backend (cold start)
-const API_URL = import.meta.env.VITE_API_URL || 'https://backend-production-fc8f.up.railway.app/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://backend-soutenance-1et0.onrender.com/api';
 fetch(`${API_URL}/token/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
   .catch(() => {}); // Silencieux — juste pour réveiller le serveur
 

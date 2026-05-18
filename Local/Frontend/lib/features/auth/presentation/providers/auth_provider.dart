@@ -138,6 +138,58 @@ class AuthNotifier extends Notifier<AuthState> {
     }
   }
 
+  /// Vérifier le code de validation à 6 chiffres
+  Future<bool> verifyCode(String email, String code) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true, clearValidationErrors: true);
+    try {
+      final loginResponse = await _datasource.verifyCode(email, code);
+      if (loginResponse != null) {
+        // Stocker les tokens pour l'auto-connexion
+        await _storage.write(
+          key: AppConstants.accessTokenKey,
+          value: loginResponse.access,
+        );
+        await _storage.write(
+          key: AppConstants.refreshTokenKey,
+          value: loginResponse.refresh,
+        );
+
+        // Récupérer le profil et hydrater l'état
+        final user = await _datasource.getMe();
+        state = state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          token: loginResponse.access,
+        );
+      } else {
+        state = state.copyWith(status: AuthStatus.unauthenticated);
+      }
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
+      return false;
+    }
+  }
+
+  /// Renvoyer le code de validation
+  Future<bool> resendCode(String email) async {
+    state = state.copyWith(status: AuthStatus.loading, clearError: true, clearValidationErrors: true);
+    try {
+      await _datasource.resendCode(email);
+      state = state.copyWith(status: AuthStatus.unauthenticated);
+      return true;
+    } on ApiException catch (e) {
+      state = state.copyWith(
+        status: AuthStatus.error,
+        errorMessage: e.message,
+      );
+      return false;
+    }
+  }
+
   /// Demande de réinitialisation de mot de passe
   Future<bool> requestPasswordReset(String email) async {
     state = state.copyWith(status: AuthStatus.loading, clearError: true, clearValidationErrors: true);

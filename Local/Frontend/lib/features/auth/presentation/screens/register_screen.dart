@@ -46,11 +46,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
+    final rawPhone = _telephoneController.text.trim();
+    final normalizedPhone = rawPhone.startsWith('+') ? rawPhone : '+229$rawPhone';
+
     final data = {
       'first_name': _firstNameController.text.trim(),
       'last_name': _lastNameController.text.trim(),
       'email': _emailController.text.trim(),
-      'telephone': _telephoneController.text.trim(),
+      'telephone': normalizedPhone,
       'password': _passwordController.text,
       'password_confirm': _confirmPasswordController.text,
       'sexe': 'M',
@@ -59,9 +62,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final success = await ref.read(authProvider.notifier).register(data);
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inscription réussie ! Connectez-vous.')),
+        const SnackBar(content: Text('Inscription réussie ! Veuillez saisir le code de validation reçu.')),
       );
-      context.go('/login');
+      context.go('/verify-code', extra: {
+        'email': _emailController.text.trim(),
+        'telephone': normalizedPhone,
+      });
     }
   }
 
@@ -139,15 +145,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               controller: _telephoneController,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: 'Téléphone', 
-                hintText: '0199395776',
-                helperText: 'Format Bénin : 10 chiffres commençant par 01',
+                labelText: 'Numéro WhatsApp', 
+                hintText: '+229XXXXXXXX ou XXXXXXXX',
+                helperText: 'Format béninois requis : 8 ou 10 chiffres (avec ou sans +229)',
                 prefixIcon: const Icon(Icons.phone_outlined),
                 errorText: authState.validationErrors?['telephone'],
               ),
               validator: (v) {
                 if (v == null || v.isEmpty) return 'Requis';
-                if (!RegExp(r'^01\d{8}$').hasMatch(v)) return 'Doit contenir 10 chiffres et commencer par 01';
+                if (!RegExp(r'^(\+229)?\d{8,10}$').hasMatch(v.trim())) return 'Format requis : 8 ou 10 chiffres';
                 return null;
               },
             ),

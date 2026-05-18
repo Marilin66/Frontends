@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../features/auth/presentation/screens/verify_code_screen.dart';
 import '../../features/auth/presentation/screens/request_password_reset_screen.dart';
 import '../../features/auth/presentation/screens/reset_password_confirm_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
@@ -68,7 +69,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   });
 
   // Liste des routes accessibles sans être connecté
-  const publicRoutes = ['/onboarding', '/login', '/register', '/hospitals', '/emergency', '/tips'];
+  const publicRoutes = ['/onboarding', '/login', '/register', '/verify-code', '/hospitals', '/emergency', '/tips'];
 
   return GoRouter(
     initialLocation: '/',
@@ -90,6 +91,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isOnSplash = state.matchedLocation == '/';
       final isAuthRoute = state.matchedLocation == '/login' || 
                           state.matchedLocation == '/register' ||
+                          state.matchedLocation == '/verify-code' ||
                           state.matchedLocation == '/forgot-password' ||
                           state.matchedLocation.startsWith('/reset-password');
 
@@ -171,6 +173,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           state: state,
           child: const RegisterScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/verify-code',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, String>? ?? {};
+          final email = extra['email'];
+          final telephone = extra['telephone'];
+          return _buildPageWithFadeTransition(
+            state: state,
+            child: VerifyCodeScreen(email: email, telephone: telephone),
+          );
+        },
       ),
       GoRoute(
         path: '/forgot-password',

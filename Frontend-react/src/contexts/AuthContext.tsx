@@ -52,6 +52,7 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   clearError: () => void;
   refreshUser: () => Promise<void>;
+  autoLogin: (tokens: { access: string; refresh: string; user?: User }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -186,6 +187,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: 'LOGOUT' });
   };
 
+  // Auto login helper
+  const autoLogin = async (tokens: { access: string; refresh: string; user?: User }) => {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'CLEAR_ERROR' });
+
+    try {
+      const { access, refresh } = tokens;
+      localStorage.setItem('auth_token', access);
+      localStorage.setItem('refresh_token', refresh);
+
+      let user = tokens.user;
+      if (!user) {
+        user = await api.get<User>(endpoints.me);
+      }
+      localStorage.setItem('user', JSON.stringify(user));
+      dispatch({ type: 'SET_USER', payload: { user, token: access } });
+    } catch (error: any) {
+      console.error('Auto login error:', error);
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
   // Clear error
   const clearError = () => {
     dispatch({ type: 'CLEAR_ERROR' });
@@ -198,6 +221,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     clearError,
     refreshUser,
+    autoLogin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

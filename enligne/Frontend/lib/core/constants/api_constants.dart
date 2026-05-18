@@ -31,6 +31,8 @@ class ApiConstants {
   static const String refreshToken = 'token/refresh/';
   static const String register = 'accounts/register/';
   static const String verifyEmail = 'accounts/verify-email';
+  static const String verifyCode = 'accounts/verify-code/';
+  static const String resendCode = 'accounts/resend-code/';
   static const String requestPasswordReset = 'accounts/request-password-reset/';
   static const String resetPasswordConfirm = 'accounts/reset-password-confirm/';
   static const String userMe = 'accounts/users/me/';

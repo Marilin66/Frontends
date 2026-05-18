@@ -31,7 +31,11 @@ export default function RegisterPage() {
     if (!form.first_name.trim())  e.first_name       = 'Requis';
     if (!form.last_name.trim())   e.last_name        = 'Requis';
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) e.email = 'Email invalide';
-    if (!form.telephone.trim())   e.telephone        = 'Requis';
+    if (!form.telephone.trim()) {
+      e.telephone = 'Requis';
+    } else if (!/^(\+229)?\d{8,10}$/.test(form.telephone.trim())) {
+      e.telephone = 'Le numéro WhatsApp doit être un numéro béninois valide (8 ou 10 chiffres).';
+    }
     if (form.password.length < 6) e.password         = 'Minimum 6 caractères';
     if (form.password !== form.password_confirm)      e.password_confirm = 'Les mots de passe ne correspondent pas';
     setFieldErrors(e);
@@ -42,15 +46,21 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!validate()) return;
     try {
+      const normalizedPhone = form.telephone.trim().startsWith('+')
+        ? form.telephone.trim()
+        : `+229${form.telephone.trim()}`;
+
       // Envoie sexe et role en dur comme le mobile
       await register({
         ...form,
+        telephone: normalizedPhone,
         sexe: 'M',
         role: 'patient',
       });
-      navigate('/login', { state: { message: 'Inscription réussie ! Vous pouvez maintenant vous connecter.' } });
+      sessionStorage.setItem('verification_email', form.email);
+      sessionStorage.setItem('verification_phone', normalizedPhone);
+      navigate('/verify-code', { state: { email: form.email, telephone: normalizedPhone, message: 'Inscription réussie ! Veuillez saisir le code à 6 chiffres reçu.' } });
     } catch (err: any) {
-      // Les erreurs de validation du backend sont dans error.response.data
       const data = err?.response?.data;
       if (data && typeof data === 'object') {
         const backendErrors: Record<string, string> = {};
@@ -124,13 +134,13 @@ export default function RegisterPage() {
         />
 
         <Input
-          label="Téléphone"
+          label="Numéro WhatsApp"
           type="tel"
-          placeholder="0100000000"
+          placeholder="+229XXXXXXXX ou XXXXXXXX"
           value={form.telephone}
           onChange={(e) => set('telephone', e.target.value)}
           error={fieldErrors.telephone}
-          helperText="Format : 10 chiffres commençant par 01"
+          helperText="Format béninois requis : 8 ou 10 chiffres (avec ou sans +229)"
           className="h-11 rounded-xl"
           autoComplete="tel"
         />

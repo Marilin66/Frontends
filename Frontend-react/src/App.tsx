@@ -26,6 +26,7 @@ import OnboardingPage      from '@/pages/common/OnboardingPage';
 import LoginPage           from '@/pages/auth/LoginPage';
 import RegisterPage        from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage  from '@/pages/auth/ForgotPasswordPage';
+import VerifyCodePage      from '@/pages/auth/VerifyCodePage';
 
 // ── Common (partagées) ───────────────────────────────────────────────────────
 import HealthTipsPage      from '@/pages/patient/HealthTipsPage';
@@ -140,6 +141,7 @@ function AppRoutes() {
         <Route path="/login"           element={<LoginPage />} />
         <Route path="/register"        element={<RegisterPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/verify-code"     element={<VerifyCodePage />} />
       </Route>
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardRedirect />} />

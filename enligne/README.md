@@ -4,7 +4,7 @@ Application de gestion de santé pour le Bénin déployée sur Render.
 
 ## 🌐 URLs Production
 
-- **Backend**: https://backend-production-fc8f.up.railway.app
+- **Backend**: https://backend-soutenance-1et0.onrender.com
 - **Frontend**: https://frontend-soutenance-1et0.onrender.com
 
 ## 📊 Statut
@@ -43,13 +43,13 @@ EMAIL_HOST_USER=votre-email@gmail.com
 EMAIL_HOST_PASSWORD=votre-app-password
 DEFAULT_FROM_EMAIL=noreply@esante-benin.com
 FRONTEND_URL=https://frontend-soutenance-1et0.onrender.com
-BACKEND_URL=https://backend-production-fc8f.up.railway.app
+BACKEND_URL=https://backend-soutenance-1et0.onrender.com
 ```
 
 **Frontend**:
 ```bash
-BASE_URL_WEB=https://backend-production-fc8f.up.railway.app/api
-BASE_URL_MOBILE=https://backend-production-fc8f.up.railway.app/api
+BASE_URL_WEB=https://backend-soutenance-1et0.onrender.com/api
+BASE_URL_MOBILE=https://backend-soutenance-1et0.onrender.com/api
 ```
 
 ### Commandes de maintenance
@@ -69,13 +69,13 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-## � Configuration Réseau Mobile
+##  Configuration Réseau Mobile
 
 ### Problème de connexion résolu
 
 L'application mobile est maintenant configurée pour se connecter en production :
 
-✅ **URL Production** : `https://backend-production-fc8f.up.railway.app/api`  
+✅ **URL Production** : `https://backend-soutenance-1et0.onrender.com/api`  
 ✅ **Android** : `android:usesCleartextTraffic="true"` configuré  
 ✅ **iOS** : `NSAppTransportSecurity` avec `NSAllowsArbitraryLoads` activé  
 
@@ -83,7 +83,7 @@ L'application mobile est maintenant configurée pour se connecter en production 
 
 1. **Vérifier le `.env`** :
    ```bash
-   BASE_URL_MOBILE=https://backend-production-fc8f.up.railway.app/api
+   BASE_URL_MOBILE=https://backend-soutenance-1et0.onrender.com/api
    ```
 
 2. **Builder l'APK** :
