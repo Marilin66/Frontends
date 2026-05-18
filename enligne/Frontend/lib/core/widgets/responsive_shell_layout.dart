@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-import 'global_ai_bubble.dart';
+import '../../features/notifications/presentation/providers/notification_provider.dart';
 
 class ResponsiveShellLayout extends StatelessWidget {
   final Widget child;
@@ -25,12 +25,10 @@ class ResponsiveShellLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 600;
-            final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1100;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isMobile = constraints.maxWidth < 600;
+        final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1100;
 
         if (isMobile) {
           final state = GoRouterState.of(context);
@@ -40,6 +38,81 @@ class ResponsiveShellLayout extends StatelessWidget {
           // Hide shell AppBar if we are deep in a sub-route (more than 2 segments)
           // OR if we are on a messagerie route (which has its own custom header)
           final showAppBar = pathSegments.length <= 2 && !location.contains('messagerie');
+
+          Widget mainContent = child;
+          if (destinations.length > 5) {
+            final topDestinations = destinations.sublist(5);
+            final activeTopIndex = selectedIndex - 5;
+
+            mainContent = Column(
+              children: [
+                Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                    border: const Border(
+                      bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+                    ),
+                  ),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    itemCount: topDestinations.length,
+                    itemBuilder: (context, index) {
+                      final d = topDestinations[index];
+                      final isSelected = activeTopIndex == index;
+                      final globalIndex = index + 5;
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: InkWell(
+                          onTap: () => onDestinationSelected(globalIndex),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.primary : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            alignment: Alignment.center,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconTheme(
+                                  data: IconThemeData(
+                                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                                    size: 16,
+                                  ),
+                                  child: d.icon,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  d.label,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Expanded(child: child),
+              ],
+            );
+          }
 
           return Scaffold(
             appBar: showAppBar 
@@ -57,15 +130,45 @@ class ResponsiveShellLayout extends StatelessWidget {
                     ),
                   ),
                   actions: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary),
-                      onPressed: () => onDestinationSelected(-1),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final unreadCount = ref.watch(unreadNotificationCountProvider);
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary),
+                              onPressed: () => onDestinationSelected(-1),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    unreadCount > 9 ? '9+' : unreadCount.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(width: 8),
                   ],
                 )
               : null,
-            body: child,
+            body: mainContent,
             bottomNavigationBar: NavigationBarTheme(
               data: NavigationBarThemeData(
                 labelTextStyle: WidgetStateProperty.all(
@@ -75,12 +178,12 @@ class ResponsiveShellLayout extends StatelessWidget {
                 indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: NavigationBar(
-                selectedIndex: selectedIndex,
+                selectedIndex: selectedIndex >= 5 ? 0 : selectedIndex,
                 onDestinationSelected: onDestinationSelected,
-                labelBehavior: destinations.length > 5 
-                    ? NavigationDestinationLabelBehavior.onlyShowSelected 
-                    : NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: destinations,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: destinations.length > 5 
+                    ? destinations.sublist(0, 5) 
+                    : destinations,
                 backgroundColor: AppColors.surface,
                 surfaceTintColor: Colors.transparent,
                 elevation: 10,
@@ -272,9 +375,6 @@ class ResponsiveShellLayout extends StatelessWidget {
           ),
         );
       },
-    ),
-    const GlobalAIBubble(),
-      ],
     );
   }
 

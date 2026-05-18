@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:file_picker/file_picker.dart';
@@ -89,7 +89,7 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
   }
 
   void _showEditMedecinDialog(BuildContext context, WidgetRef ref, dynamic medecin) {
-    ref.read(adminHopitalHopitalServicesProvider); 
+    ref.read(adminHopitalServicesProvider);
 
     showDialog(
       context: context,
@@ -155,8 +155,7 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
   }
 
   void _showCreateMedecinDialog(BuildContext context, WidgetRef ref) {
-    // S'assurer que les services sont chargés
-    ref.read(adminHopitalHopitalServicesProvider); 
+    ref.read(adminHopitalServicesProvider); 
 
     showDialog(
       context: context,
@@ -178,15 +177,23 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
   final _firstNameCtrl = TextEditingController();
   final _lastNameCtrl = TextEditingController();
   final _telephoneCtrl = TextEditingController();
+  final _numeroOrdreCtrl = TextEditingController();
+  final _biographieCtrl = TextEditingController();
+  final _dateNaissanceCtrl = TextEditingController(text: '1985-01-01');
+  String _sexe = 'M';
   
   final List<int> _selectedServices = [];
 
   @override
   Widget build(BuildContext context) {
-    final servicesState = ref.watch(adminHopitalHopitalServicesProvider);
+    final servicesState = ref.watch(adminHopitalServicesProvider);
 
     return AlertDialog(
-      title: Text('Nouveau Médecin', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        'Nouveau Médecin',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.medecin),
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -195,46 +202,129 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
             children: [
               TextFormField(
                 controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(
+                  labelText: 'Email *',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _firstNameCtrl,
-                decoration: const InputDecoration(labelText: 'Prénom'),
+                decoration: const InputDecoration(
+                  labelText: 'Prénom *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _lastNameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom'),
+                decoration: const InputDecoration(
+                  labelText: 'Nom *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _telephoneCtrl,
-                decoration: const InputDecoration(labelText: 'Téléphone'),
+                decoration: const InputDecoration(
+                  labelText: 'Téléphone *',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  hintText: 'Ex: 0197000000',
+                ),
                 keyboardType: TextInputType.phone,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Requis';
+                  if (v.length != 10 || !v.startsWith('01')) {
+                    return "Doit comporter 10 chiffres et commencer par '01'";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _numeroOrdreCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'N° d\'Ordre (optionnel)',
+                  prefixIcon: Icon(Icons.assignment_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _biographieCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Biographie (optionnelle)',
+                  prefixIcon: Icon(Icons.description_outlined),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _dateNaissanceCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Date de naissance *',
+                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                ),
+                readOnly: true,
+                validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+                onTap: () async {
+                  final initialDate = DateTime.tryParse(_dateNaissanceCtrl.text) ?? DateTime(1985, 1, 1);
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: initialDate,
+                    firstDate: DateTime(1930),
+                    lastDate: DateTime.now(),
+                  );
+                  if (date != null) {
+                    setState(() {
+                      _dateNaissanceCtrl.text = date.toString().split(' ')[0];
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _sexe,
+                decoration: const InputDecoration(
+                  labelText: 'Sexe *',
+                  prefixIcon: Icon(Icons.wc_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'M', child: Text('Masculin')),
+                  DropdownMenuItem(value: 'F', child: Text('Féminin')),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) _sexe = val;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Services du médecin :', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Services du médecin * :',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
               ),
+              const SizedBox(height: 8),
               if (servicesState.isLoading)
                 const Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator())
               else if (servicesState.hasValue)
                 ...servicesState.value!.map((service) {
                   return CheckboxListTile(
-                    title: Text(service.serviceNom),
-                    value: _selectedServices.contains(service.service),
+                    title: Text(service.nom),
+                    activeColor: AppColors.medecin,
+                    value: _selectedServices.contains(service.id),
                     onChanged: (val) {
                       setState(() {
                         if (val == true) {
-                          _selectedServices.add(service.service);
+                          _selectedServices.add(service.id);
                         } else {
-                          _selectedServices.remove(service.service);
+                          _selectedServices.remove(service.id);
                         }
                       });
                     },
@@ -247,10 +337,13 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Annuler'),
+          child: Text('Annuler', style: GoogleFonts.poppins(color: Colors.grey)),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.medecin),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.medecin,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
           onPressed: () async {
             if (!_formKey.currentState!.validate()) return;
             final data = {
@@ -258,6 +351,10 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
               'first_name': _firstNameCtrl.text.trim(),
               'last_name': _lastNameCtrl.text.trim(),
               'telephone': _telephoneCtrl.text.trim(),
+              'numero_ordre': _numeroOrdreCtrl.text.trim(),
+              'biographie': _biographieCtrl.text.trim(),
+              'date_naissance': _dateNaissanceCtrl.text.trim(),
+              'sexe': _sexe,
               'service_ids': _selectedServices.toList()
             };
             
@@ -272,7 +369,7 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
               );
             }
           },
-          child: const Text('Créer', style: TextStyle(color: Colors.white)),
+          child: Text('Créer', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
         ),
       ],
     );
@@ -284,6 +381,9 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
     _telephoneCtrl.dispose();
+    _numeroOrdreCtrl.dispose();
+    _biographieCtrl.dispose();
+    _dateNaissanceCtrl.dispose();
     super.dispose();
   }
 }
@@ -303,6 +403,10 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
   late final TextEditingController _telephoneCtrl;
+  late final TextEditingController _numeroOrdreCtrl;
+  late final TextEditingController _biographieCtrl;
+  late final TextEditingController _dateNaissanceCtrl;
+  String _sexe = 'M';
   
   final List<int> _selectedServices = [];
 
@@ -313,15 +417,30 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
     _firstNameCtrl = TextEditingController(text: widget.medecin.firstName);
     _lastNameCtrl = TextEditingController(text: widget.medecin.lastName);
     _telephoneCtrl = TextEditingController(text: widget.medecin.telephone ?? '');
+    
+    // Extract numero_ordre and biographie
+    final profileNum = widget.medecin.medecinProfile?['numero_ordre']?.toString() ?? '';
+    _numeroOrdreCtrl = TextEditingController(text: profileNum);
+
+    final profileBio = widget.medecin.medecinProfile?['biographie']?.toString() ?? '';
+    _biographieCtrl = TextEditingController(text: profileBio);
+
+    _dateNaissanceCtrl = TextEditingController(text: widget.medecin.dateNaissance ?? '1985-01-01');
+    _sexe = (widget.medecin.sexe == null || widget.medecin.sexe.isEmpty) ? 'M' : widget.medecin.sexe;
+
     _selectedServices.addAll(widget.medecin.serviceIds ?? []);
   }
 
   @override
   Widget build(BuildContext context) {
-    final servicesState = ref.watch(adminHopitalHopitalServicesProvider);
+    final servicesState = ref.watch(adminHopitalServicesProvider);
 
     return AlertDialog(
-      title: Text('Modifier Médecin', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        'Modifier Médecin',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.medecin),
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -330,46 +449,129 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
             children: [
               TextFormField(
                 controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
+                decoration: const InputDecoration(
+                  labelText: 'Email *',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
                 keyboardType: TextInputType.emailAddress,
                 validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _firstNameCtrl,
-                decoration: const InputDecoration(labelText: 'Prénom'),
+                decoration: const InputDecoration(
+                  labelText: 'Prénom *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _lastNameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom'),
+                decoration: const InputDecoration(
+                  labelText: 'Nom *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
                 validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _telephoneCtrl,
-                decoration: const InputDecoration(labelText: 'Téléphone'),
+                decoration: const InputDecoration(
+                  labelText: 'Téléphone *',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  hintText: 'Ex: 0197000000',
+                ),
                 keyboardType: TextInputType.phone,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Requis';
+                  if (v.length != 10 || !v.startsWith('01')) {
+                    return "Doit comporter 10 chiffres et commencer par '01'";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _numeroOrdreCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'N° d\'Ordre (optionnel)',
+                  prefixIcon: Icon(Icons.assignment_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _biographieCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Biographie (optionnelle)',
+                  prefixIcon: Icon(Icons.description_outlined),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _dateNaissanceCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Date de naissance *',
+                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                ),
+                readOnly: true,
+                validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+                onTap: () async {
+                  final initialDate = DateTime.tryParse(_dateNaissanceCtrl.text) ?? DateTime(1985, 1, 1);
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: initialDate,
+                    firstDate: DateTime(1930),
+                    lastDate: DateTime.now(),
+                  );
+                  if (date != null) {
+                    setState(() {
+                      _dateNaissanceCtrl.text = date.toString().split(' ')[0];
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _sexe,
+                decoration: const InputDecoration(
+                  labelText: 'Sexe *',
+                  prefixIcon: Icon(Icons.wc_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'M', child: Text('Masculin')),
+                  DropdownMenuItem(value: 'F', child: Text('Féminin')),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) _sexe = val;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Services du médecin :', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Services du médecin * :',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
               ),
+              const SizedBox(height: 8),
               if (servicesState.isLoading)
                 const Padding(padding: EdgeInsets.all(8), child: CircularProgressIndicator())
               else if (servicesState.hasValue)
                 ...servicesState.value!.map((service) {
                   return CheckboxListTile(
-                    title: Text(service.serviceNom),
-                    value: _selectedServices.contains(service.service),
+                    title: Text(service.nom),
+                    activeColor: AppColors.medecin,
+                    value: _selectedServices.contains(service.id),
                     onChanged: (val) {
                       setState(() {
                         if (val == true) {
-                          _selectedServices.add(service.service);
+                          _selectedServices.add(service.id);
                         } else {
-                          _selectedServices.remove(service.service);
+                          _selectedServices.remove(service.id);
                         }
                       });
                     },
@@ -382,10 +584,13 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Annuler'),
+          child: Text('Annuler', style: GoogleFonts.poppins(color: Colors.grey)),
         ),
         ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.medecin),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.medecin,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
           onPressed: () async {
             if (!_formKey.currentState!.validate()) return;
             final data = {
@@ -393,6 +598,10 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
               'first_name': _firstNameCtrl.text.trim(),
               'last_name': _lastNameCtrl.text.trim(),
               'telephone': _telephoneCtrl.text.trim(),
+              'numero_ordre': _numeroOrdreCtrl.text.trim(),
+              'biographie': _biographieCtrl.text.trim(),
+              'date_naissance': _dateNaissanceCtrl.text.trim(),
+              'sexe': _sexe,
               'service_ids': _selectedServices.toList()
             };
             
@@ -407,7 +616,7 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
               );
             }
           },
-          child: const Text('Modifier', style: TextStyle(color: Colors.white)),
+          child: Text('Modifier', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
         ),
       ],
     );
@@ -419,6 +628,9 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
     _telephoneCtrl.dispose();
+    _numeroOrdreCtrl.dispose();
+    _biographieCtrl.dispose();
+    _dateNaissanceCtrl.dispose();
     super.dispose();
   }
 }

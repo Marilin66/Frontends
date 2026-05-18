@@ -109,7 +109,18 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
       return '/result-code';
     }
 
-    // 10. Si c'est une route du genre /patient/hopital/ID ou /hopital/ID
+    // 10. Pages statiques
+    if (rawRoute == '/patient/tips') {
+      return '/tips';
+    }
+    if (rawRoute == '/patient/faq') {
+      return '/faq';
+    }
+    if (rawRoute == '/patient/emergency') {
+      return '/emergency';
+    }
+
+    // 11. Si c'est une route du genre /patient/hopital/ID ou /hopital/ID
     if (rawRoute.startsWith('/patient/hopital/')) {
       return rawRoute.replaceFirst('/patient/hopital/', '/hopital/');
     }

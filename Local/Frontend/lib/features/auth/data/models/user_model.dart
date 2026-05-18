@@ -18,6 +18,7 @@ class UserModel {
   final Map<String, dynamic>? patientProfile;
   final Map<String, dynamic>? medecinProfile;
   final Map<String, dynamic>? laborantinProfile;
+  final List<int>? serviceIds;
 
   UserModel({
     required this.id,
@@ -39,6 +40,7 @@ class UserModel {
     this.patientProfile,
     this.medecinProfile,
     this.laborantinProfile,
+    this.serviceIds,
   });
 
   String get fullName => '$firstName $lastName';
@@ -62,8 +64,15 @@ class UserModel {
       hopital: json['hopital'] is int ? json['hopital'] as int : int.tryParse(json['hopital']?.toString() ?? ''),
       hopitalNom: json['hopital_nom']?.toString(),
       patientProfile: json['patient_profile'] as Map<String, dynamic>?,
-      medecinProfile: json['medecin_profile'] as Map<String, dynamic>?,
+      medecinProfile: (json['numero_ordre'] != null || json['biographie'] != null)
+          ? {
+              'numero_ordre': json['numero_ordre'],
+              'biographie': json['biographie'],
+              'statut': json['statut'],
+            }
+          : json['medecin_profile'] as Map<String, dynamic>?,
       laborantinProfile: json['laboratoire'] != null ? {'laboratoire': json['laboratoire']} : json['laborantin_profile'] as Map<String, dynamic>?,
+      serviceIds: (json['service_ids'] as List<dynamic>?)?.map((e) => e as int).toList(),
     );
   }
 
@@ -88,6 +97,7 @@ class UserModel {
       'patient_profile': patientProfile,
       'medecin_profile': medecinProfile,
       'laborantin_profile': laborantinProfile,
+      'service_ids': serviceIds,
     };
   }
 }

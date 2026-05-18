@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,12 +14,14 @@ class ChatScreen extends ConsumerStatefulWidget {
   final int? consultationId;
   final int? destinataireId;
   final String contactName;
+  final String? contactPhoto;
 
   const ChatScreen({
     super.key,
     this.consultationId,
     this.destinataireId,
     required this.contactName,
+    this.contactPhoto,
   });
 
   @override
@@ -113,7 +115,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFECE5DD), // fond WhatsApp
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(closed),
       body: Column(
         children: [
@@ -138,7 +140,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               ? Icons.lock_outline_rounded
                               : Icons.chat_bubble_outline_rounded,
                           size: 48,
-                          color: Colors.grey.shade400,
+                          color: AppColors.textHint,
                         ),
                         const SizedBox(height: 12),
                         Text(
@@ -146,15 +148,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               ? 'Consultation terminée'
                               : 'Aucun message',
                           style: GoogleFonts.poppins(
-                            color: Colors.grey.shade500,
+                            color: AppColors.textSecondary,
                             fontSize: 15,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         if (!closed)
                           Text(
                             'Envoyez le premier message',
                             style: GoogleFonts.poppins(
-                              color: Colors.grey.shade400,
+                              color: AppColors.textHint,
                               fontSize: 13,
                             ),
                           ),
@@ -165,7 +168,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 return ListView.builder(
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 12),
+                      horizontal: 16, vertical: 16),
                   itemCount: messages.length,
                   itemBuilder: (context, i) {
                     final msg = messages[i];
@@ -205,28 +208,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   PreferredSizeWidget _buildAppBar(bool closed) {
     return AppBar(
-      backgroundColor: const Color(0xFF075E54), // vert WhatsApp
-      foregroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
+      foregroundColor: AppColors.textPrimary,
       elevation: 0,
       titleSpacing: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back),
+        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
         onPressed: () => Navigator.of(context).pop(),
       ),
       title: Row(
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            child: Text(
-              widget.contactName.isNotEmpty
-                  ? widget.contactName[0].toUpperCase()
-                  : '?',
-              style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  fontSize: 16),
-            ),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            backgroundImage: widget.contactPhoto != null && widget.contactPhoto!.isNotEmpty
+                ? NetworkImage(
+                    widget.contactPhoto!.startsWith('http') 
+                      ? widget.contactPhoto! 
+                      : '${AppColors.primary}${widget.contactPhoto}') // fallback simpliste
+                : null,
+            child: widget.contactPhoto == null || widget.contactPhoto!.isEmpty
+                ? Text(
+                    widget.contactName.isNotEmpty
+                        ? widget.contactName[0].toUpperCase()
+                        : '?',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                        fontSize: 16),
+                  )
+                : null,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -237,21 +248,37 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Text(
                   widget.contactName,
                   style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                Text(
-                  closed ? 'Consultation clôturée' : 'En ligne',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: closed
-                        ? Colors.orange.shade200
-                        : Colors.greenAccent.shade100,
-                  ),
+                Row(
+                  children: [
+                    if (!closed) ...[
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.success,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      closed ? 'Consultation clôturée' : 'En ligne',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: closed
+                            ? AppColors.warning
+                            : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -260,15 +287,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.videocam_outlined),
+          icon: const Icon(Icons.videocam_outlined, color: AppColors.textSecondary),
           onPressed: closed ? null : () {},
         ),
         IconButton(
-          icon: const Icon(Icons.call_outlined),
+          icon: const Icon(Icons.call_outlined, color: AppColors.textSecondary),
           onPressed: closed ? null : () {},
         ),
         IconButton(
-          icon: const Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_vert, color: AppColors.textSecondary),
           onPressed: () {},
         ),
       ],
@@ -302,12 +329,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildInput() {
     return Container(
-      color: const Color(0xFFECE5DD),
+      color: AppColors.surface,
       padding: EdgeInsets.only(
-        left: 8,
-        right: 8,
-        top: 8,
-        bottom: MediaQuery.of(context).padding.bottom + 8,
+        left: 12,
+        right: 12,
+        top: 10,
+        bottom: MediaQuery.of(context).padding.bottom + 10,
+      ),
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+        ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -317,24 +350,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             child: Container(
               constraints: const BoxConstraints(maxHeight: 120),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
+                color: const Color(0xFFF1F5F9), // slate-100 style
+                borderRadius: BorderRadius.circular(16),
               ),
               child: TextField(
                 controller: _textCtrl,
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
-                style: GoogleFonts.poppins(fontSize: 15),
+                style: GoogleFonts.poppins(fontSize: 14, color: AppColors.textPrimary),
                 onChanged: (_) => setState(() {}),
                 decoration: InputDecoration(
-                  hintText: 'Message',
+                  hintText: 'Écrivez votre message...',
                   hintStyle: GoogleFonts.poppins(
-                      color: Colors.grey.shade500, fontSize: 15),
+                      color: AppColors.textSecondary, fontSize: 14),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 10),
-                  prefixIcon: Icon(Icons.emoji_emotions_outlined,
-                      color: Colors.grey.shade500),
+                  prefixIcon: const Icon(Icons.emoji_emotions_outlined,
+                      color: AppColors.textSecondary),
                 ),
               ),
             ),
@@ -352,12 +385,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: _isRecording
-                    ? Colors.red
-                    : const Color(0xFF075E54),
+                    ? AppColors.error
+                    : AppColors.primary,
                 shape: BoxShape.circle,
               ),
               child: _isSending
@@ -373,7 +406,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               ? Icons.mic_off_rounded
                               : Icons.mic_rounded),
                       color: Colors.white,
-                      size: 22,
+                      size: 20,
                     ),
             ),
           ),
@@ -384,22 +417,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildLockedInput() {
     return Container(
-      color: Colors.grey.shade100,
+      color: const Color(0xFFF8FAFC), // soft slate background
       padding: EdgeInsets.only(
         left: 16,
         right: 16,
-        top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
+        top: 14,
+        bottom: MediaQuery.of(context).padding.bottom + 14,
+      ),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lock_rounded, size: 18, color: Colors.grey),
+          const Icon(Icons.lock_rounded, size: 16, color: AppColors.textSecondary),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'Les messages sont désactivés — consultation clôturée',
               style: GoogleFonts.poppins(
-                  fontSize: 13, color: Colors.grey.shade500),
+                  fontSize: 13, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -438,20 +476,20 @@ class _DateSeparator extends StatelessWidget {
     final label = _label();
     if (label.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFD9FDD3).withValues(alpha: 0.9),
-            borderRadius: BorderRadius.circular(8),
+            color: const Color(0xFFE2E8F0), // premium slate color
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             label,
             style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w500,
+              fontSize: 11,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -483,8 +521,8 @@ class _MessageBubble extends StatelessWidget {
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: EdgeInsets.only(
-          top: 2,
-          bottom: 2,
+          top: 4,
+          bottom: 4,
           left: isMe ? 60 : 0,
           right: isMe ? 0 : 60,
         ),
@@ -497,28 +535,33 @@ class _MessageBubble extends StatelessWidget {
               CircleAvatar(
                 radius: 14,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                child: Text(
-                  message.expediteurNom.isNotEmpty
-                      ? message.expediteurNom[0].toUpperCase()
-                      : '?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
-                ),
+                backgroundImage: message.expediteurPhoto != null && message.expediteurPhoto!.isNotEmpty
+                    ? NetworkImage(message.expediteurPhoto!)
+                    : null,
+                child: message.expediteurPhoto == null || message.expediteurPhoto!.isEmpty
+                    ? Text(
+                        message.expediteurNom.isNotEmpty
+                            ? message.expediteurNom[0].toUpperCase()
+                            : '?',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : null,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
             ],
 
             // Bulle
             Flexible(
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+                    horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: isMe
-                      ? const Color(0xFFDCF8C6) // vert clair WhatsApp
+                      ? AppColors.primary
                       : Colors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: const Radius.circular(16),
@@ -528,14 +571,14 @@ class _MessageBubble extends StatelessWidget {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Nom expéditeur (pour les messages reçus)
@@ -546,7 +589,7 @@ class _MessageBubble extends StatelessWidget {
                           message.expediteurNom,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                             color: AppColors.primary,
                           ),
                         ),
@@ -556,27 +599,29 @@ class _MessageBubble extends StatelessWidget {
                     _buildContent(context),
 
                     // Heure + statut
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           _formatTime(),
                           style: GoogleFonts.poppins(
-                            fontSize: 11,
-                            color: Colors.grey.shade500,
+                            fontSize: 10,
+                            color: isMe ? Colors.white70 : AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                         if (isMe) ...[
-                          const SizedBox(width: 3),
+                          const SizedBox(width: 4),
                           Icon(
                             message.lu
                                 ? Icons.done_all_rounded
                                 : Icons.done_rounded,
-                            size: 14,
+                            size: 13,
                             color: message.lu
-                                ? const Color(0xFF34B7F1) // bleu WhatsApp
-                                : Colors.grey.shade400,
+                                ? const Color(0xFF93C5FD) // light blue
+                                : Colors.white70,
                           ),
                         ],
                       ],
@@ -607,7 +652,7 @@ class _MessageBubble extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.play_circle_fill_rounded,
-                  color: isMe ? const Color(0xFF075E54) : AppColors.primary,
+                  color: isMe ? Colors.white : AppColors.primary,
                   size: 32),
               const SizedBox(width: 8),
               Column(
@@ -616,11 +661,11 @@ class _MessageBubble extends StatelessWidget {
                   Text('Message vocal',
                       style: GoogleFonts.poppins(
                           fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade800)),
+                          fontWeight: FontWeight.w600,
+                          color: isMe ? Colors.white : AppColors.textPrimary)),
                   Text('Appuyer pour écouter',
                       style: GoogleFonts.poppins(
-                          fontSize: 11, color: Colors.grey.shade500)),
+                          fontSize: 11, color: isMe ? Colors.white70 : AppColors.textSecondary)),
                 ],
               ),
             ],
@@ -632,14 +677,14 @@ class _MessageBubble extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.attach_file_rounded,
-                size: 18, color: Colors.grey.shade600),
+                size: 18, color: isMe ? Colors.white70 : AppColors.textSecondary),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
                 message.contenu.isNotEmpty ? message.contenu : 'Fichier',
                 style: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey.shade800,
+                  color: isMe ? Colors.white : AppColors.textPrimary,
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -653,7 +698,7 @@ class _MessageBubble extends StatelessWidget {
           message.contenu,
           style: GoogleFonts.poppins(
             fontSize: 14,
-            color: Colors.grey.shade900,
+            color: isMe ? Colors.white : AppColors.textPrimary,
             height: 1.4,
           ),
         );

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,6 +32,9 @@ class PatientShell extends ConsumerWidget {
 
   void _onTap(int index, BuildContext context) {
     switch (index) {
+      case -1:
+        context.push('/notifications');
+        break;
       case 0:
         context.go('/patient');
         break;

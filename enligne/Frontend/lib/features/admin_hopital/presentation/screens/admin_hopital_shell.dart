@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -24,27 +24,30 @@ class AdminHopitalShell extends ConsumerWidget {
 
   int _calculateIndex(String location) {
     if (location.startsWith('/admin-hopital/medecins'))    return 1;
-    if (location.startsWith('/admin-hopital/laborantins')) return 2;
-    if (location.startsWith('/admin-hopital/services'))    return 3;
-    if (location.startsWith('/admin-hopital/demandes'))    return 4;
-    if (location.startsWith('/admin-hopital/patients'))    return 5;
-    if (location.startsWith('/admin-hopital/stats'))       return 6;
-    if (location.startsWith('/admin-hopital/messages'))    return 7;
-    if (location.startsWith('/admin-hopital/settings'))    return 8;
+    if (location.startsWith('/admin-hopital/patients'))    return 2;
+    if (location.startsWith('/admin-hopital/messages'))    return 3;
+    if (location.startsWith('/admin-hopital/settings'))    return 4;
+    if (location.startsWith('/admin-hopital/laborantins')) return 5;
+    if (location.startsWith('/admin-hopital/services'))    return 6;
+    if (location.startsWith('/admin-hopital/demandes'))    return 7;
+    if (location.startsWith('/admin-hopital/stats'))       return 8;
     return 0;
   }
 
   void _onTap(int index, BuildContext context) {
     switch (index) {
+      case -1:
+        context.push('/notifications');
+        break;
       case 0: context.go('/admin-hopital');             break;
       case 1: context.go('/admin-hopital/medecins');    break;
-      case 2: context.go('/admin-hopital/laborantins'); break;
-      case 3: context.go('/admin-hopital/services');    break;
-      case 4: context.go('/admin-hopital/demandes');    break;
-      case 5: context.go('/admin-hopital/patients');    break;
-      case 6: context.go('/admin-hopital/stats');       break;
-      case 7: context.go('/admin-hopital/messages');    break;
-      case 8: context.go('/admin-hopital/settings');    break;
+      case 2: context.go('/admin-hopital/patients');    break;
+      case 3: context.go('/admin-hopital/messages');    break;
+      case 4: context.go('/admin-hopital/settings');    break;
+      case 5: context.go('/admin-hopital/laborantins'); break;
+      case 6: context.go('/admin-hopital/services');    break;
+      case 7: context.go('/admin-hopital/demandes');    break;
+      case 8: context.go('/admin-hopital/stats');       break;
     }
   }
 
@@ -66,6 +69,21 @@ class AdminHopitalShell extends ConsumerWidget {
           label: 'Médecins',
         ),
         NavigationDestination(
+          icon: Icon(Icons.person_search_outlined),
+          selectedIcon: Icon(Icons.person_search),
+          label: 'Patients',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.message_outlined),
+          selectedIcon: Icon(Icons.message),
+          label: 'Messages',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.settings_outlined),
+          selectedIcon: Icon(Icons.settings),
+          label: 'Paramètres',
+        ),
+        NavigationDestination(
           icon: Icon(Icons.biotech_outlined),
           selectedIcon: Icon(Icons.biotech),
           label: 'Laborantins',
@@ -81,24 +99,9 @@ class AdminHopitalShell extends ConsumerWidget {
           label: 'Demandes',
         ),
         NavigationDestination(
-          icon: Icon(Icons.person_search_outlined),
-          selectedIcon: Icon(Icons.person_search),
-          label: 'Patients',
-        ),
-        NavigationDestination(
           icon: Icon(Icons.bar_chart_outlined),
           selectedIcon: Icon(Icons.bar_chart),
           label: 'Stats',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.message_outlined),
-          selectedIcon: Icon(Icons.message),
-          label: 'Messages',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.settings_outlined),
-          selectedIcon: Icon(Icons.settings),
-          label: 'Paramètres',
         ),
       ],
       child: child,

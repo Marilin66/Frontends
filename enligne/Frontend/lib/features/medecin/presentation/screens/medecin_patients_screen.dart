@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,6 +9,8 @@ import 'package:hopitel_app/core/theme/app_colors.dart';
 import 'package:hopitel_app/core/widgets/premium_error_view.dart';
 import 'package:hopitel_app/core/widgets/premium_loading_view.dart';
 import 'package:hopitel_app/features/medecin/presentation/providers/medecin_provider.dart';
+import 'package:hopitel_app/core/utils/helpers.dart';
+
 
 class MedecinPatientsContent extends ConsumerStatefulWidget {
   const MedecinPatientsContent({super.key});
@@ -27,6 +29,63 @@ class _MedecinPatientsContentState
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _showPatientAppointments(BuildContext context, String patientName, List<RendezVousMedecinModel> appointments) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Rendez-vous de $patientName',
+                style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: appointments.length,
+                  itemBuilder: (context, index) {
+                    final rdv = appointments[index];
+                    final statusColor = Helpers.getStatusColor(rdv.statut);
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        Helpers.formatDateTime(rdv.dateHeure),
+                        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        rdv.motif.isNotEmpty ? rdv.motif : 'Sans motif',
+                        style: GoogleFonts.poppins(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: statusColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          Helpers.getStatusLabel(rdv.statut),
+                          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.bold, color: statusColor),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -177,9 +236,11 @@ class _MedecinPatientsContentState
                               .join()
                               .toUpperCase();
 
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            padding: const EdgeInsets.all(14),
+                          return GestureDetector(
+                            onTap: () => _showPatientAppointments(context, name, patientRdvs),
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(14),
@@ -295,7 +356,8 @@ class _MedecinPatientsContentState
                                 ),
                               ],
                             ),
-                          );
+                          ),
+                        );
                         },
                       ),
               ),

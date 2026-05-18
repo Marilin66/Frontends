@@ -301,6 +301,7 @@ class MedecinListSerializer(serializers.ModelSerializer):
     is_email_verified = serializers.BooleanField(source='user.is_email_verified', read_only=True, default=False)
     date_joined = serializers.DateTimeField(source='user.date_joined', read_only=True)
     last_login = serializers.DateTimeField(source='user.last_login', read_only=True)
+    service_ids = serializers.SerializerMethodField()
 
     class Meta:
         model = Medecin
@@ -310,7 +311,11 @@ class MedecinListSerializer(serializers.ModelSerializer):
             'hopital', 'hopital_nom', 'photo',
             'is_active', 'is_email_verified', 'date_joined', 'last_login',
             'numero_ordre', 'biographie', 'statut',
+            'service_ids',
         ]
+
+    def get_service_ids(self, obj):
+        return list(obj.medecin_services.values_list('service_id', flat=True))
 
 
 class MedecinUpdateSerializer(serializers.ModelSerializer):
@@ -322,13 +327,16 @@ class MedecinUpdateSerializer(serializers.ModelSerializer):
     date_naissance = serializers.DateField(source='user.date_naissance', required=False)
     sexe = serializers.ChoiceField(source='user.sexe', choices=User.Sexe.choices, required=False)
     adresse = serializers.CharField(source='user.adresse', required=False)
+    service_ids = serializers.ListField(
+        child=serializers.IntegerField(), required=False, write_only=True
+    )
 
     class Meta:
         model = Medecin
         fields = [
             'first_name', 'last_name', 'telephone',
             'date_naissance', 'sexe', 'adresse',
-            'biographie', 'statut',
+            'biographie', 'statut', 'service_ids',
         ]
 
     def update(self, instance, validated_data):
@@ -337,6 +345,13 @@ class MedecinUpdateSerializer(serializers.ModelSerializer):
             setattr(instance.user, attr, value)
         if user_data:
             instance.user.save()
+
+        service_ids = validated_data.pop('service_ids', None)
+        if service_ids is not None:
+            from hopitaux.models import MedecinService
+            instance.medecin_services.all().delete()
+            for s_id in service_ids:
+                MedecinService.objects.create(medecin=instance, service_id=s_id)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

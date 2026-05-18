@@ -212,7 +212,7 @@ class AdminHopitalRemoteDatasource {
   Future<Map<String, dynamic>> getSupervisionDashboard() async {
     try {
       final response =
-          await _client.get('${ApiConstants.hopitaux}supervision/dashboard/');
+          await _client.get(ApiConstants.hopitalStats);
       final responseData = response.data;
       if (responseData == null || responseData is! Map<String, dynamic>) return {};
       return responseData;
@@ -226,7 +226,7 @@ class AdminHopitalRemoteDatasource {
     try {
       final params = statut != null ? {'statut': statut} : null;
       final response = await _client.get(
-        '${ApiConstants.hopitaux}supervision/rendezvous/',
+        ApiConstants.rendezvous,
         queryParameters: params,
       );
       final data = response.data;
@@ -240,7 +240,7 @@ class AdminHopitalRemoteDatasource {
   Future<List<dynamic>> getSupervisionConsultations() async {
     try {
       final response = await _client
-          .get('${ApiConstants.hopitaux}supervision/consultations/');
+          .get(ApiConstants.consultations);
       final data = response.data;
       return data is List ? data : (data['results'] as List<dynamic>?) ?? [];
     } on DioException catch (e) {
@@ -252,7 +252,7 @@ class AdminHopitalRemoteDatasource {
   Future<List<dynamic>> getSupervisionLaboratoire() async {
     try {
       final response =
-          await _client.get('${ApiConstants.hopitaux}supervision/laboratoire/');
+          await _client.get(ApiConstants.analyses);
       final data = response.data;
       return data is List ? data : (data['results'] as List<dynamic>?) ?? [];
     } on DioException catch (e) {

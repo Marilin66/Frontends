@@ -145,7 +145,7 @@ class _VerifyCodeScreenState extends ConsumerState<VerifyCodeScreen> {
           if (widget.email != null && widget.email!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, py: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(20),

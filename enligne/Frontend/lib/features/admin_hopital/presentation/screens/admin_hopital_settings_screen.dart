@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -252,7 +252,7 @@ class _AdminHopitalSettingsScreenState extends ConsumerState<AdminHopitalSetting
             leading: const Icon(Icons.language_outlined, color: AppColors.textSecondary),
             title: Text('Langue', style: GoogleFonts.poppins()),
             trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
-            onTap: () => context.go('/admin-hopital/language'),
+            onTap: () => context.push('/admin-hopital/language'),
           ),
           ListTile(
             leading: const Icon(Icons.lock_outline, color: AppColors.textSecondary),

@@ -198,11 +198,15 @@ final contactsDisponiblesProvider =
 
   Future<List<dynamic>> fetchList(String url,
       {Map<String, dynamic>? params}) async {
-    final resp = await client.get(url, queryParameters: params);
-    final data = resp.data;
-    if (data is List) return data;
-    if (data is Map && data['results'] is List) return data['results'] as List;
-    return [];
+    try {
+      final resp = await client.get(url, queryParameters: params);
+      final data = resp.data;
+      if (data is List) return data;
+      if (data is Map && data['results'] is List) return data['results'] as List;
+      return [];
+    } catch (_) {
+      return [];
+    }
   }
 
   final role = user.role;
@@ -256,30 +260,72 @@ final contactsDisponiblesProvider =
     return contacts;
   }
 
-  // ── Médecin ou Laborantin → admin de son hôpital ──────────────────────
+  // ── Médecin ou Laborantin → contacts de son hôpital ──────────────────────
   if (role == 'medecin' || role == 'laborantin') {
     final hopId = user.hopital;
     if (hopId == null) return [];
 
-    final list = await fetchList(ApiConstants.adminHopitaux);
-    return list
-        .where((e) {
-          final m = e as Map<String, dynamic>;
-          final hId = m['hopital'];
-          return hId == hopId ||
-              hId?.toString() == hopId.toString();
-        })
-        .map((e) {
-          final m = e as Map<String, dynamic>;
-          return ContactModel(
-            id: m['id'] as int,
-            nom: '${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
-            role: 'admin_hopital',
-            hopitalNom: m['hopital_nom'] as String?,
-            photo: m['photo'] as String?,
-          );
-        })
-        .toList();
+    final adminsList = await fetchList(ApiConstants.adminHopitaux);
+    final medList = await fetchList(ApiConstants.medecins);
+    final labList = await fetchList(ApiConstants.laborantins);
+
+    final contacts = <ContactModel>[];
+
+    // Admins
+    for (final e in adminsList) {
+      final m = e as Map<String, dynamic>;
+      final hId = m['hopital'];
+      if (hId?.toString() == hopId.toString()) {
+        contacts.add(ContactModel(
+          id: m['id'] as int,
+          nom: 'Administration: ${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
+          role: 'admin_hopital',
+          hopitalNom: m['hopital_nom'] as String?,
+          photo: m['photo'] as String?,
+        ));
+      }
+    }
+
+    // Médecins
+    for (final e in medList) {
+      final m = e as Map<String, dynamic>;
+      final hId = m['hopital'] ?? m['hopital_id'];
+      if (hId?.toString() == hopId.toString() && m['id'].toString() != user.id.toString()) {
+        contacts.add(ContactModel(
+          id: m['id'] as int,
+          nom: 'Dr. ${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
+          role: 'medecin',
+          hopitalNom: m['hopital_nom'] as String?,
+          photo: m['photo'] as String?,
+        ));
+      }
+    }
+
+    // Laborantins
+    for (final e in labList) {
+      final m = e as Map<String, dynamic>;
+      final hId = m['hopital'] ?? m['hopital_id'];
+      if (hId?.toString() == hopId.toString() && m['id'].toString() != user.id.toString()) {
+        contacts.add(ContactModel(
+          id: m['id'] as int,
+          nom: 'Lab. ${m['first_name'] ?? ''} ${m['last_name'] ?? ''}'.trim(),
+          role: 'laborantin',
+          hopitalNom: m['hopital_nom'] as String?,
+          photo: m['photo'] as String?,
+        ));
+      }
+    }
+
+    if (contacts.isEmpty) {
+      contacts.add(const ContactModel(
+        id: 999,
+        nom: 'Support Technique Hopitel',
+        role: 'admin_general',
+        hopitalNom: 'Assistance',
+      ));
+    }
+
+    return contacts;
   }
 
   return [];

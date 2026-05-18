@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/universal_back_button.dart';
-
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 enum AppLanguage { french, english }
 
@@ -108,7 +110,12 @@ class _PatientLanguageContentState extends ConsumerState<PatientLanguageContent>
                   : null,
               onTap: () {
                 _changeLanguage(AppLanguage.french);
-                Navigator.pop(context);
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  final role = ref.read(authProvider).user?.role;
+                  context.go(_getProfileRoute(role));
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -176,7 +183,12 @@ class _PatientLanguageContentState extends ConsumerState<PatientLanguageContent>
                   : null,
               onTap: () {
                 _changeLanguage(AppLanguage.english);
-                Navigator.pop(context);
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  final role = ref.read(authProvider).user?.role;
+                  context.go(_getProfileRoute(role));
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -225,5 +237,22 @@ class _PatientLanguageContentState extends ConsumerState<PatientLanguageContent>
         ],
       ),
     );
+  }
+
+  String _getProfileRoute(String? role) {
+    switch (role) {
+      case AppConstants.rolePatient:
+        return '/patient/profile';
+      case AppConstants.roleMedecin:
+        return '/medecin/profile';
+      case AppConstants.roleAdminHopital:
+        return '/admin-hopital/settings';
+      case AppConstants.roleAdminGeneral:
+        return '/super-admin/settings';
+      case AppConstants.roleLaborantin:
+        return '/laborantin/profile';
+      default:
+        return '/login';
+    }
   }
 }

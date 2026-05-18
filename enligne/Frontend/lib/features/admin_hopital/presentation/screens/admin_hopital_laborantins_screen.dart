@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -127,6 +127,9 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
   late final TextEditingController _firstNameCtrl;
   late final TextEditingController _lastNameCtrl;
   late final TextEditingController _telCtrl;
+  late final TextEditingController _laboCtrl;
+  late final TextEditingController _dateNaissanceCtrl;
+  String _sexe = 'M';
 
   @override
   void initState() {
@@ -135,13 +138,25 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
     _firstNameCtrl = TextEditingController(text: widget.laborantin?.firstName);
     _lastNameCtrl = TextEditingController(text: widget.laborantin?.lastName);
     _telCtrl = TextEditingController(text: widget.laborantin?.telephone);
+    
+    // Extract laboratoire from profile or root
+    final profileLab = widget.laborantin?.laborantinProfile?['laboratoire']?.toString() ?? '';
+    final rootLab = widget.laborantin?.laborantinProfile == null ? (widget.laborantin?.laboratoire?.toString() ?? '') : '';
+    _laboCtrl = TextEditingController(text: profileLab.isNotEmpty ? profileLab : rootLab);
+
+    _dateNaissanceCtrl = TextEditingController(text: widget.laborantin?.dateNaissance ?? '1995-01-01');
+    _sexe = (widget.laborantin?.sexe == null || widget.laborantin!.sexe.isEmpty) ? 'M' : widget.laborantin!.sexe;
   }
 
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.laborantin != null;
     return AlertDialog(
-      title: Text(isEdit ? 'Modifier Laborantin' : 'Nouveau Laborantin'),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: Text(
+        isEdit ? 'Modifier Laborantin' : 'Nouveau Laborantin',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: AppColors.laborantin),
+      ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -150,30 +165,113 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
             children: [
               TextFormField(
                 controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Email *',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _firstNameCtrl,
-                decoration: const InputDecoration(labelText: 'Prénom'),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Prénom *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _lastNameCtrl,
-                decoration: const InputDecoration(labelText: 'Nom'),
-                validator: (v) => v!.isEmpty ? 'Requis' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Nom *',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
+                validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _telCtrl,
-                decoration: const InputDecoration(labelText: 'Téléphone'),
+                decoration: const InputDecoration(
+                  labelText: 'Téléphone *',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                  hintText: 'Ex: 0197000000',
+                ),
+                keyboardType: TextInputType.phone,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Requis';
+                  if (v.length != 10 || !v.startsWith('01')) {
+                    return "Doit comporter 10 chiffres et commencer par '01'";
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _laboCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Laboratoire',
+                  prefixIcon: Icon(Icons.biotech_outlined),
+                  hintText: 'Ex: Biochimie',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _dateNaissanceCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Date de naissance *',
+                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                ),
+                readOnly: true,
+                validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+                onTap: () async {
+                  final initialDate = DateTime.tryParse(_dateNaissanceCtrl.text) ?? DateTime(1995, 1, 1);
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: initialDate,
+                    firstDate: DateTime(1930),
+                    lastDate: DateTime.now(),
+                  );
+                  if (date != null) {
+                    setState(() {
+                      _dateNaissanceCtrl.text = date.toString().split(' ')[0];
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _sexe,
+                decoration: const InputDecoration(
+                  labelText: 'Sexe *',
+                  prefixIcon: Icon(Icons.wc_outlined),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'M', child: Text('Masculin')),
+                  DropdownMenuItem(value: 'F', child: Text('Féminin')),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    if (val != null) _sexe = val;
+                  });
+                },
               ),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Annuler', style: GoogleFonts.poppins(color: Colors.grey)),
+        ),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.laborantin,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
           onPressed: () async {
             if (!_formKey.currentState!.validate()) return;
             final data = {
@@ -181,6 +279,9 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
               'first_name': _firstNameCtrl.text.trim(),
               'last_name': _lastNameCtrl.text.trim(),
               'telephone': _telCtrl.text.trim(),
+              'laboratoire': _laboCtrl.text.trim(),
+              'date_naissance': _dateNaissanceCtrl.text.trim(),
+              'sexe': _sexe,
             };
             
             Navigator.pop(context);
@@ -192,10 +293,10 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
             }
             
             if (context.mounted) {
-              Helpers.showSnackBar(context, success ? 'Opération réussie' : 'Échec', isError: !success);
+              Helpers.showSnackBar(context, success ? 'Opération réussie' : 'Échec de l\'opération', isError: !success);
             }
           },
-          child: Text(isEdit ? 'Modifier' : 'Créer'),
+          child: Text(isEdit ? 'Modifier' : 'Créer', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -207,6 +308,8 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
     _firstNameCtrl.dispose();
     _lastNameCtrl.dispose();
     _telCtrl.dispose();
+    _laboCtrl.dispose();
+    _dateNaissanceCtrl.dispose();
     super.dispose();
   }
 }

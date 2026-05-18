@@ -75,13 +75,13 @@ class AdminHopitalSupervisionConsultationsScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemBuilder: (context, i) {
                 final c = consultations[i] as Map<String, dynamic>;
-                final dateStr = c['date_consultation'] as String? ?? '';
+                final dateStr = c['date_creation'] as String? ?? c['date'] as String? ?? '';
                 DateTime? dt;
                 try {
                   dt = DateTime.parse(dateStr);
                 } catch (_) {}
 
-                final bool estCloture = c['est_cloture'] == true;
+                final bool estCloture = c['statut'] == 'termine';
 
                 return Container(
                   padding: const EdgeInsets.all(16),

@@ -25,7 +25,7 @@ class ConsultationModel {
 
   factory ConsultationModel.fromJson(Map<String, dynamic> json) {
     return ConsultationModel(
-      rendezVousId: json['rendez_vous_id'] as int? ?? 0,
+      rendezVousId: json['rendez_vous_id'] as int? ?? json['rendez_vous'] as int? ?? 0,
       patientNom: json['patient_nom'] as String? ?? '',
       medecinNom: json['medecin_nom'] as String? ?? '',
       dateRdv: DateTime.tryParse(json['date_rdv']?.toString() ?? '') ?? DateTime.now(),
