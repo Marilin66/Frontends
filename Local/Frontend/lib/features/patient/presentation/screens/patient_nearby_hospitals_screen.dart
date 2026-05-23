@@ -8,6 +8,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/universal_back_button.dart';
@@ -184,9 +185,7 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
     final hopitauxAsync = ref.watch(nearbyHopitauxProvider);
 
     hopitauxAsync.whenData((hopitaux) {
-      if (_mapController != null) {
-        _updateMarkers(hopitaux);
-      }
+      _updateMarkers(hopitaux);
     });
 
     return Scaffold(
@@ -650,6 +649,53 @@ class _PatientNearbyHospitalsScreenState extends ConsumerState<PatientNearbyHosp
                               ),
                             ],
                           ),
+                        ),
+                      ],
+                      // ── Bouton Appeler ──────────────────────────────
+                      if (hopital.telephone.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final uri = Uri(scheme: 'tel', path: hopital.telephone);
+                                  if (await canLaunchUrl(uri)) {
+                                    await launchUrl(uri);
+                                  }
+                                },
+                                icon: const Icon(Icons.phone, size: 14),
+                                label: Text(
+                                  'Appeler',
+                                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.primary,
+                                  side: const BorderSide(color: AppColors.primary),
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => context.go('/patient/hopital/${hopital.id}', extra: hopital),
+                                icon: const Icon(Icons.info_outline, size: 14),
+                                label: Text(
+                                  'Détails',
+                                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  elevation: 0,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ],

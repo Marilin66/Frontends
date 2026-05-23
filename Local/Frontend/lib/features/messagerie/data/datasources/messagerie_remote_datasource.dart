@@ -36,9 +36,9 @@ class MessagerieRemoteDatasource {
   Future<List<MessageModel>> getMessages({int? consultationId, int? destinataireId}) async {
     try {
       final queryParams = <String, dynamic>{
-        if (consultationId != null) 'consultation': consultationId,
-        if (destinataireId != null) 'destinataire': destinataireId,
-      };
+        'consultation': consultationId,
+        'destinataire': destinataireId,
+      }..removeWhere((key, value) => value == null);
 
       final response = await _client.get(
         ApiConstants.messages,
@@ -71,14 +71,14 @@ class MessagerieRemoteDatasource {
       final response = await _client.post(
         ApiConstants.messages,
         data: {
-          if (consultationId != null) 'consultation': consultationId,
-          if (destinataireId != null) 'destinataire': destinataireId,
+          'consultation': consultationId,
+          'destinataire': destinataireId,
           'contenu': contenu,
-        },
+        }..removeWhere((key, value) => value == null),
       );
-      final rd0 = response.data;
-      if (rd0 is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
-      return MessageModel.fromJson(rd0);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return MessageModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -92,20 +92,20 @@ class MessagerieRemoteDatasource {
   }) async {
     try {
       final formData = FormData.fromMap({
-        if (consultationId != null) 'consultation': consultationId,
-        if (destinataireId != null) 'destinataire': destinataireId,
+        'consultation': consultationId,
+        'destinataire': destinataireId,
         'type_message': 'vocal',
         'contenu': '🎙 Message vocal',
         'audio': await MultipartFile.fromFile(audioPath, filename: 'voice_message.m4a'),
-      });
+      }..removeWhere((key, value) => value == null));
 
       final response = await _client.post(
         ApiConstants.messages,
         data: formData,
       );
-      final rd2 = response.data;
-      if (rd2 is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
-      return MessageModel.fromJson(rd2);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return MessageModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

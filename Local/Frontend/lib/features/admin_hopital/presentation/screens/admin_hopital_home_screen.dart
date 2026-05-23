@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -67,6 +67,34 @@ class AdminHopitalHomeContent extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
+                // ── Alerte RDV en attente ──────────────────────────
+                if ((stats['rdv_en_attente'] ?? 0) > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.notifications_active, color: Colors.amber, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '${stats['rdv_en_attente']} rendez-vous en attente de confirmation',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.amber.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 Row(
                   children: [
                     Expanded(
@@ -231,6 +259,66 @@ class AdminHopitalHomeContent extends ConsumerWidget {
                 label: 'Statistiques',
                 color: Colors.teal,
                 onTap: () => context.go('/admin-hopital/stats'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.biotech_outlined,
+                label: 'Laborantins',
+                color: AppColors.laborantin,
+                onTap: () => context.go('/admin-hopital/laborantins'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
+            const SizedBox(width: 12),
+            const Expanded(child: SizedBox()),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Supervision',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.event,
+                label: 'Suivi RDV',
+                color: AppColors.primary,
+                onTap: () => context.go('/admin-hopital/supervision/rdv'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.medical_information_outlined,
+                label: 'Consultations',
+                color: AppColors.medecin,
+                onTap: () => context.go('/admin-hopital/supervision/consultations'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionCard(
+                icon: Icons.science_outlined,
+                label: 'Laboratoire',
+                color: AppColors.laborantin,
+                onTap: () => context.go('/admin-hopital/supervision/laboratoire'),
               ),
             ),
           ],

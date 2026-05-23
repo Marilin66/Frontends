@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,7 +7,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
 import '../../../../core/widgets/animated_tap.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../notifications/presentation/providers/notification_provider.dart';
 import '../../data/models/rendezvous_medecin_model.dart';
 import '../providers/medecin_provider.dart';
 
@@ -138,7 +137,7 @@ class MedecinHomeContent extends ConsumerWidget {
             // ── Rendez-vous du jour ──────────────────────────────────
             _SectionHeader(
               title: 'Rendez-vous du jour',
-              onSeeAll: () => context.go('/medecin/rendezvous'),
+              onSeeAll: () => context.go('/medecin/agenda'),
             ),
             const SizedBox(height: 8),
             rdvAsync.when(
@@ -484,6 +483,41 @@ class _RendezVousMedecinCard extends ConsumerWidget {
                     label: const Text('Confirmer'),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.success,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      textStyle: GoogleFonts.poppins(
+                          fontSize: 12, fontWeight: FontWeight.w600),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (rdv.statut == 'confirme') ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  FilledButton.icon(
+                    onPressed: () async {
+                      final consultationId = await ref
+                          .read(medecinRendezvousProvider.notifier)
+                          .terminerRendezvous(rdv.id);
+                      if (context.mounted) {
+                        Helpers.showSnackBar(
+                          context,
+                          consultationId != null
+                              ? 'Consultation créée'
+                              : 'Erreur lors de la clôture',
+                          isError: consultationId == null,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.check_circle_outline, size: 16),
+                    label: const Text('Terminer'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.teal,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       textStyle: GoogleFonts.poppins(

@@ -6,7 +6,6 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/chatbot_provider.dart';
@@ -51,70 +50,106 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
   }
 
   String _sanitizeAndMapRoute(String rawRoute) {
-    // 1. Rendez-vous
-    if (rawRoute == '/rendezvous' ||
-        rawRoute == '/patient/rendezvous' ||
-        rawRoute == '/appointments' ||
-        rawRoute == '/patient/appointments') {
+    if (rawRoute.isEmpty) return '/hospitals';
+
+    // Normaliser les slashes doubles et les slashs de fin, et mettre en minuscule
+    String target = rawRoute.replaceAll(RegExp(r'/+'), '/').toLowerCase().trim();
+    if (target.endsWith('/') && target.length > 1) {
+      target = target.substring(0, target.length - 1);
+    }
+    if (!target.startsWith('/')) {
+      target = '/$target';
+    }
+
+    // 1. Détection des IDs pour les routes dynamiques
+    // /hopital/123 ou /patient/hopital/123
+    final hopitalIdMatch = RegExp(r'^/(?:patient/)?hopital/(\d+)').firstMatch(target);
+    if (hopitalIdMatch != null) {
+      return '/hopital/${hopitalIdMatch.group(1)}';
+    }
+
+    // /patient/medecin/123/rendezvous ou /medecin/123/rendezvous ou /medecin/123
+    final medecinIdMatch = RegExp(r'^/(?:patient/)?medecin[s]?/(\d+)').firstMatch(target);
+    if (medecinIdMatch != null) {
+      return '/patient/medecin/${medecinIdMatch.group(1)}/rendezvous';
+    }
+
+    // 2. Map d'alias précis
+    const aliases = {
+      '/nearby': '/nearby',
+      '/patient/nearby': '/nearby',
+      '/map': '/nearby',
+      '/hospitals': '/hospitals',
+      '/hopitaux': '/hospitals',
+      '/appointments': '/patient/appointments',
+      '/rendezvous': '/patient/appointments',
+      '/rendez-vous': '/patient/appointments',
+      '/rdv': '/patient/appointments',
+      '/patient/rendezvous': '/patient/appointments',
+      '/patient/appointments': '/patient/appointments',
+      '/results': '/patient/results',
+      '/resultats': '/patient/results',
+      '/patient/results': '/patient/results',
+      '/patient/resultats': '/patient/results',
+      '/ai-agent': '/chatbot',
+      '/assistant': '/chatbot',
+      '/chatbot': '/chatbot',
+      '/patient/chatbot': '/chatbot',
+      '/patient/ai-agent': '/chatbot',
+      '/search': '/patient/search',
+      '/recherche': '/patient/search',
+      '/patient/search': '/patient/search',
+      '/patient/recherche': '/patient/search',
+      '/profile': '/patient/profile',
+      '/profil': '/patient/profile',
+      '/patient/profile': '/patient/profile',
+      '/patient/profil': '/patient/profile',
+      '/messages': '/patient/messagerie',
+      '/messagerie': '/patient/messagerie',
+      '/patient/messages': '/patient/messagerie',
+      '/patient/messagerie': '/patient/messagerie',
+      '/notifications': '/notifications',
+      '/patient/notifications': '/notifications',
+      '/tips': '/tips',
+      '/conseils': '/tips',
+      '/conseil': '/tips',
+      '/patient/tips': '/tips',
+      '/emergency': '/emergency',
+      '/urgences': '/emergency',
+      '/urgence': '/emergency',
+      '/patient/emergency': '/emergency',
+      '/faq': '/faq',
+      '/patient/faq': '/faq',
+      '/result-code': '/result-code',
+      '/track-results': '/result-code',
+      '/patient/result-code': '/result-code',
+    };
+
+    if (aliases.containsKey(target)) {
+      return aliases[target]!;
+    }
+
+    // 3. Détection par mots-clés (Failsafe)
+    if (target.contains('medecin') || target.contains('médecin') || target.contains('recherche') || target.contains('search')) {
+      return '/patient/search';
+    }
+    if (target.contains('hopital') || target.contains('hôpital') || target.startsWith('/hopitaux')) {
+      return '/hospitals';
+    }
+    if (target.contains('urgence') || target.contains('emergency')) {
+      return '/emergency';
+    }
+    if (target.contains('conseil') || target.contains('tips') || target.contains('sante') || target.contains('santé')) {
+      return '/tips';
+    }
+    if (target.contains('result')) {
+      return '/patient/results';
+    }
+    if (target.contains('rdv') || target.contains('rendez')) {
       return '/patient/appointments';
     }
 
-    // 2. Résultats d'analyses
-    if (rawRoute == '/resultats' ||
-        rawRoute == '/patient/resultats' ||
-        rawRoute == '/results' ||
-        rawRoute == '/patient/results') {
-      return '/patient/results';
-    }
-
-    // 3. Recherche
-    if (rawRoute == '/search' || rawRoute == '/patient/search') {
-      return '/patient/search';
-    }
-
-    // 4. Profil
-    if (rawRoute == '/profile' || rawRoute == '/patient/profile') {
-      return '/patient/profile';
-    }
-
-    // 5. Messagerie
-    if (rawRoute == '/messagerie' ||
-        rawRoute == '/patient/messagerie' ||
-        rawRoute == '/messages' ||
-        rawRoute == '/patient/messages') {
-      return '/patient/messagerie';
-    }
-
-    // 6. Proximité / Carte
-    if (rawRoute == '/nearby' || rawRoute == '/patient/nearby') {
-      return '/nearby';
-    }
-
-    // 7. Chatbot
-    if (rawRoute == '/chatbot' ||
-        rawRoute == '/patient/chatbot' ||
-        rawRoute == '/patient/ai-agent' ||
-        rawRoute == '/ai-agent') {
-      return '/chatbot';
-    }
-
-    // 8. Hôpitaux
-    if (rawRoute == '/hospitals' || rawRoute == '/hopitaux') {
-      return '/hospitals';
-    }
-
-    // 9. Accès par code
-    if (rawRoute == '/result-code' ||
-        rawRoute == '/track-results' ||
-        rawRoute == '/patient/result-code') {
-      return '/result-code';
-    }
-
-    // 10. Si c'est une route du genre /patient/hopital/ID ou /hopital/ID
-    if (rawRoute.startsWith('/patient/hopital/')) {
-      return rawRoute.replaceFirst('/patient/hopital/', '/hopital/');
-    }
-
+    // Par défaut
     return rawRoute;
   }
 
@@ -131,7 +166,6 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
       final authState = ref.read(authProvider);
       final isAuthenticated = authState.status == AuthStatus.authenticated;
       
-      // Routes nécessitant une connexion (tout ce qui commence par /patient/, /medecin/, etc.)
       final requiresAuth = payload.startsWith('/patient/') ||
           payload.startsWith('/medecin/') ||
           payload.startsWith('/admin') ||
@@ -139,7 +173,6 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
           payload.startsWith('/super-admin/');
       
       if (requiresAuth && !isAuthenticated) {
-        // Rediriger vers login avec message
         context.go('/login');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

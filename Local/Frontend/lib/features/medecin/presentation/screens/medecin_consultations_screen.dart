@@ -8,11 +8,27 @@ import '../../../../core/theme/app_colors.dart';
 import '../providers/medecin_provider.dart';
 import '../../data/models/consultation_model.dart';
 
-class MedecinConsultationsScreen extends ConsumerWidget {
+class MedecinConsultationsScreen extends ConsumerStatefulWidget {
   const MedecinConsultationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MedecinConsultationsScreen> createState() =>
+      _MedecinConsultationsScreenState();
+}
+
+class _MedecinConsultationsScreenState
+    extends ConsumerState<MedecinConsultationsScreen> {
+  final _searchCtrl = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final consultationsAsync = ref.watch(medecinConsultationsListProvider);
 
     return Scaffold(
@@ -33,73 +49,120 @@ class MedecinConsultationsScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: consultationsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.medecin),
-        ),
-        error: (e, _) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.error),
-              const SizedBox(height: 16),
-              Text('Erreur: $e',
-                  style: GoogleFonts.poppins(color: AppColors.textSecondary)),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref
-                    .read(medecinConsultationsListProvider.notifier)
-                    .refresh(),
-                child: const Text('Réessayer'),
-              ),
-            ],
-          ),
-        ),
-        data: (consultations) {
-          if (consultations.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.medical_services_outlined,
-                    size: 64,
-                    color: AppColors.textHint.withValues(alpha: 0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Aucune consultation',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Les consultations apparaîtront ici\naprès la fin des rendez-vous.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(color: AppColors.textHint),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
+      body: Column(
+        children: [
+          // ── Barre de recherche ─────────────────────────────────────
+          Padding(
             padding: const EdgeInsets.all(16),
-            itemCount: consultations.length,
-            itemBuilder: (context, index) {
-              final c = consultations[index];
-              return _ConsultationCard(
-                consultation: c,
-                onTap: () => context.push(
-                  '/medecin/consultations/${c.rendezVousId}',
+            child: TextField(
+              controller: _searchCtrl,
+              decoration: InputDecoration(
+                hintText: 'Rechercher par patient ou motif…',
+                hintStyle: GoogleFonts.poppins(color: AppColors.textHint),
+                prefixIcon: const Icon(Icons.search, color: AppColors.textHint),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-              );
-            },
-          );
-        },
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
+            ),
+          ),
+          // ── Liste ──────────────────────────────────────────────────
+          Expanded(
+            child: consultationsAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(color: AppColors.medecin),
+              ),
+              error: (e, _) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Text('Erreur: $e',
+                        style: GoogleFonts.poppins(color: AppColors.textSecondary)),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref
+                          .read(medecinConsultationsListProvider.notifier)
+                          .refresh(),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
+              ),
+              data: (consultations) {
+                final filtered = _searchQuery.isEmpty
+                    ? consultations
+                    : consultations
+                        .where((c) =>
+                            c.patientNom.toLowerCase().contains(_searchQuery) ||
+                            c.motif.toLowerCase().contains(_searchQuery))
+                        .toList();
+
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.medical_services_outlined,
+                          size: 64,
+                          color: AppColors.textHint.withValues(alpha: 0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchQuery.isEmpty
+                              ? 'Aucune consultation'
+                              : 'Aucun résultat pour "$_searchQuery"',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        if (_searchQuery.isEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Les consultations apparaîtront ici\naprès la fin des rendez-vous.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(color: AppColors.textHint),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    final c = filtered[index];
+                    return _ConsultationCard(
+                      consultation: c,
+                      onTap: () => context.push(
+                        '/medecin/consultations/${c.rendezVousId}',
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

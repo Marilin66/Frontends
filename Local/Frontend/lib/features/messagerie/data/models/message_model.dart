@@ -16,6 +16,7 @@ class MessageModel {
   final TypeMessage typeMessage;
   /// URL du fichier audio si typeMessage == TypeMessage.vocal
   final String? audio;
+  final String? expediteurPhoto;
 
   MessageModel({
     required this.id,
@@ -30,6 +31,7 @@ class MessageModel {
     this.pieceJointe,
     this.typeMessage = TypeMessage.texte,
     this.audio,
+    this.expediteurPhoto,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class MessageModel {
       pieceJointe: json['piece_jointe'] as String?,
       typeMessage: parsedType,
       audio: json['audio'] as String?,
+      expediteurPhoto: json['expediteur_photo'] as String?,
     );
   }
 

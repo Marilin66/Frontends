@@ -13,10 +13,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
   await initializeDateFormatting('fr_FR', null);
-  
+
   // Lancement du ping silencieux pour réveiller le backend Render
   _pingBackend();
-  
+
   runApp(
     const ProviderScope(
       child: HopitelApp(),
@@ -49,9 +49,6 @@ class HopitelApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: router,
-      builder: (context, child) {
-        return child ?? const SizedBox();
-      },
     );
   }
 }

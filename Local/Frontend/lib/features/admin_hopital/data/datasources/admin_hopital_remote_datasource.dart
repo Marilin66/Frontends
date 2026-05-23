@@ -170,7 +170,6 @@ class AdminHopitalRemoteDatasource {
       throw ApiException.fromDioError(e);
     }
   }
-  }
 
   /// Récupérer les demandes de service de l'hôpital
   Future<List<dynamic>> getDemandes() async {
@@ -179,7 +178,6 @@ class AdminHopitalRemoteDatasource {
       final data = response.data;
       final results =
           data is List ? data : (data['results'] as List<dynamic>?) ?? [];
-      // Import DemandeModel inline pour éviter les dépendances circulaires
       return results;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -203,6 +201,73 @@ class AdminHopitalRemoteDatasource {
       return results
           .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  // ── Supervision ──────────────────────────────────────────────────────────
+
+  /// Dashboard de supervision (stats générales)
+  Future<Map<String, dynamic>> getSupervisionDashboard() async {
+    try {
+      final response =
+          await _client.get(ApiConstants.hopitalStats);
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) return {};
+      return responseData;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Supervision des rendez-vous
+  Future<List<dynamic>> getSupervisionRendezvous({String? statut}) async {
+    try {
+      final params = statut != null ? {'statut': statut} : null;
+      final response = await _client.get(
+        ApiConstants.rendezvous,
+        queryParameters: params,
+      );
+      final data = response.data;
+      return data is List ? data : (data['results'] as List<dynamic>?) ?? [];
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Supervision des consultations
+  Future<List<dynamic>> getSupervisionConsultations() async {
+    try {
+      final response = await _client
+          .get(ApiConstants.consultations);
+      final data = response.data;
+      return data is List ? data : (data['results'] as List<dynamic>?) ?? [];
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Supervision du laboratoire
+  Future<List<dynamic>> getSupervisionLaboratoire() async {
+    try {
+      final response =
+          await _client.get(ApiConstants.analyses);
+      final data = response.data;
+      return data is List ? data : (data['results'] as List<dynamic>?) ?? [];
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
+  /// Parcours patient complet
+  Future<Map<String, dynamic>> getPatientParcours(int patientId) async {
+    try {
+      final response = await _client.get(
+          '${ApiConstants.hopitaux}supervision/patient/$patientId/parcours/');
+      final responseData = response.data;
+      if (responseData == null || responseData is! Map<String, dynamic>) return {};
+      return responseData;
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }

@@ -1,11 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../providers/messagerie_provider.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 
 class ConversationListScreen extends ConsumerStatefulWidget {
   const ConversationListScreen({super.key});
@@ -106,7 +105,6 @@ class _ConversationListScreenState
   Widget build(BuildContext context) {
     final conversationsAsync = ref.watch(conversationProvider);
     final contactsAsync = ref.watch(contactsDisponiblesProvider);
-    final user = ref.watch(authProvider).user;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -228,11 +226,10 @@ class _ConversationListScreenState
 
                     return ListView.separated(
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(
+                      separatorBuilder: (_, _) => const Divider(
                           height: 1, indent: 76, endIndent: 16),
                       itemBuilder: (context, i) {
                         final conv = filtered[i];
-                        final isConsultation = conv.type == 'consultation';
                         return _ConversationTile(
                           initials: _initials(conv.titre),
                           nom: conv.titre,
@@ -243,6 +240,7 @@ class _ConversationListScreenState
                           nonLus: conv.nonLus,
                           estCloture: conv.estCloture,
                           couleur: AppColors.primary,
+                          photo: conv.contactPhoto,
                           onTap: () => _openChat(
                             context,
                             consultationId: conv.consultationId,
@@ -286,7 +284,7 @@ class _ConversationListScreenState
 
                     return ListView.separated(
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const Divider(
+                      separatorBuilder: (_, _) => const Divider(
                           height: 1, indent: 76, endIndent: 16),
                       itemBuilder: (context, i) {
                         final contact = filtered[i];
@@ -297,6 +295,7 @@ class _ConversationListScreenState
                           roleLabel: _roleLabel(contact.role),
                           hopitalNom: contact.hopitalNom,
                           couleur: color,
+                          photo: contact.photo,
                           onTap: () => _openChat(
                             context,
                             destinataireId: contact.id,
@@ -326,6 +325,7 @@ class _ConversationTile extends StatelessWidget {
   final int nonLus;
   final bool estCloture;
   final Color couleur;
+  final String? photo;
   final VoidCallback onTap;
 
   const _ConversationTile({
@@ -336,6 +336,7 @@ class _ConversationTile extends StatelessWidget {
     required this.nonLus,
     required this.estCloture,
     required this.couleur,
+    this.photo,
     required this.onTap,
   });
 
@@ -353,14 +354,19 @@ class _ConversationTile extends StatelessWidget {
                 CircleAvatar(
                   radius: 26,
                   backgroundColor: couleur.withValues(alpha: 0.15),
-                  child: Text(
-                    initials,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                      color: couleur,
-                    ),
-                  ),
+                  backgroundImage: photo != null && photo!.isNotEmpty
+                      ? NetworkImage(photo!.startsWith('http') ? photo! : '${AppColors.primary}$photo')
+                      : null,
+                  child: photo == null || photo!.isEmpty
+                      ? Text(
+                          initials,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: couleur,
+                          ),
+                        )
+                      : null,
                 ),
                 if (!estCloture)
                   Positioned(
@@ -477,6 +483,7 @@ class _ContactTile extends StatelessWidget {
   final String roleLabel;
   final String? hopitalNom;
   final Color couleur;
+  final String? photo;
   final VoidCallback onTap;
 
   const _ContactTile({
@@ -485,6 +492,7 @@ class _ContactTile extends StatelessWidget {
     required this.roleLabel,
     this.hopitalNom,
     required this.couleur,
+    this.photo,
     required this.onTap,
   });
 
@@ -500,14 +508,19 @@ class _ContactTile extends StatelessWidget {
             CircleAvatar(
               radius: 26,
               backgroundColor: couleur.withValues(alpha: 0.15),
-              child: Text(
-                initials,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: couleur,
-                ),
-              ),
+              backgroundImage: photo != null && photo!.isNotEmpty
+                  ? NetworkImage(photo!.startsWith('http') ? photo! : '${AppColors.primary}$photo')
+                  : null,
+              child: photo == null || photo!.isEmpty
+                  ? Text(
+                      initials,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: couleur,
+                      ),
+                    )
+                  : null,
             ),
             const SizedBox(width: 14),
             // Infos

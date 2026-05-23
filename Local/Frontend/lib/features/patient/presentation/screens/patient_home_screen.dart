@@ -265,6 +265,18 @@ class PatientHomeContent extends ConsumerWidget {
           color: AppColors.info,
           onTap: () => context.go('/patient/results'),
         ),
+        _QuickActionCard(
+          icon: Icons.smart_toy_outlined,
+          label: 'Assistant IA',
+          color: Colors.deepPurple,
+          onTap: () => context.go('/chatbot'),
+        ),
+        _QuickActionCard(
+          icon: Icons.emergency_outlined,
+          label: 'Urgences',
+          color: AppColors.error,
+          onTap: () => context.go('/emergency'),
+        ),
       ],
     );
   }

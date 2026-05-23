@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:dio/dio.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../core/network/dio_client.dart';
 import '../providers/admin_hopital_provider.dart';
 
 class AdminHopitalMedecinsContent extends ConsumerWidget {
@@ -21,6 +26,12 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
         actions: [
+          // Bouton import CSV
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Importer CSV',
+            onPressed: () => _importCSV(context, ref),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.read(adminHopitalMedecinsProvider.notifier).refresh(),
@@ -78,12 +89,39 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
   }
 
   void _showEditMedecinDialog(BuildContext context, WidgetRef ref, dynamic medecin) {
-    ref.read(adminHopitalHopitalServicesProvider); 
+    ref.read(adminHopitalServicesProvider);
 
     showDialog(
       context: context,
       builder: (ctx) => EditMedecinDialogForm(medecin: medecin),
     );
+  }
+
+  void _importCSV(BuildContext context, WidgetRef ref) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
+      withData: kIsWeb,
+    );
+    if (result == null) return;
+    final file = result.files.first;
+
+    try {
+      final client = ref.read(dioClientProvider);
+      final multipart = kIsWeb
+          ? MultipartFile.fromBytes(file.bytes!, filename: file.name)
+          : await MultipartFile.fromFile(file.path!, filename: file.name);
+      final formData = FormData.fromMap({'fichier': multipart});
+      await client.post(ApiConstants.medecinsImport, data: formData);
+      ref.read(adminHopitalMedecinsProvider.notifier).refresh();
+      if (context.mounted) {
+        Helpers.showSnackBar(context, 'Import CSV réussi !');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Helpers.showSnackBar(context, 'Erreur lors de l\'import CSV', isError: true);
+      }
+    }
   }
 
   void _confirmDeactivate(BuildContext context, WidgetRef ref, int id, String name) {
@@ -117,8 +155,7 @@ class AdminHopitalMedecinsContent extends ConsumerWidget {
   }
 
   void _showCreateMedecinDialog(BuildContext context, WidgetRef ref) {
-    // S'assurer que les services sont chargés
-    ref.read(adminHopitalHopitalServicesProvider); 
+    ref.read(adminHopitalServicesProvider); 
 
     showDialog(
       context: context,
@@ -149,7 +186,7 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
 
   @override
   Widget build(BuildContext context) {
-    final servicesState = ref.watch(adminHopitalHopitalServicesProvider);
+    final servicesState = ref.watch(adminHopitalServicesProvider);
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -196,7 +233,7 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
                 decoration: const InputDecoration(
                   labelText: 'Téléphone *',
                   prefixIcon: Icon(Icons.phone_outlined),
-                  placeholder: 'Ex: 0197000000',
+                  hintText: 'Ex: 0197000000',
                 ),
                 keyboardType: TextInputType.phone,
                 validator: (v) {
@@ -279,15 +316,15 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
               else if (servicesState.hasValue)
                 ...servicesState.value!.map((service) {
                   return CheckboxListTile(
-                    title: Text(service.serviceNom),
+                    title: Text(service.nom),
                     activeColor: AppColors.medecin,
-                    value: _selectedServices.contains(service.service),
+                    value: _selectedServices.contains(service.id),
                     onChanged: (val) {
                       setState(() {
                         if (val == true) {
-                          _selectedServices.add(service.service);
+                          _selectedServices.add(service.id);
                         } else {
-                          _selectedServices.remove(service.service);
+                          _selectedServices.remove(service.id);
                         }
                       });
                     },
@@ -396,7 +433,7 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
 
   @override
   Widget build(BuildContext context) {
-    final servicesState = ref.watch(adminHopitalHopitalServicesProvider);
+    final servicesState = ref.watch(adminHopitalServicesProvider);
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -443,7 +480,7 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
                 decoration: const InputDecoration(
                   labelText: 'Téléphone *',
                   prefixIcon: Icon(Icons.phone_outlined),
-                  placeholder: 'Ex: 0197000000',
+                  hintText: 'Ex: 0197000000',
                 ),
                 keyboardType: TextInputType.phone,
                 validator: (v) {
@@ -526,15 +563,15 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
               else if (servicesState.hasValue)
                 ...servicesState.value!.map((service) {
                   return CheckboxListTile(
-                    title: Text(service.serviceNom),
+                    title: Text(service.nom),
                     activeColor: AppColors.medecin,
-                    value: _selectedServices.contains(service.service),
+                    value: _selectedServices.contains(service.id),
                     onChanged: (val) {
                       setState(() {
                         if (val == true) {
-                          _selectedServices.add(service.service);
+                          _selectedServices.add(service.id);
                         } else {
-                          _selectedServices.remove(service.service);
+                          _selectedServices.remove(service.id);
                         }
                       });
                     },

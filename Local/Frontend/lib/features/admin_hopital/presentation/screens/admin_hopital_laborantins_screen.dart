@@ -196,7 +196,7 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Téléphone *',
                   prefixIcon: Icon(Icons.phone_outlined),
-                  placeholder: 'Ex: 0197000000',
+                  hintText: 'Ex: 0197000000',
                 ),
                 keyboardType: TextInputType.phone,
                 validator: (v) {
@@ -213,7 +213,7 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
                 decoration: const InputDecoration(
                   labelText: 'Laboratoire',
                   prefixIcon: Icon(Icons.biotech_outlined),
-                  placeholder: 'Ex: Biochimie',
+                  hintText: 'Ex: Biochimie',
                 ),
               ),
               const SizedBox(height: 12),

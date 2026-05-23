@@ -96,9 +96,9 @@ class SuperAdminRemoteDatasource {
   Future<HopitalModel> createHopital(Map<String, dynamic> data) async {
     try {
       final response = await _client.post(ApiConstants.hopitaux, data: data);
-      final rd = response.data;
-      if (rd is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
-      return HopitalModel.fromJson(rd);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return HopitalModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -114,9 +114,9 @@ class SuperAdminRemoteDatasource {
         '${ApiConstants.hopitaux}$id/',
         data: data,
       );
-      final rd = response.data;
-      if (rd is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
-      return HopitalModel.fromJson(rd);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return HopitalModel.fromJson(responseData);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
@@ -208,6 +208,19 @@ class SuperAdminRemoteDatasource {
     }
   }
 
+  /// Mettre à jour un service global
+  Future<ServiceModel> updateService(int id, Map<String, dynamic> data) async {
+    try {
+      final response =
+          await _client.patch('${ApiConstants.services}$id/', data: data);
+      final responseData = response.data;
+      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
+      return ServiceModel.fromJson(responseData);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   /// Récupérer les services d'un hôpital précis
   Future<List<HopitalServiceModel>> getHopitalServices(int hopitalId) async {
     try {
@@ -276,16 +289,3 @@ class SuperAdminRemoteDatasource {
     }
   }
 }
-
-  /// Mettre à jour un service global
-  Future<ServiceModel> updateService(int id, Map<String, dynamic> data) async {
-    try {
-      final response =
-          await _client.patch('${ApiConstants.services}$id/', data: data);
-      final responseData = response.data;
-      if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
-      return ServiceModel.fromJson(responseData);
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
-    }
-  }

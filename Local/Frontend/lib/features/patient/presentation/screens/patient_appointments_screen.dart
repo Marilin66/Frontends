@@ -227,6 +227,44 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                             ),
                                           ),
                                         ],
+
+                                        // ── Bandeaux contextuels selon statut ──
+                                        if (rdv.statut == 'en_attente') ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.hourglass_top_rounded,
+                                            message: 'En attente de confirmation par le médecin',
+                                            color: Colors.amber.shade700,
+                                            bgColor: Colors.amber.shade50,
+                                          ),
+                                        ],
+                                        if (rdv.statut == 'confirme' && rdv.preEnregistrement == null) ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.edit_note_rounded,
+                                            message: 'Pensez à remplir votre fiche pré-consultation avant le RDV',
+                                            color: Colors.blue.shade700,
+                                            bgColor: Colors.blue.shade50,
+                                          ),
+                                        ],
+                                        if (rdv.statut == 'confirme' && rdv.preEnregistrement != null) ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.check_circle_rounded,
+                                            message: 'Fiche envoyée — votre médecin est informé de vos symptômes',
+                                            color: Colors.teal.shade700,
+                                            bgColor: Colors.teal.shade50,
+                                          ),
+                                        ],
+                                        if (rdv.statut == 'termine' && rdv.hasConsultation) ...[
+                                          const SizedBox(height: 8),
+                                          _ContextBanner(
+                                            icon: Icons.task_alt_rounded,
+                                            message: 'Consultation terminée — compte rendu disponible',
+                                            color: Colors.green.shade700,
+                                            bgColor: Colors.green.shade50,
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),
@@ -354,6 +392,30 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                   ),
                                 ),
                               ),
+                            // ── Bouton Annuler ─────────────────────────────────────────────────
+                            if (rdv.statut == 'en_attente' || rdv.statut == 'confirme')
+                              Container(
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: AppColors.error.withValues(alpha: 0.04),
+                                  borderRadius: const BorderRadius.only(
+                                    bottomLeft: Radius.circular(16),
+                                    bottomRight: Radius.circular(16),
+                                  ),
+                                ),
+                                child: TextButton.icon(
+                                  onPressed: () => _showCancelDialog(context, ref, rdv.id),
+                                  icon: const Icon(Icons.cancel_outlined, size: 18),
+                                  label: Text(
+                                    'Annuler ce rendez-vous',
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: AppColors.error,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       );
@@ -362,6 +424,63 @@ class PatientAppointmentsContent extends ConsumerWidget {
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelDialog(BuildContext context, WidgetRef ref, int rdvId) {
+    final commentCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Annuler ce rendez-vous ?',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Cette action est irréversible. Le médecin sera notifié.',
+              style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: commentCtrl,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Motif de l\'annulation (optionnel)…',
+                hintStyle: GoogleFonts.poppins(color: AppColors.textHint),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Retour'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final ok = await ref
+                  .read(patientRendezvousProvider.notifier)
+                  .annulerRendezvous(rdvId, commentCtrl.text.trim());
+              if (context.mounted) {
+                Helpers.showSnackBar(
+                  context,
+                  ok ? 'Rendez-vous annulé' : 'Erreur lors de l\'annulation',
+                  isError: !ok,
+                );
+              }
+            },
+            child: Text('Annuler le RDV',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -439,7 +558,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                 onChanged: (val) => _updateFilters(ref, selectedStatut, val),
               ),
               loading: () => const SizedBox(height: 40, child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
-              error: (_, __) => const SizedBox.shrink(),
+              error: (error, stackTrace) => const SizedBox.shrink(),
             ),
           ),
         ],
@@ -469,6 +588,49 @@ class _StatusChip extends StatelessWidget {
       onSelected: (_) => onSelected(),
       selectedColor: AppColors.primary.withValues(alpha: 0.2),
       labelStyle: TextStyle(color: isSelected ? AppColors.primary : AppColors.textSecondary),
+    );
+  }
+}
+
+/// Bandeau contextuel affiché sous les infos du RDV selon son statut
+class _ContextBanner extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final Color color;
+  final Color bgColor;
+
+  const _ContextBanner({
+    required this.icon,
+    required this.message,
+    required this.color,
+    required this.bgColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -120,7 +120,7 @@ class PublicHospitalSearchScreen extends ConsumerWidget {
                                         const SizedBox(width: 4),
                                         Expanded(
                                           child: Text(
-                                            h.adresse ?? 'Adresse non disponible',
+                                            h.adresse.isNotEmpty ? h.adresse : 'Adresse non disponible',
                                             style: GoogleFonts.poppins(fontSize: 13, color: AppColors.textSecondary),
                                           ),
                                         ),

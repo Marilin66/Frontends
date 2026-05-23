@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/brand_logo.dart';
 
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
@@ -40,9 +39,20 @@ class OnboardingScreen extends StatelessWidget {
       backgroundColor: Colors.white,
       elevation: 1,
       centerTitle: !isDesktop,
-      title: const BrandLogo(
-        logoSize: 40,
-        fontSize: 22,
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.health_and_safety, color: AppColors.primary, size: 32),
+          const SizedBox(width: 8),
+          Text(
+            'Hopitel',
+            style: GoogleFonts.poppins(
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
+          ),
+        ],
       ),
       actions: isDesktop
           ? [
@@ -229,6 +239,14 @@ class OnboardingScreen extends StatelessWidget {
               ),
               _buildFeatureCard(
                 context,
+                title: 'Assistant IA',
+                description: 'Posez vos questions médicales à notre assistant intelligent, disponible sans connexion.',
+                icon: Icons.smart_toy_rounded,
+                color: Colors.deepPurple,
+                route: '/chatbot',
+              ),
+              _buildFeatureCard(
+                context,
                 title: 'Suivi Patient Centralisé',
                 description: 'Connectez-vous pour voir vos RDV, vos résultats d\'analyses labo et contacter vos médecins.',
                 icon: Icons.folder_shared,
@@ -330,10 +348,20 @@ class OnboardingScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 24),
       child: Column(
         children: [
-          const BrandLogo(
-            logoSize: 28,
-            fontSize: 18,
-            textColor: Colors.white,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.health_and_safety, color: Colors.white, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                'Hopitel',
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Text(

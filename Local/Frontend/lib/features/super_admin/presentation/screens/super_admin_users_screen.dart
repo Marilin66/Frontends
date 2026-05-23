@@ -198,8 +198,8 @@ class SuperAdminUsersContent extends ConsumerWidget {
     final lastNameCtrl = TextEditingController();
     final telephoneCtrl = TextEditingController();
     final dateNaissanceCtrl = TextEditingController();
-    final hopitalCtrl = TextEditingController();
     String sexe = 'M';
+    int? selectedHopitalId;
 
     showDialog(
       context: context,
@@ -265,11 +265,19 @@ class SuperAdminUsersContent extends ConsumerWidget {
                     onChanged: (v) => setState(() => sexe = v ?? 'M'),
                   ),
                   const SizedBox(height: 8),
-                  TextFormField(
-                    controller: hopitalCtrl,
-                    decoration: const InputDecoration(labelText: 'ID Hôpital'),
-                    keyboardType: TextInputType.number,
-                    validator: (v) => v == null || v.isEmpty ? 'Requis' : null,
+                  // Dropdown hôpital (au lieu d'un champ texte ID)
+                  ref.watch(hopitauxProvider).when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (e, _) => Text('Erreur hôpitaux: $e'),
+                    data: (hopitaux) => DropdownButtonFormField<int>(
+                      decoration: const InputDecoration(labelText: 'Hôpital *'),
+                      value: selectedHopitalId,
+                      items: hopitaux
+                          .map((h) => DropdownMenuItem(value: h.id, child: Text(h.nom)))
+                          .toList(),
+                      onChanged: (v) => setState(() => selectedHopitalId = v),
+                      validator: (v) => v == null ? 'Requis' : null,
+                    ),
                   ),
                 ],
               ),
@@ -292,7 +300,7 @@ class SuperAdminUsersContent extends ConsumerWidget {
                   'telephone': telephoneCtrl.text.trim(),
                   'date_naissance': dateNaissanceCtrl.text.trim(),
                   'sexe': sexe,
-                  'hopital': int.tryParse(hopitalCtrl.text.trim()) ?? 0,
+                  'hopital': selectedHopitalId,
                 };
                 final success = await ref.read(adminHopitauxProvider.notifier).createAdminHopital(data);
                 if (context.mounted) {

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -31,6 +31,11 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging || _tabController.index != _tabController.previousIndex) {
+        setState(() {});
+      }
+    });
     _selectedDay = _focusedDay;
   }
 
@@ -150,8 +155,9 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                               );
                             },
                           );
-                          if (date != null)
+                          if (date != null) {
                             setModalState(() => dateSpecifique = date);
+                          }
                         },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -203,8 +209,9 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                                     context: context,
                                     initialTime: heureDebut,
                                   );
-                                  if (time != null)
+                                  if (time != null) {
                                     setModalState(() => heureDebut = time);
+                                  }
                                 },
                                 child: _buildTimeDisplay(heureDebut),
                               ),
@@ -223,8 +230,9 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
                                     context: context,
                                     initialTime: heureFin,
                                   );
-                                  if (time != null)
+                                  if (time != null) {
                                     setModalState(() => heureFin = time);
+                                  }
                                 },
                                 child: _buildTimeDisplay(heureFin),
                               ),
@@ -437,12 +445,18 @@ class _MedecinAgendaContentState extends ConsumerState<MedecinAgendaContent>
         children: [_buildAgendaTab(), _buildPlanningTab()],
       ),
       floatingActionButton: _tabController.index == 1
-          ? FloatingActionButton(
-              backgroundColor: AppColors.medecin,
-              child: const Icon(Icons.add, color: Colors.white),
-              onPressed: _addDispoDialog,
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: FloatingActionButton.extended(
+                onPressed: _addDispoDialog,
+                backgroundColor: AppColors.medecin,
+                elevation: 4,
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: Text('Ajouter', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600)),
+              ),
             )
           : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 

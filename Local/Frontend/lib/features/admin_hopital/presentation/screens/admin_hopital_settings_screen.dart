@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
@@ -252,7 +252,7 @@ class _AdminHopitalSettingsScreenState extends ConsumerState<AdminHopitalSetting
             leading: const Icon(Icons.language_outlined, color: AppColors.textSecondary),
             title: Text('Langue', style: GoogleFonts.poppins()),
             trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
-            onTap: () => context.go('/admin-hopital/language'),
+            onTap: () => context.push('/admin-hopital/language'),
           ),
           ListTile(
             leading: const Icon(Icons.lock_outline, color: AppColors.textSecondary),
@@ -326,34 +326,5 @@ class _AdminHopitalSettingsScreenState extends ConsumerState<AdminHopitalSetting
         );
       }
     }
-  }
-}
-
-class _SettingsItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final Color? color;
-
-  const _SettingsItem({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: color ?? AppColors.textSecondary),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          color: color ?? AppColors.textPrimary,
-        ),
-      ),
-      trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
-      onTap: onTap,
-    );
   }
 }

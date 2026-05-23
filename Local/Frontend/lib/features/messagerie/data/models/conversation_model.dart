@@ -12,6 +12,7 @@ class ConversationModel {
   /// Indique si la consultation liée est clôturée (ajouté par le backend).
   /// Si true, l'envoi de messages doit être désactivé côté UI.
   final bool estCloture;
+  final String? contactPhoto;
 
   ConversationModel({
     this.consultationId,
@@ -25,6 +26,7 @@ class ConversationModel {
     required this.dateDernierMessage,
     this.nonLus = 0,
     this.estCloture = false,
+    this.contactPhoto,
   });
 
   factory ConversationModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,7 @@ class ConversationModel {
       dateDernierMessage: json['date_dernier_message'] as String? ?? '',
       nonLus: json['non_lus'] as int? ?? 0,
       estCloture: json['est_cloture'] as bool? ?? false,
+      contactPhoto: json['contact_photo'] as String?,
     );
   }
 }

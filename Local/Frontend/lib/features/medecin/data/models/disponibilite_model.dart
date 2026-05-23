@@ -37,7 +37,7 @@ class DisponibiliteModel {
       jourSemaine: json['jour_semaine'] as int?,
       jourSemaineDisplay: json['jour_semaine_display'] as String?,
       dateSpecifique: json['date_specifique'] != null
-          ? DateTime.tryParse(json['date_specifique'].toString())
+          ? DateTime.tryParse(json['date_specifique'].toString()) 
           : null,
       heureDebut: json['heure_debut'] as String? ?? '',
       heureFin: json['heure_fin'] as String? ?? '',

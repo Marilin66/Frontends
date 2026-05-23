@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../features/notifications/presentation/providers/notification_provider.dart';
 
 class ResponsiveShellLayout extends StatelessWidget {
   final Widget child;
@@ -128,9 +130,39 @@ class ResponsiveShellLayout extends StatelessWidget {
                     ),
                   ),
                   actions: [
-                    IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary),
-                      onPressed: () => onDestinationSelected(-1),
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final unreadCount = ref.watch(unreadNotificationCountProvider);
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textPrimary),
+                              onPressed: () => onDestinationSelected(-1),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    unreadCount > 9 ? '9+' : unreadCount.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(width: 8),
                   ],

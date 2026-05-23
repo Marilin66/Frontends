@@ -185,6 +185,7 @@ class _LaborantinManualInscriptionSheetState extends ConsumerState<LaborantinMan
       }
     } catch (e) {
       if (mounted) {
+        // ApiException.toString() retourne directement le message du backend
         final msg = e.toString().replaceAll('Exception: ', '');
         Helpers.showSnackBar(
           context,

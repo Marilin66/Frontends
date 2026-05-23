@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -137,7 +137,7 @@ class MedecinHomeContent extends ConsumerWidget {
             // ── Rendez-vous du jour ──────────────────────────────────
             _SectionHeader(
               title: 'Rendez-vous du jour',
-              onSeeAll: () => context.go('/medecin/rendezvous'),
+              onSeeAll: () => context.go('/medecin/agenda'),
             ),
             const SizedBox(height: 8),
             rdvAsync.when(

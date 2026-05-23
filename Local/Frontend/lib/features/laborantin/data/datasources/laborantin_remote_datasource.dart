@@ -95,4 +95,18 @@ class LaborantinRemoteDatasource {
       throw ApiException.fromDioError(e);
     }
   }
+
+  // --- Patients du laborantin ---
+  Future<List<UserModel>> getMyPatients() async {
+    try {
+      final response = await _client.get('${ApiConstants.laborantins}patients/');
+      final data = response.data;
+      final results = data is List ? data : (data['results'] as List<dynamic>?) ?? [];
+      return results
+          .map((e) => UserModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
 }

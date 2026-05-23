@@ -100,7 +100,17 @@ class _PatientIntakeScreenState extends ConsumerState<PatientIntakeScreen> {
       if (_isEditMode) {
         await client.put(url, data: payload);
       } else {
-        await client.post(url, data: payload);
+        try {
+          await client.post(url, data: payload);
+        } on DioException catch (e) {
+          // Si la fiche existe déjà (400), on bascule en PUT automatiquement
+          if (e.response?.statusCode == 400) {
+            await client.put(url, data: payload);
+            _isEditMode = true;
+          } else {
+            rethrow;
+          }
+        }
       }
       if (mounted) {
         setState(() => _saved = true);
@@ -109,10 +119,28 @@ class _PatientIntakeScreenState extends ConsumerState<PatientIntakeScreen> {
       }
     } on DioException catch (e) {
       if (mounted) {
+        // Extraire le vrai message d'erreur du backend
+        String errorMsg = 'Erreur lors de la sauvegarde.';
+        final data = e.response?.data;
+        if (data is Map) {
+          if (data['error'] != null) {
+            errorMsg = data['error'].toString();
+          } else if (data['detail'] != null) {
+            errorMsg = data['detail'].toString();
+          } else if (data['symptomes_principaux'] != null) {
+            errorMsg = 'Symptômes : ${data['symptomes_principaux']}';
+          } else {
+            errorMsg = data.values.first.toString();
+          }
+        } else {
+          errorMsg = ApiException.fromDioError(e).message;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(ApiException.fromDioError(e).message),
+            content: Text(errorMsg),
             backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }

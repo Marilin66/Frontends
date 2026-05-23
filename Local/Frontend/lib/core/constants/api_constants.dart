@@ -75,7 +75,9 @@ class ApiConstants {
   // Chatbot
   static const String chatbotMessage = 'chatbot/message/';
   static const String chatbotHistory = 'chatbot/history/';
+  static const String chatbotSessions = 'chatbot/sessions/';
 
   // Notifications
   static const String notifications = 'notifications/';
+  static const String markAllRead = 'notifications/mark-all-read/';
 }

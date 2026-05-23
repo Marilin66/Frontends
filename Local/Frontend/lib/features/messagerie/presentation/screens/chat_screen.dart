@@ -693,7 +693,6 @@ class _MessageBubble extends StatelessWidget {
         );
 
       case TypeMessage.texte:
-      default:
         return Text(
           message.contenu,
           style: GoogleFonts.poppins(

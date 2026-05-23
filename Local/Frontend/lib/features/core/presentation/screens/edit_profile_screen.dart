@@ -7,8 +7,6 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/helpers.dart';
-import '../../../../core/widgets/animated_tap.dart';
-import '../../../../core/widgets/fluid_card.dart';
 import '../../../../core/widgets/safe_pop_scope.dart';
 import '../../../../core/widgets/universal_back_button.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';

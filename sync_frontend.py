@@ -38,10 +38,10 @@ def sync_folders():
 
     new_pub = local_content
     # Inject dev dependency if not there
-    if dev_deps_match and "flutter_launcher_icons:" not in new_pub.split("dev_dependencies:")[1].split("flutter:")[0]:
+    if dev_deps_match and "flutter_launcher_icons:" not in new_pub.split("dev_dependencies:")[1].split("\nflutter:")[0]:
         new_pub = new_pub.replace("dev_dependencies:", "dev_dependencies:\n  " + dev_deps_match.group(0))
 
-    if match and "flutter_launcher_icons:" not in new_pub.split("flutter:")[1]:
+    if match and "flutter_launcher_icons:" not in new_pub.split("\nflutter:")[1]:
         new_pub = new_pub + "\n" + match.group(0) + "\n"
 
     with open(enligne_pub, "w", encoding="utf-8") as f:

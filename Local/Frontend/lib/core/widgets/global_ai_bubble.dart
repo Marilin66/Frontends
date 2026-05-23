@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -70,7 +70,7 @@ class _GlobalAIBubbleState extends ConsumerState<GlobalAIBubble> {
                 onPressed: () {
                   final router = ref.read(routerProvider);
                   // Push the chatbot route
-                  router.push('/patient/chatbot');
+                  router.push('/chatbot');
                 },
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

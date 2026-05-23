@@ -411,28 +411,31 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppColors.textHint),
-        const SizedBox(width: 8),
-        Text(
-          '$label : ',
+    final children = <Widget>[
+      Icon(icon, size: 16, color: AppColors.textHint),
+      const SizedBox(width: 8),
+      Text(
+        '$label : ',
+        style: GoogleFonts.poppins(
+            fontSize: 13, color: AppColors.textSecondary),
+      ),
+      Expanded(
+        child: Text(
+          value,
           style: GoogleFonts.poppins(
-              fontSize: 13, color: AppColors.textSecondary),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary),
+          overflow: TextOverflow.ellipsis,
         ),
-        Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (trailing != null) trailing!,
-      ],
-    );
+      ),
+    ];
+    
+    if (trailing != null) {
+      children.add(trailing!);
+    }
+    
+    return Row(children: children);
   }
 }
 

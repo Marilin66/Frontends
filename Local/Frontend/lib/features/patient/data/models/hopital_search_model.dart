@@ -163,8 +163,7 @@ class HopitalSearchModel {
       isActive: json['is_active'] as bool? ?? true,
       dateCreation: json['date_creation'] as String? ?? '',
       services: (json['services'] as List<dynamic>?)
-              ?.where((e) => e != null)
-              .map((e) =>
+              ?.map((e) =>
                   HopitalServiceModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
