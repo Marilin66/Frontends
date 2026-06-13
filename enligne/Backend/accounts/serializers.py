@@ -92,8 +92,8 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
             date_naissance=validated_data.get('date_naissance'),
             sexe=validated_data.get('sexe', 'M'),
             role='patient',
-            is_active=True,           # TODO: remettre à False quand on réactive la confirmation email
-            is_email_verified=True,   # TODO: remettre à False quand on réactive la confirmation email
+            is_active=False,
+            is_email_verified=False,
         )
 
         # Créer le profil patient

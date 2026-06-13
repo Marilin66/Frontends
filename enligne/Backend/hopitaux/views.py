@@ -4,6 +4,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+import logging
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
@@ -21,6 +23,8 @@ from .serializers import (
     DemandeAjoutServiceSerializer, DemandeAjoutServiceCreateSerializer, DemandeRefusSerializer,
 )
 
+
+logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────
 # Hôpitaux
@@ -621,9 +625,7 @@ class NearbyHospitalView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            print(f"DEBUG: Erreur inattendue dans NearbyHospitalView : {str(e)}")
-            import traceback
-            traceback.print_exc()
+            logger.exception("Erreur inattendue dans NearbyHospitalView")
             return Response(
                 {'error': f'Erreur inattendue : {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

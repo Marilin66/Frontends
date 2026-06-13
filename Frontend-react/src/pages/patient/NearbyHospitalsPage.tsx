@@ -1,9 +1,6 @@
-// @ts-nocheck
 import { useState, useEffect, useCallback } from 'react';
 import { api, endpoints } from '@/services/api';
-// @ts-ignore
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
-// @ts-ignore
 import L from 'leaflet';
 import { Card, CardContent, Button, Badge } from '@/components/ui';
 import { Search, Star, ArrowLeft, MapPin, Zap, Navigation, Loader2, AlertCircle, X, List, Map, ChevronRight } from 'lucide-react';

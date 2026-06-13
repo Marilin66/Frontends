@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -77,7 +76,6 @@ export default function AIAgentPage() {
   const fetchSessions = async () => {
     try {
       const response = await api.get<any>(endpoints.chatbotSessions);
-      console.log('Chatbot sessions response:', response);
       const data = Array.isArray(response) ? response : (response?.results ?? response?.data ?? response?.sessions ?? []);
       setSessions(data);
     } catch (err) {
@@ -157,8 +155,6 @@ export default function AIAgentPage() {
         message: text,
         session_id: currentSessionId,
       });
-
-      console.log('Chatbot response:', data);
 
       if (data.session_id && data.session_id !== currentSessionId) {
         setCurrentSessionId(data.session_id);

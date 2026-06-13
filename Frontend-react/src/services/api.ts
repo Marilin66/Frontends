@@ -1,4 +1,3 @@
-// @ts-nocheck
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // API Configuration

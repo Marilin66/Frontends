@@ -5,10 +5,14 @@ Module isolé pour faciliter une future migration vers PostGIS.
 Utilise geopy.distance.geodesic pour un calcul précis (ellipsoïde WGS-84).
 """
 
+import logging
+
 from geopy.distance import geodesic
 
 from .models import Hopital
 
+
+logger = logging.getLogger(__name__)
 
 def calculate_distance(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     """
@@ -66,7 +70,7 @@ def get_nearby_hospitals(
                 })
         except (ValueError, TypeError, Exception) as e:
             # Ignorer cet hôpital si le calcul échoue mais continuer la boucle
-            print(f"Erreur calcul distance pour hôpital {hospital.id}: {e}")
+            logger.warning("Erreur calcul distance pour hôpital %s: %s", hospital.id, e)
             continue
 
     # Tri par distance croissante + limitation

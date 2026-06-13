@@ -242,7 +242,7 @@ class _LaborantinFormDialogState extends ConsumerState<LaborantinFormDialog> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _sexe,
+                initialValue: _sexe,
                 decoration: const InputDecoration(
                   labelText: 'Sexe *',
                   prefixIcon: Icon(Icons.wc_outlined),
