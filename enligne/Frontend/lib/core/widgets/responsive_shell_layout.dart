@@ -29,7 +29,6 @@ class ResponsiveShellLayout extends StatelessWidget {
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
         final isTablet = constraints.maxWidth >= 600 && constraints.maxWidth < 1100;
-
         if (isMobile) {
           final state = GoRouterState.of(context);
           final pathSegments = state.uri.pathSegments;

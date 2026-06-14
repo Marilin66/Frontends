@@ -78,6 +78,7 @@ class RendezVousMedecinModel {
   }
 
   RendezVousMedecinModel copyWith({
+
     int? id,
     int? patient,
     String? patientNom,

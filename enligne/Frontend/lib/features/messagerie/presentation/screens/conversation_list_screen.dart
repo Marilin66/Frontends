@@ -92,12 +92,18 @@ class _ConversationListScreenState
 
   // ── Navigation vers le chat ────────────────────────────────────────────────
 
-  void _openChat(BuildContext context, {int? destinataireId, int? consultationId, required String nom}) {
+  void _openChat(BuildContext context, {int? destinataireId, int? consultationId, required String nom, String? photo}) {
     final location = GoRouterState.of(context).matchedLocation;
     if (consultationId != null) {
-      context.push('$location/consultation/$consultationId');
+      context.push(
+        '$location/consultation/$consultationId',
+        extra: {'contactName': nom, 'contactPhoto': photo},
+      );
     } else if (destinataireId != null) {
-      context.push('$location/direct/$destinataireId');
+      context.push(
+        '$location/direct/$destinataireId',
+        extra: {'contactName': nom, 'contactPhoto': photo},
+      );
     }
   }
 
@@ -246,6 +252,7 @@ class _ConversationListScreenState
                             consultationId: conv.consultationId,
                             destinataireId: conv.destinataireId,
                             nom: conv.titre,
+                            photo: conv.contactPhoto,
                           ),
                         );
                       },
@@ -300,6 +307,7 @@ class _ConversationListScreenState
                             context,
                             destinataireId: contact.id,
                             nom: contact.nom,
+                            photo: contact.photo,
                           ),
                         );
                       },

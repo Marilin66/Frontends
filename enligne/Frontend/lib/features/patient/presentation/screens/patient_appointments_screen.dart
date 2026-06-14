@@ -380,7 +380,7 @@ class PatientAppointmentsContent extends ConsumerWidget {
                                   ),
                                 ),
                                 child: TextButton.icon(
-                                  onPressed: () => context.go('/messagerie/consultation/${rdv.consultationId}'),
+                                  onPressed: () => context.go('/patient/messagerie/consultation/${rdv.consultationId}'),
                                   icon: const Icon(Icons.chat_bubble_outline, size: 18),
                                   label: Text(
                                     'Accéder à la conversation',

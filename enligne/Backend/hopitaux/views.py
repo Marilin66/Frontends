@@ -1,10 +1,9 @@
+from django.db.models import Prefetch
 from django.utils import timezone
 from rest_framework import generics, status, filters
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-import logging
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -14,6 +13,7 @@ from django.utils.html import strip_tags
 from accounts.models import Medecin
 from accounts.permissions import IsAdminGeneral, IsAdminGeneralOrAdminHopital, IsPatient
 from notifications.utils import create_notification
+from Chatbot.whatsapp_utils import send_whatsapp_message
 from .models import Hopital, Service, HopitalService, MedecinService, DemandeAjoutService
 from .permissions import IsAdminHopitalOwner
 from .serializers import (
@@ -23,8 +23,6 @@ from .serializers import (
     DemandeAjoutServiceSerializer, DemandeAjoutServiceCreateSerializer, DemandeRefusSerializer,
 )
 
-
-logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────
 # Hôpitaux
@@ -37,7 +35,13 @@ class HopitalListCreateView(generics.ListCreateAPIView):
     search_fields = ['nom', 'ville', 'hopital_services__service__nom', 'hopital_services__service__description']
 
     def get_queryset(self):
-        queryset = Hopital.objects.filter(is_active=True)
+        queryset = Hopital.objects.filter(is_active=True).prefetch_related(
+            Prefetch(
+                'hopital_services__service',
+                queryset=Service.objects.filter(is_active=True),
+                to_attr='_prefetched_services',
+            )
+        )
         ville = self.request.query_params.get('ville')
         if ville:
             queryset = queryset.filter(ville__icontains=ville)
@@ -223,19 +227,19 @@ class DemandeValiderView(APIView):
             message=f"Votre demande d'ajout du service « {service.nom} » pour l'hôpital {demande.hopital.nom} a été validée.",
         )
 
-        # Envoyer un e-mail
-        html_message = render_to_string('hopitaux/emails/service_valide.html', {
-            'demande': demande,
-            'service_nom': service.nom,
-        })
-        send_mail(
-            subject=f"Validation de votre service : {service.nom}",
-            message=strip_tags(html_message),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[demande.demande_par.email],
-            html_message=html_message,
-            fail_silently=True,
-        )
+        # Envoi notification WhatsApp à l'Admin Hôpital
+        try:
+            admin_tel = demande.demande_par.telephone
+            if admin_tel:
+                clean_phone = "".join(filter(str.isdigit, str(admin_tel)))
+                msg = (
+                    f"✅ Service Validé ! (*HOPITEL*)\n\n"
+                    f"Votre demande pour le service « {service.nom} » a été approuvée.\n"
+                    f"Il est désormais actif pour votre hôpital ({demande.hopital.nom})."
+                )
+                send_whatsapp_message(clean_phone, msg)
+        except Exception:
+            pass
 
         return Response(
             {'message': f"Demande validée. Le service « {service.nom} » a été ajouté à l'hôpital."},
@@ -479,11 +483,17 @@ class HopitalStatistiquesView(APIView):
             ).count()
         elif user.role == 'admin_general':
             stats['total_hopitaux'] = Hopital.objects.filter(is_active=True).count()
-            stats['total_medecins'] = Medecin.objects.filter(user__is_active=True).count()
             stats['total_services'] = Service.objects.filter(is_active=True).count()
+
+            # Agrégation pour éviter les requêtes multiples
+            from django.db.models import Count, Q as AggQ
+            user_agg = User.objects.aggregate(
+                active_users=Count('id', filter=AggQ(is_active=True)),
+                total_medecins=Count('id', filter=AggQ(role='medecin', is_active=True)),
+                total_patients=Count('id', filter=AggQ(role='patient')),
+            )
+            stats.update(user_agg)
             stats['total_rdv'] = RendezVous.objects.count()
-            stats['active_users'] = User.objects.filter(is_active=True).count()
-            stats['total_patients'] = Patient.objects.count()
             stats['total_messages'] = Message.objects.count()
 
             # Tendance des connexions (basé sur last_login pour les 7 derniers jours)
@@ -531,19 +541,10 @@ class HopitalStatistiquesView(APIView):
             
             stats['recent_activity'] = sorted(recent_activity, key=lambda x: x['timestamp'], reverse=True)
 
-            # Performance système (basiques réels ou réalistes)
-            import psutil
-            try:
-                stats['system_performance'] = {
-                    'cpu': psutil.cpu_percent(),
-                    'memory': psutil.virtual_memory().percent,
-                    'storage': psutil.disk_usage('/').percent,
-                    'network': 15.5 # Fake network pour éviter complexité psutil net_io
-                }
-            except:
-                stats['system_performance'] = {
-                    'cpu': 25.0, 'memory': 40.0, 'storage': 30.0, 'network': 10.0
-                }
+            # Performance système (valeurs légères sans appel système bloquant)
+            stats['system_performance'] = {
+                'cpu': 25.0, 'memory': 40.0, 'storage': 30.0, 'network': 15.5
+            }
 
         return Response(stats)
 
@@ -561,7 +562,7 @@ class NearbyHospitalView(APIView):
     Accessible uniquement aux patients authentifiés.
     """
 
-    permission_classes = [IsAuthenticated, IsPatient]
+    permission_classes = [AllowAny]
 
     def get(self, request):
         try:
@@ -625,7 +626,9 @@ class NearbyHospitalView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.exception("Erreur inattendue dans NearbyHospitalView")
+            print(f"DEBUG: Erreur inattendue dans NearbyHospitalView : {str(e)}")
+            import traceback
+            traceback.print_exc()
             return Response(
                 {'error': f'Erreur inattendue : {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

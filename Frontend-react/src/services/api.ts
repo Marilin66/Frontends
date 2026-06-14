@@ -173,12 +173,12 @@ export const endpoints = {
   analyses: '/analyses/',
   demandesAnalyse: '/analyses/',
   cloturerAnalyse: (id: number) => `/analyses/${id}/cloturer/`,
-  laborantinPatients: '/laborantins/patients/',
   getResultatByCode: (code: string) => `/resultats/acces/${code}/`,
 
   // Messaging & Notifications
   conversations: '/conversations/',
   messages: '/messages/',
+  messageMarkRead: (id: number) => `/messages/${id}/mark-read/`,
   notifications: '/notifications/',
   markAllRead: '/notifications/mark-all-read/',
   chatbot: '/chatbot/message/',

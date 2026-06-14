@@ -95,7 +95,7 @@ class MedecinHomeContent extends ConsumerWidget {
                     icon: Icons.message_outlined,
                     label: 'Mes Messages',
                     color: AppColors.secondary,
-                    onTap: () => context.go('/medecin/messages'),
+                    onTap: () => context.go('/medecin/messagerie'),
                   ),
                 ),
               ],

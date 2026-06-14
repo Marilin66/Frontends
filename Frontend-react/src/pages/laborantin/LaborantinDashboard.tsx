@@ -12,8 +12,8 @@ export default function LaborantinDashboard() {
 
   useEffect(() => {
     Promise.all([
-      api.get(endpoints.demandesAnalyse),
-      api.get(endpoints.resultats),
+      api.get(endpoints.analyses),    // demandes d'analyse du labo
+      api.get(endpoints.resultats),   // résultats déjà clôturés
     ]).then(([d, r]: any) => {
       setDemandes(Array.isArray(d) ? d : d.results || []);
       setResultats(Array.isArray(r) ? r : r.results || []);

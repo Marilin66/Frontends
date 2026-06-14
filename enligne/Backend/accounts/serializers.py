@@ -11,6 +11,33 @@ User = get_user_model()
 # Serializers de base pour les profils
 # ──────────────────────────────────────────────
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        
+        # Vérifier si l'utilisateur veut rester connecté
+        stay_logged_in = self.context['request'].data.get('stay_logged_in', False)
+        
+        if str(stay_logged_in).lower() in ['true', '1', 't', 'y', 'yes']:
+            from datetime import timedelta
+            # En prolongeant le token (ex: 30 jours) si la case est cochée
+            refresh = self.get_token(self.user)
+            refresh.set_exp(lifetime=timedelta(days=30))
+            data['refresh'] = str(refresh)
+            data['access'] = str(refresh.access_token)
+        
+        # Ajouter le rôle et info user au retour par défaut (très utile pour le frontend)
+        data['user'] = {
+            'id': self.user.id,
+            'email': self.user.email,
+            'first_name': self.user.first_name,
+            'last_name': self.user.last_name,
+            'role': self.user.role,
+        }
+        return data
+
 class PatientProfileSerializer(serializers.ModelSerializer):
     """Serializer pour le profil patient (champs spécifiques)."""
 
@@ -18,7 +45,7 @@ class PatientProfileSerializer(serializers.ModelSerializer):
         model = Patient
         fields = [
             'contact_urgence_nom', 'contact_urgence_tel',
-            'groupe_sanguin', 'allergies', 'numero_secu',
+            'groupe_sanguin', 'allergies', 'numero_secu', 'npi',
         ]
 
 
@@ -66,7 +93,7 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'password_confirm': 'Les mots de passe ne correspondent pas.'})
         
         # Validation et formatage du téléphone
-        from .twilio_utils import validate_and_format_benin_phone
+        from .utils import validate_and_format_benin_phone
         tel = attrs.get('telephone')
         formatted_tel = validate_and_format_benin_phone(tel)
         if not formatted_tel:
@@ -92,8 +119,8 @@ class PatientRegisterSerializer(serializers.ModelSerializer):
             date_naissance=validated_data.get('date_naissance'),
             sexe=validated_data.get('sexe', 'M'),
             role='patient',
-            is_active=False,
-            is_email_verified=False,
+            is_active=False,           # TODO: remettre à False quand on réactive la confirmation email
+            is_email_verified=False,   # TODO: remettre à False quand on réactive la confirmation email
         )
 
         # Créer le profil patient
@@ -217,7 +244,7 @@ class MedecinCreateSerializer(serializers.ModelSerializer):
             )
 
         # Validation et formatage du téléphone
-        from .twilio_utils import validate_and_format_benin_phone
+        from .utils import validate_and_format_benin_phone
         tel = attrs.get('telephone')
         formatted_tel = validate_and_format_benin_phone(tel)
         if not formatted_tel:
@@ -247,8 +274,8 @@ class MedecinCreateSerializer(serializers.ModelSerializer):
             sexe=validated_data.get('sexe', 'M'),
             role='medecin',
             hopital_id=hopital_id,
-            is_active=True,
-            is_email_verified=True,
+            is_active=False,
+            is_email_verified=False,
         )
 
         numero_ordre = validated_data.get('numero_ordre', '')
@@ -266,6 +293,8 @@ class MedecinCreateSerializer(serializers.ModelSerializer):
 
         # Envoyer l'email avec le mot de passe
         send_account_created_email(user, password)
+        from .utils import send_account_created_whatsapp
+        send_account_created_whatsapp(user, password)
 
         return medecin
 
@@ -301,7 +330,6 @@ class MedecinListSerializer(serializers.ModelSerializer):
     is_email_verified = serializers.BooleanField(source='user.is_email_verified', read_only=True, default=False)
     date_joined = serializers.DateTimeField(source='user.date_joined', read_only=True)
     last_login = serializers.DateTimeField(source='user.last_login', read_only=True)
-    service_ids = serializers.SerializerMethodField()
 
     class Meta:
         model = Medecin
@@ -311,11 +339,7 @@ class MedecinListSerializer(serializers.ModelSerializer):
             'hopital', 'hopital_nom', 'photo',
             'is_active', 'is_email_verified', 'date_joined', 'last_login',
             'numero_ordre', 'biographie', 'statut',
-            'service_ids',
         ]
-
-    def get_service_ids(self, obj):
-        return list(obj.medecin_services.values_list('service_id', flat=True))
 
 
 class MedecinUpdateSerializer(serializers.ModelSerializer):
@@ -327,16 +351,13 @@ class MedecinUpdateSerializer(serializers.ModelSerializer):
     date_naissance = serializers.DateField(source='user.date_naissance', required=False)
     sexe = serializers.ChoiceField(source='user.sexe', choices=User.Sexe.choices, required=False)
     adresse = serializers.CharField(source='user.adresse', required=False)
-    service_ids = serializers.ListField(
-        child=serializers.IntegerField(), required=False, write_only=True
-    )
 
     class Meta:
         model = Medecin
         fields = [
             'first_name', 'last_name', 'telephone',
             'date_naissance', 'sexe', 'adresse',
-            'biographie', 'statut', 'service_ids',
+            'biographie', 'statut',
         ]
 
     def update(self, instance, validated_data):
@@ -345,13 +366,6 @@ class MedecinUpdateSerializer(serializers.ModelSerializer):
             setattr(instance.user, attr, value)
         if user_data:
             instance.user.save()
-
-        service_ids = validated_data.pop('service_ids', None)
-        if service_ids is not None:
-            from hopitaux.models import MedecinService
-            instance.medecin_services.all().delete()
-            for s_id in service_ids:
-                MedecinService.objects.create(medecin=instance, service_id=s_id)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -403,7 +417,7 @@ class LaborantinCreateSerializer(serializers.ModelSerializer):
             )
 
         # Validation et formatage du téléphone
-        from .twilio_utils import validate_and_format_benin_phone
+        from .utils import validate_and_format_benin_phone
         tel = attrs.get('telephone')
         formatted_tel = validate_and_format_benin_phone(tel)
         if not formatted_tel:
@@ -431,8 +445,8 @@ class LaborantinCreateSerializer(serializers.ModelSerializer):
             sexe=validated_data['sexe'],
             role='laborantin',
             hopital_id=hopital_id,
-            is_active=True,
-            is_email_verified=True,
+            is_active=False,
+            is_email_verified=False,
         )
 
         laborantin = Laborantin.objects.create(
@@ -441,6 +455,8 @@ class LaborantinCreateSerializer(serializers.ModelSerializer):
         )
 
         send_account_created_email(user, password)
+        from .utils import send_account_created_whatsapp
+        send_account_created_whatsapp(user, password)
 
         return laborantin
 
@@ -567,7 +583,7 @@ class AdminHopitalCreateSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         # Validation et formatage du téléphone
-        from .twilio_utils import validate_and_format_benin_phone
+        from .utils import validate_and_format_benin_phone
         tel = attrs.get('telephone')
         formatted_tel = validate_and_format_benin_phone(tel)
         if not formatted_tel:
@@ -598,11 +614,13 @@ class AdminHopitalCreateSerializer(serializers.Serializer):
             sexe=validated_data['sexe'],
             role='admin_hopital',
             hopital_id=validated_data['hopital'],
-            is_active=True,
-            is_email_verified=True,
+            is_active=False,
+            is_email_verified=False,
         )
 
         send_account_created_email(user, password)
+        from .utils import send_account_created_whatsapp
+        send_account_created_whatsapp(user, password)
 
         return user
 

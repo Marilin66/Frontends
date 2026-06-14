@@ -32,9 +32,8 @@ export default function PatientsPage() {
   const fetchPatients = async () => {
     setIsLoading(true);
     try {
-      let endpoint = endpoints.patients;
-      if (user?.role === 'admin_hopital') endpoint = endpoints.hopitalPatients;
-      const response: any = await api.get(endpoint);
+      // Tous les rôles utilisent le même endpoint — le backend filtre selon l'utilisateur connecté
+      const response: any = await api.get(endpoints.patients);
       const data = Array.isArray(response) ? response : response.results ?? [];
       setPatients(data);
     } catch (e) { console.error(e); }

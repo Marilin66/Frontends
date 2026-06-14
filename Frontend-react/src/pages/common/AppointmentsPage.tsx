@@ -230,7 +230,7 @@ export default function AppointmentsPage() {
                   {/* Pré-consultation */}
                   {(apt.statut === 'confirme' || apt.statut === 'en_attente') && (
                     <Link
-                      to={`/patient/rdv/${apt.id}/intake/${encodeURIComponent(apt._medecin)}`}
+                      to={`/patient/rdv/${apt.id}/intake?medecin=${encodeURIComponent(apt._medecin)}`}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
                         apt.pre_enregistrement
                           ? 'bg-teal-50 border-teal-200 text-teal-700 hover:bg-teal-100'

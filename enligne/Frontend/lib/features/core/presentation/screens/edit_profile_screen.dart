@@ -31,6 +31,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late final TextEditingController _adresseController;
   late final TextEditingController _allergiesController;
   late final TextEditingController _secuController;
+  late final TextEditingController _npiController;      // ← NPI ajouté
   late final TextEditingController _urgenceNomController;
   late final TextEditingController _urgenceTelController;
   DateTime? _selectedBirthDate;
@@ -57,12 +58,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       final p = user!.patientProfile!;
       _allergiesController = TextEditingController(text: p['allergies'] as String?);
       _secuController = TextEditingController(text: p['numero_secu'] as String?);
+      _npiController = TextEditingController(text: p['npi'] as String?);
       _urgenceNomController = TextEditingController(text: p['contact_urgence_nom'] as String?);
       _urgenceTelController = TextEditingController(text: p['contact_urgence_tel'] as String?);
       _selectedGroupeSanguin = p['groupe_sanguin'] as String?;
     } else {
       _allergiesController = TextEditingController();
       _secuController = TextEditingController();
+      _npiController = TextEditingController();
       _urgenceNomController = TextEditingController();
       _urgenceTelController = TextEditingController();
     }
@@ -83,6 +86,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _adresseController.dispose();
     _allergiesController.dispose();
     _secuController.dispose();
+    _npiController.dispose();
     _urgenceNomController.dispose();
     _urgenceTelController.dispose();
     super.dispose();
@@ -104,6 +108,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         'groupe_sanguin': _selectedGroupeSanguin,
         'allergies': _allergiesController.text.trim(),
         'numero_secu': _secuController.text.trim(),
+        'npi': _npiController.text.trim().isEmpty ? null : _npiController.text.trim(),
         'contact_urgence_nom': _urgenceNomController.text.trim(),
         'contact_urgence_tel': _urgenceTelController.text.trim(),
       };
@@ -350,7 +355,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               TextFormField(
                 controller: _secuController,
                 onChanged: (_) => _markDirty(),
-                decoration: const InputDecoration(labelText: 'Numéro Sécurité (NPI)', prefixIcon: Icon(Icons.badge_outlined)),
+                decoration: const InputDecoration(labelText: 'Numéro de sécurité sociale (optionnel)', prefixIcon: Icon(Icons.badge_outlined)),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _npiController,
+                onChanged: (_) => _markDirty(),
+                decoration: const InputDecoration(
+                  labelText: 'NPI — Numéro Personnel d\'Identification *',
+                  prefixIcon: Icon(Icons.fingerprint_outlined),
+                  helperText: 'Requis pour réserver un rendez-vous médical',
+                  helperStyle: TextStyle(color: Colors.orange),
+                ),
               ),
             ],
           ),

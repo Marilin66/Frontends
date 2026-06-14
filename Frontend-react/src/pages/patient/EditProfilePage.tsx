@@ -30,6 +30,7 @@ export default function EditProfilePage() {
     // Étape 2 — Dossier médical (patient_profile)
     groupe_sanguin: user?.patient_profile?.groupe_sanguin || '',
     allergies: user?.patient_profile?.allergies || '',
+    npi: user?.patient_profile?.npi || '',
     numero_secu: user?.patient_profile?.numero_secu || '',
     // Étape 3 — Contact d'urgence
     contact_urgence_nom: user?.patient_profile?.contact_urgence_nom || '',
@@ -58,6 +59,7 @@ export default function EditProfilePage() {
         patient_profile: {
           groupe_sanguin: form.groupe_sanguin,
           allergies: form.allergies,
+          npi: form.npi || null,
           numero_secu: form.numero_secu,
           contact_urgence_nom: form.contact_urgence_nom,
           contact_urgence_tel: form.contact_urgence_tel,
@@ -250,6 +252,15 @@ export default function EditProfilePage() {
               value={form.numero_secu}
               onChange={(e) => setForm({ ...form, numero_secu: e.target.value })}
               placeholder="Ex: 1 85 07 75 123 456 78"
+            />
+
+            {/* NPI — obligatoire pour les RDV */}
+            <Input
+              label="NPI — Numéro Personnel d'Identification *"
+              value={form.npi}
+              onChange={(e) => setForm({ ...form, npi: e.target.value })}
+              placeholder="Ex: BJ12345678"
+              helperText="Requis pour réserver un rendez-vous médical"
             />
           </div>
         )}

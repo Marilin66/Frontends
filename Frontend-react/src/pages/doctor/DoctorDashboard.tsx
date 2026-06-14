@@ -90,8 +90,6 @@ export default function DoctorDashboard() {
             <Badge className="bg-primary/10 text-primary border-transparent font-bold uppercase tracking-widest text-[10px]">
               Espace Praticien
             </Badge>
-            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">En ligne</span>
           </div>
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
             Ravi de vous revoir, <span className="text-primary">Dr. {user?.last_name}</span>
@@ -235,7 +233,7 @@ export default function DoctorDashboard() {
                       </td>
                       <td className="px-6 py-4 text-right">
                          <button 
-                           onClick={() => navigate(`/medecin/consultation/${apt.id}`)}
+                           onClick={() => navigate(`/medecin/consultations/${apt.consultation_id ?? apt.id}`)}
                            className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-all"
                          >
                             <ChevronRight className="w-5 h-5" />

@@ -105,10 +105,80 @@ class PatientProfileContent extends ConsumerWidget {
                     style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 16),
+                  // NPI — statut visible avec couleur selon renseignement
+                  Builder(builder: (ctx) {
+                    final npi = user?.patientProfile?['npi'] as String?;
+                    return Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: (npi != null && npi.isNotEmpty)
+                            ? Colors.green.shade50
+                            : Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: (npi != null && npi.isNotEmpty)
+                              ? Colors.green.shade200
+                              : Colors.orange.shade200,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.fingerprint_outlined,
+                            color: (npi != null && npi.isNotEmpty)
+                                ? Colors.green.shade700
+                                : Colors.orange.shade700,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'NPI — Requis pour les rendez-vous',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: (npi != null && npi.isNotEmpty)
+                                        ? Colors.green.shade700
+                                        : Colors.orange.shade700,
+                                  ),
+                                ),
+                                Text(
+                                  (npi != null && npi.isNotEmpty) ? npi : 'Non renseigné',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: (npi != null && npi.isNotEmpty)
+                                        ? Colors.green.shade900
+                                        : Colors.orange.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (npi == null || npi.isEmpty)
+                            TextButton(
+                              onPressed: () => context.go('/patient/profile/edit'),
+                              child: Text(
+                                'Ajouter',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade700,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  }),
                     Row(
                       children: [
                         Expanded(child: _buildInfoTile(Icons.bloodtype_outlined, 'Groupe Sanguin', (user?.patientProfile?['groupe_sanguin'] as String?) ?? '--')),
-                        Expanded(child: _buildInfoTile(Icons.badge_outlined, 'NPI / Sécu', (user?.patientProfile?['numero_secu'] as String?) ?? '--')),
+                        Expanded(child: _buildInfoTile(Icons.badge_outlined, 'N° Sécurité', (user?.patientProfile?['numero_secu'] as String?) ?? '--')),
                       ],
                     ),
                   _buildInfoTile(Icons.warning_amber_rounded, 'Allergies', (user?.patientProfile?['allergies'] as String?) ?? 'Aucune'),

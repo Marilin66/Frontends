@@ -233,6 +233,33 @@ export default function ProfilePage() {
                     <h3 className="text-lg font-black text-slate-900 uppercase tracking-wider">Résumé Médical</h3>
                     <Button variant="outline" size="sm" onClick={() => navigate('/patient/profile/edit')}>Accéder au dossier complet</Button>
                   </div>
+
+                  {/* NPI */}
+                  {user?.patient_profile && (
+                    <div className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 ${
+                      user.patient_profile.npi
+                        ? 'bg-emerald-50 border-emerald-100'
+                        : 'bg-amber-50 border-amber-200'
+                    }`}>
+                      <Shield className={`w-5 h-5 shrink-0 mt-0.5 ${user.patient_profile.npi ? 'text-emerald-600' : 'text-amber-500'}`} />
+                      <div className="flex-1">
+                        <p className={`text-xs font-black uppercase tracking-widest ${user.patient_profile.npi ? 'text-emerald-500' : 'text-amber-500'}`}>
+                          NPI — Requis pour réserver un RDV
+                        </p>
+                        <p className={`text-sm font-bold mt-0.5 ${user.patient_profile.npi ? 'text-emerald-900' : 'text-amber-800'}`}>
+                          {user.patient_profile.npi || 'Non renseigné'}
+                        </p>
+                        {!user.patient_profile.npi && (
+                          <button
+                            onClick={() => navigate('/patient/profile/edit')}
+                            className="text-xs font-bold text-amber-700 underline mt-1"
+                          >
+                            Ajouter mon NPI →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-6 bg-red-50 rounded-[2rem] border border-red-100">
                       <div className="flex items-center gap-3 mb-3">

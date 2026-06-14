@@ -95,7 +95,15 @@ class MessageNotifier extends AsyncNotifier<List<MessageModel>> {
     _subscription?.cancel();
     _subscription = wsService.connect(arg.consultationId).listen((newMessage) {
       final current = state.value ?? [];
-      // Éviter les doublons si le message vient d'être envoyé localement
+
+      // Pour les messages directs (sans consultationId), filtrer par destinataire/expéditeur
+      if (arg.consultationId == null && arg.destinataireId != null) {
+        final isRelevant = newMessage.expediteur == arg.destinataireId ||
+            newMessage.destinataire == arg.destinataireId;
+        if (!isRelevant) return;
+      }
+
+      // Éviter les doublons
       if (!current.any((m) => m.id == newMessage.id)) {
         state = AsyncValue.data([...current, newMessage]);
       }

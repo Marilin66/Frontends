@@ -509,9 +509,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'consultation/:id',
                 pageBuilder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
+                  final extra = state.extra as Map<String, dynamic>?;
                   return _buildPageWithFadeTransition(
                     state: state,
-                    child: ChatScreen(consultationId: id, contactName: 'Consultation'),
+                    child: ChatScreen(
+                      consultationId: id,
+                      contactName: extra?['contactName'] as String? ?? 'Consultation',
+                      contactPhoto: extra?['contactPhoto'] as String?,
+                    ),
                   );
                 },
               ),
@@ -519,9 +524,14 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'direct/:id',
                 pageBuilder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
+                  final extra = state.extra as Map<String, dynamic>?;
                   return _buildPageWithFadeTransition(
                     state: state,
-                    child: ChatScreen(destinataireId: id, contactName: 'Conversation Directe'),
+                    child: ChatScreen(
+                      destinataireId: id,
+                      contactName: extra?['contactName'] as String? ?? 'Conversation Directe',
+                      contactPhoto: extra?['contactPhoto'] as String?,
+                    ),
                   );
                 },
               ),
@@ -591,22 +601,31 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(path: '/medecin/patients', builder: (context, state) => const MedecinPatientsContent()),
-          GoRoute(
-            path: '/medecin/messagerie',
+          GoRoute(path: '/medecin/messagerie',
             builder: (context, state) => const ConversationListScreen(),
             routes: [
               GoRoute(
                 path: 'consultation/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(consultationId: id, contactName: 'Consultation');
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return ChatScreen(
+                    consultationId: id,
+                    contactName: extra?['contactName'] as String? ?? 'Consultation',
+                    contactPhoto: extra?['contactPhoto'] as String?,
+                  );
                 },
               ),
               GoRoute(
                 path: 'direct/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return ChatScreen(
+                    destinataireId: id,
+                    contactName: extra?['contactName'] as String? ?? 'Conversation Directe',
+                    contactPhoto: extra?['contactPhoto'] as String?,
+                  );
                 },
               ),
             ],
@@ -652,14 +671,24 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'consultation/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(consultationId: id, contactName: 'Consultation');
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return ChatScreen(
+                    consultationId: id,
+                    contactName: extra?['contactName'] as String? ?? 'Consultation',
+                    contactPhoto: extra?['contactPhoto'] as String?,
+                  );
                 },
               ),
               GoRoute(
                 path: 'direct/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return ChatScreen(
+                    destinataireId: id,
+                    contactName: extra?['contactName'] as String? ?? 'Conversation Directe',
+                    contactPhoto: extra?['contactPhoto'] as String?,
+                  );
                 },
               ),
             ],
@@ -703,7 +732,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'direct/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return ChatScreen(
+                    destinataireId: id,
+                    contactName: extra?['contactName'] as String? ?? 'Conversation Directe',
+                    contactPhoto: extra?['contactPhoto'] as String?,
+                  );
                 },
               ),
             ],
@@ -730,7 +764,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: 'direct/:id',
                 builder: (context, state) {
                   final id = int.parse(state.pathParameters['id']!);
-                  return ChatScreen(destinataireId: id, contactName: 'Conversation Directe');
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return ChatScreen(
+                    destinataireId: id,
+                    contactName: extra?['contactName'] as String? ?? 'Conversation Directe',
+                    contactPhoto: extra?['contactPhoto'] as String?,
+                  );
                 },
               ),
             ],

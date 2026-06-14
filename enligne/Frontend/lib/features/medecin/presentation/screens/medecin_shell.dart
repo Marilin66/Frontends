@@ -23,6 +23,9 @@ class MedecinShell extends ConsumerWidget {
     if (location.startsWith('/medecin/patients')) return 2;
     if (location.startsWith('/medecin/messagerie')) return 3;
     if (location.startsWith('/medecin/profile')) return 4;
+    if (location.startsWith('/medecin/settings')) return 4;
+    if (location.startsWith('/medecin/change-password')) return 4;
+    if (location.startsWith('/medecin/about')) return 4;
     return 0;
   }
 

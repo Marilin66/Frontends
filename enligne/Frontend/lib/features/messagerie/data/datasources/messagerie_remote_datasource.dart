@@ -71,10 +71,10 @@ class MessagerieRemoteDatasource {
       final response = await _client.post(
         ApiConstants.messages,
         data: {
-          'consultation': consultationId,
-          'destinataire': destinataireId,
+          if (consultationId != null) 'consultation': consultationId,
+          if (destinataireId != null) 'destinataire': destinataireId,
           'contenu': contenu,
-        }..removeWhere((key, value) => value == null),
+        },
       );
       final responseData = response.data;
       if (responseData is! Map<String, dynamic>) throw const FormatException('Réponse inattendue');
@@ -92,12 +92,12 @@ class MessagerieRemoteDatasource {
   }) async {
     try {
       final formData = FormData.fromMap({
-        'consultation': consultationId,
-        'destinataire': destinataireId,
+        if (consultationId != null) 'consultation': consultationId,
+        if (destinataireId != null) 'destinataire': destinataireId,
         'type_message': 'vocal',
         'contenu': '🎙 Message vocal',
         'audio': await MultipartFile.fromFile(audioPath, filename: 'voice_message.m4a'),
-      }..removeWhere((key, value) => value == null));
+      });
 
       final response = await _client.post(
         ApiConstants.messages,

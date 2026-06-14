@@ -1,365 +1,609 @@
 // @ts-nocheck
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Calendar, Clock, User, Stethoscope, ChevronRight, 
-  CheckCircle, AlertCircle, ShieldCheck, Activity,
-  ArrowRight, MapPin, Loader2, Building2, Info, ArrowLeft,
-  Search, Star, Check, BadgeCheck
+import {
+  Clock, User, Activity, CheckCircle, AlertCircle, ShieldCheck,
+  ArrowLeft, Loader2, Building2, Check, BadgeCheck,
+  ChevronLeft, ChevronRight, MapPin,
 } from 'lucide-react';
 import { Card, Badge, Button, Avatar, PageLoader } from '@/components/ui';
 import { api, endpoints } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface Hospital { id: number; nom: string; adresse: string; logo?: string }
-interface Service { id: number; nom: string; description?: string; service_nom?: string }
-interface Doctor { id: number; first_name: string; last_name: string; specialite_nom?: string; photo?: string }
-interface Availability { date: string; heure_debut: string; heure_fin: string }
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+interface Hospital { id: number; nom: string; adresse: string }
+interface Service  { id: number; nom: string }
+interface Doctor   { id: number; first_name: string; last_name: string; specialite_nom?: string; photo?: string }
+interface Slot     { date: string; heure_debut: string; heure_fin: string }
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+
+function startOfWeek(d: Date): Date {
+  const r = new Date(d);
+  const diff = (r.getDay() + 6) % 7;
+  r.setDate(r.getDate() - diff);
+  r.setHours(0, 0, 0, 0);
+  return r;
+}
+
+function addDays(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
+function toISO(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+/** Nettoie une réponse d'erreur — enlève le HTML brut si présent */
+function cleanError(raw: unknown, httpStatus?: number): string {
+  if (!raw) {
+    return httpStatus === 500
+      ? 'Erreur serveur. Si votre NPI n\'est pas renseigné dans votre profil, veuillez le compléter avant de réserver.'
+      : 'Erreur inconnue.';
+  }
+  if (typeof raw === 'string') {
+    if (raw.includes('<!doctype') || raw.includes('<html') || raw.includes('<body')) {
+      return 'Erreur serveur (500). Assurez-vous que votre NPI est renseigné dans votre profil (Profil → Dossier médical → NPI).';
+    }
+    return raw;
+  }
+  if (typeof raw === 'object') {
+    const d = raw as Record<string, unknown>;
+    const msg =
+      (d.detail as string) ??
+      (Array.isArray(d.non_field_errors) ? (d.non_field_errors as string[])[0] : undefined) ??
+      (Array.isArray(d.medecin)    ? (d.medecin    as string[])[0] : undefined) ??
+      (Array.isArray(d.date_heure) ? (d.date_heure as string[])[0] : undefined) ??
+      (Array.isArray(d.motif)      ? (d.motif      as string[])[0] : undefined);
+    if (msg) return msg;
+    // Chercher dans les clés imbriquées
+    for (const v of Object.values(d)) {
+      if (typeof v === 'string') return v;
+      if (Array.isArray(v) && typeof v[0] === 'string') return v[0];
+    }
+    return JSON.stringify(d);
+  }
+  return String(raw);
+}
+
+// ── Calendrier responsive ─────────────────────────────────────────────────────
+// Mobile  (<768 px) → 3 colonnes, créneaux lisibles (py-2, texte xs)
+// Desktop (≥768 px) → 7 colonnes (semaine entière)
+
+function SlotCalendar({ slots, selected, onSelect }: {
+  slots: Slot[];
+  selected: Slot | null;
+  onSelect: (s: Slot) => void;
+}) {
+  const today = useMemo(() => {
+    const d = new Date(); d.setHours(0, 0, 0, 0); return d;
+  }, []);
+
+  // Premier jour qui a des créneaux (≥ aujourd'hui)
+  const firstSlotDay = useMemo(() => {
+    const sorted = [...slots].sort((a, b) => a.date.localeCompare(b.date));
+    const d = sorted.find(s => new Date(s.date + 'T00:00:00') >= today);
+    return d ? new Date(d.date + 'T00:00:00') : today;
+  }, [slots, today]);
+
+  // Nombre de colonnes selon la largeur d'écran
+  const [cols, setCols] = useState<3 | 7>(() => (typeof window !== 'undefined' && window.innerWidth >= 768) ? 7 : 3);
+
+  useEffect(() => {
+    const update = () => setCols(window.innerWidth >= 768 ? 7 : 3);
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // Début de la période affichée
+  const [start, setStart] = useState<Date>(() =>
+    cols === 7 ? startOfWeek(firstSlotDay) : firstSlotDay
+  );
+
+  // Recalculer le début quand cols change
+  useEffect(() => {
+    setStart(cols === 7 ? startOfWeek(firstSlotDay) : firstSlotDay);
+  }, [cols, firstSlotDay]);
+
+  const days = useMemo(() => Array.from({ length: cols }, (_, i) => addDays(start, i)), [start, cols]);
+
+  const byDate = useMemo(() => {
+    const m: Record<string, Slot[]> = {};
+    slots.forEach(s => { (m[s.date] ??= []).push(s); });
+    return m;
+  }, [slots]);
+
+  const hasSlot  = days.some(d => (byDate[toISO(d)] ?? []).length > 0);
+  const canPrev  = days[0] > today;
+
+  const rangeLabel = cols === 7
+    ? `${days[0].getDate()} – ${days[6].getDate()} ${MOIS[days[6].getMonth()]} ${days[6].getFullYear()}`
+    : `${days[0].getDate()} ${MOIS[days[0].getMonth()].slice(0,4)}. – ${days[cols-1].getDate()} ${MOIS[days[cols-1].getMonth()].slice(0,4)}.`;
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+
+      {/* ── Header navigation ── */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40">
+        <button
+          onClick={() => setStart(s => addDays(s, -cols))}
+          disabled={!canPrev}
+          className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700
+                     disabled:opacity-30 hover:bg-white dark:hover:bg-slate-700 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4 text-slate-500" />
+        </button>
+
+        <span className="text-sm font-bold text-slate-700 dark:text-slate-200 select-none">
+          {rangeLabel}
+        </span>
+
+        <button
+          onClick={() => setStart(s => addDays(s, cols))}
+          className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700
+                     hover:bg-white dark:hover:bg-slate-700 transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-500" />
+        </button>
+      </div>
+
+      {/* ── Grille ── */}
+      <div
+        className="grid divide-x divide-slate-100 dark:divide-slate-800"
+        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
+        {days.map(day => {
+          const iso      = toISO(day);
+          const isPast   = day < today;
+          const isToday  = iso === toISO(today);
+          const daySlots = (byDate[iso] ?? []).sort((a, b) => a.heure_debut.localeCompare(b.heure_debut));
+          const dayName  = day.toLocaleDateString('fr-FR', { weekday: 'short' });
+
+          return (
+            <div key={iso} className="flex flex-col">
+              {/* En-tête jour */}
+              <div className={`py-3 text-center border-b border-slate-100 dark:border-slate-800 ${isToday ? 'bg-primary/5' : ''}`}>
+                <p className={`text-[11px] font-bold uppercase tracking-wide ${isToday ? 'text-primary' : 'text-slate-400'}`}>
+                  {dayName}
+                </p>
+                <p className={`text-xl font-black mt-0.5 leading-none ${
+                  isToday ? 'text-primary' :
+                  isPast  ? 'text-slate-300 dark:text-slate-600' :
+                            'text-slate-800 dark:text-white'
+                }`}>
+                  {day.getDate()}
+                </p>
+              </div>
+
+              {/* Créneaux */}
+              <div className="flex flex-col gap-2 p-2 min-h-[140px]">
+                {isPast ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <span className="text-xs text-slate-200 dark:text-slate-700">—</span>
+                  </div>
+                ) : daySlots.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <span className="text-xs text-slate-300 dark:text-slate-700">—</span>
+                  </div>
+                ) : (
+                  daySlots.map((slot, i) => {
+                    const active = selected?.date === slot.date && selected?.heure_debut === slot.heure_debut;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => onSelect(slot)}
+                        className={`w-full py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                          active
+                            ? 'bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02]'
+                            : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-primary/10 hover:text-primary'
+                        }`}
+                      >
+                        {slot.heure_debut.slice(0, 5)}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Aucun créneau */}
+      {!hasSlot && (
+        <div className="py-6 text-center border-t border-slate-100 dark:border-slate-800 bg-slate-50/50">
+          <p className="text-sm text-slate-400 font-medium">Aucun créneau disponible</p>
+          <button
+            onClick={() => setStart(s => addDays(s, cols))}
+            className="mt-2 text-xs font-bold text-primary hover:underline"
+          >
+            Voir la période suivante →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Page principale ───────────────────────────────────────────────────────────
 
 export default function AppointmentBookingPage() {
   const { doctorId: paramDoctorId, hospitalId: paramHospitalId, serviceId: paramServiceId } = useParams();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
+  const { user }  = useAuth();
 
-  // Data States
-  const [hospital, setHospital] = useState<Hospital | null>(null);
-  const [services, setServices] = useState<Service[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [availabilities, setAvailabilities] = useState<Availability[]>([]);
+  const [hospital,       setHospital]       = useState<Hospital | null>(null);
+  const [services,       setServices]       = useState<Service[]>([]);
+  const [doctors,        setDoctors]        = useState<Doctor[]>([]);
+  const [availabilities, setAvailabilities] = useState<Slot[]>([]);
 
-  // Selection States
   const [selectedServiceId, setSelectedServiceId] = useState<string | number>(paramServiceId || '');
-  const [selectedDoctorId, setSelectedDoctorId] = useState<string | number>(paramDoctorId || '');
-  const [selectedSlot, setSelectedSlot] = useState<Availability | null>(null);
-  const [motif, setMotif] = useState('');
+  const [selectedDoctorId,  setSelectedDoctorId]  = useState<string | number>(paramDoctorId  || '');
+  const [selectedDoctor,    setSelectedDoctor]    = useState<Doctor | null>(null);
+  const [selectedSlot,      setSelectedSlot]      = useState<Slot | null>(null);
+  const [motif,             setMotif]             = useState('');
 
-  // Loading States
-  const [isLoading, setIsLoading] = useState(true);
-  const [fieldLoading, setFieldLoading] = useState({ services: false, doctors: false, slots: false });
+  const [isLoading,    setIsLoading]    = useState(true);
+  const [fldLoading,   setFldLoading]   = useState({ services: false, doctors: false, slots: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [error,        setError]        = useState('');
+  const [success,      setSuccess]      = useState(false);
+
+  // ── Init ──────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    const init = async () => {
+    if (!paramHospitalId) { setIsLoading(false); return; }
+    (async () => {
       try {
         setIsLoading(true);
-        if (paramHospitalId) {
-          const hData = await api.get<Hospital>(endpoints.hopitalDetail(parseInt(paramHospitalId)));
-          setHospital(hData);
-          await loadServices(paramHospitalId);
-          
-          if (paramServiceId) {
-            await loadDoctors(paramHospitalId, paramServiceId);
-          }
-          if (paramDoctorId) {
-            await loadDoctorInfo(paramDoctorId);
-          }
-        }
+        const h: any = await api.get(endpoints.hopitalDetail(parseInt(paramHospitalId)));
+        setHospital(h);
+        await loadServices(paramHospitalId);
+        if (paramServiceId) await loadDoctors(paramHospitalId, paramServiceId);
+        if (paramDoctorId)  await loadSlots(paramDoctorId);
       } catch (e) { console.error(e); }
       finally { setIsLoading(false); }
-    };
-    init();
+    })();
   }, [paramHospitalId, paramServiceId, paramDoctorId]);
 
-  const loadServices = async (hId: number | string) => {
-    setFieldLoading(prev => ({ ...prev, services: true }));
+  const loadServices = async (hId: string | number) => {
+    setFldLoading(p => ({ ...p, services: true }));
     try {
-      const res = await api.get<any>(endpoints.hopitalServices(parseInt(hId)));
-      const data = Array.isArray(res) ? res : res.results || [];
-      // Transform hospital service to flat service
-      setServices(data.map((s: any) => ({
-        id: s.service || s.id,
-        nom: s.service_nom || s.nom,
-        description: s.service_description || s.description
-      })));
+      const r: any = await api.get(endpoints.hopitalServices(parseInt(String(hId))));
+      const data   = Array.isArray(r) ? r : r.results || [];
+      setServices(data.map((s: any) => ({ id: s.service ?? s.id, nom: s.service_nom ?? s.nom })));
     } catch (e) { console.error(e); }
-    finally { setFieldLoading(prev => ({ ...prev, services: false })); }
+    finally { setFldLoading(p => ({ ...p, services: false })); }
   };
 
-  const loadDoctors = async (hId: number | string, sId: number | string) => {
-    setFieldLoading(prev => ({ ...prev, doctors: true }));
+  const loadDoctors = async (hId: string | number, sId: string | number) => {
+    setFldLoading(p => ({ ...p, doctors: true }));
     try {
-      const res = await api.get<any>(`${endpoints.medecins}?hopital=${hId}&service=${sId}`);
-      setDoctors(Array.isArray(res) ? res : res.results || []);
+      const r: any = await api.get(`${endpoints.medecins}?hopital=${hId}&service=${sId}`);
+      setDoctors(Array.isArray(r) ? r : r.results || []);
     } catch (e) { console.error(e); }
-    finally { setFieldLoading(prev => ({ ...prev, doctors: false })); }
+    finally { setFldLoading(p => ({ ...p, doctors: false })); }
   };
 
-  const loadDoctorInfo = async (dId: number | string) => {
-    setFieldLoading(prev => ({ ...prev, slots: true }));
+  const loadSlots = async (dId: string | number) => {
+    setFldLoading(p => ({ ...p, slots: true }));
     try {
-      const res = await api.get<any>(endpoints.medecinCreneaux(parseInt(dId)));
-      setAvailabilities(Array.isArray(res) ? res : res.results || []);
+      const r: any = await api.get(endpoints.medecinCreneaux(parseInt(String(dId))));
+      setAvailabilities(Array.isArray(r) ? r : r.results || []);
     } catch (e) { console.error(e); }
-    finally { setFieldLoading(prev => ({ ...prev, slots: false })); }
+    finally { setFldLoading(p => ({ ...p, slots: false })); }
   };
 
-  const handleServiceSelect = (sId: number | string) => {
+  const handleServiceSelect = (sId: string | number) => {
     setSelectedServiceId(sId);
-    setSelectedDoctorId('');
-    setSelectedSlot(null);
-    setDoctors([]);
+    setSelectedDoctorId(''); setSelectedDoctor(null);
+    setSelectedSlot(null); setAvailabilities([]); setDoctors([]);
+    setError('');
     loadDoctors(paramHospitalId!, sId);
   };
 
-  const handleDoctorSelect = (dId: number | string) => {
-    setSelectedDoctorId(dId);
-    setSelectedSlot(null);
-    loadDoctorInfo(dId);
+  const handleDoctorSelect = (d: Doctor) => {
+    setSelectedDoctorId(d.id); setSelectedDoctor(d);
+    setSelectedSlot(null); setAvailabilities([]);
+    setError('');
+    loadSlots(d.id);
   };
 
+  // ── Soumission ────────────────────────────────────────────────────────────
+
   const handleSubmit = async () => {
-    if (!selectedDoctorId || !selectedSlot || !motif.trim()) {
-      setError("Veuillez compléter toutes les étapes.");
+    if (!selectedDoctorId || !selectedSlot || !motif.trim() || motif.trim().length < 5) {
+      setError('Veuillez sélectionner un créneau et saisir un motif (min. 5 caractères).');
       return;
     }
     setIsSubmitting(true);
+    setError('');
     try {
-      const date_heure = `${selectedSlot.date}T${selectedSlot.heure_debut}`;
-      await api.post(endpoints.rendezVous, {
-        medecin: selectedDoctorId,
-        date_heure,
-        motif,
-      });
+      const time       = selectedSlot.heure_debut.length === 5 ? `${selectedSlot.heure_debut}:00` : selectedSlot.heure_debut;
+      const date_heure = `${selectedSlot.date}T${time}`;
+      await api.post(endpoints.rendezVous, { medecin: selectedDoctorId, date_heure, motif: motif.trim() });
       setSuccess(true);
     } catch (e: any) {
-      setError(e.response?.data?.detail || "Erreur lors de la réservation.");
+      const raw    = e?.response?.data;
+      const status = e?.response?.status;
+      setError(cleanError(raw, status));
     } finally { setIsSubmitting(false); }
   };
 
   if (isLoading) return <PageLoader />;
 
+  // ── Succès ────────────────────────────────────────────────────────────────
+
   if (success) {
     return (
       <div className="max-w-xl mx-auto py-20 px-4">
-        <Card className="text-center p-12 rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-32 -mt-32" />
-          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto text-white shadow-xl shadow-emerald-500/20 mb-8">
+        <Card className="text-center p-10 rounded-[3rem] border-none shadow-2xl bg-white dark:bg-slate-900">
+          <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+            className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto text-white shadow-xl shadow-emerald-500/20 mb-8">
             <CheckCircle className="w-12 h-12" />
           </motion.div>
-          <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4">C'est validé !</h2>
-          <p className="text-slate-500 dark:text-slate-400 font-medium mb-10">Votre demande de rendez-vous a été transmise avec succès au Dr. {doctors.find(d => d.id.toString() === selectedDoctorId.toString())?.last_name}.</p>
-          <Button onClick={() => navigate('/patient/appointments')} className="w-full h-14 rounded-2xl bg-primary text-white font-bold">Consulter mon agenda</Button>
+          <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-3">Demande envoyée !</h2>
+          <p className="text-slate-500 font-medium mb-2">
+            Votre demande de rendez-vous avec <strong>Dr. {selectedDoctor?.last_name ?? ''}</strong> a été transmise.
+          </p>
+          <p className="text-xs text-slate-400 mb-8">Vous serez notifié dès confirmation par le médecin.</p>
+          <Button onClick={() => navigate('/patient/appointments')} className="w-full h-13 rounded-2xl bg-primary text-white font-bold">
+            Voir mes rendez-vous
+          </Button>
         </Card>
       </div>
     );
   }
 
+  // ── Rendu ─────────────────────────────────────────────────────────────────
+
   return (
     <div className="max-w-7xl mx-auto px-4 lg:px-8 pb-32">
-      {/* ── Navigation ── */}
-      <div className="flex items-center justify-between mb-10">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-primary font-bold text-sm transition-colors group">
-          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" /> Retour
+
+      {/* Nav */}
+      <div className="flex items-center justify-between mb-8">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-primary font-bold text-sm group">
+          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Retour
         </button>
-        <Badge className="bg-primary/10 text-primary border-transparent font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-widest">Guichet de réservation</Badge>
+        <Badge className="bg-primary/10 text-primary border-transparent font-bold px-4 py-1.5 rounded-full text-[10px] uppercase tracking-widest">
+          Réservation
+        </Badge>
       </div>
 
-      {/* ── Page Title ── */}
-      <div className="mb-12">
-        <h1 className="text-3xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tighter leading-none">
-          Réserver à <span className="text-primary">{hospital?.nom}</span>
+      {/* Titre */}
+      <div className="mb-8">
+        <h1 className="text-2xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
+          Réserver à <span className="text-primary">{hospital?.nom ?? '—'}</span>
         </h1>
-        <div className="flex items-center gap-2 mt-4 text-slate-500 font-medium">
-          <MapPin className="w-4 h-4" /> {hospital?.adresse}
-        </div>
+        {hospital?.adresse && (
+          <p className="flex items-center gap-1.5 text-slate-500 text-sm mt-2">
+            <MapPin className="w-3.5 h-3.5 shrink-0" /> {hospital.adresse}
+          </p>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-        
-        {/* ── Interactive Selection Column ── */}
-        <div className="lg:col-span-8 space-y-12">
-          
-          {/* STEP 1: SERVICES (CLEAN CARDS) */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">1</div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Choisissez le service</h2>
+      {/* Alerte NPI manquant */}
+      {!user?.patient_profile?.npi && (
+        <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-amber-800">NPI requis pour réserver</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Votre Numéro Personnel d'Identification est obligatoire. Complétez votre profil avant de confirmer.
+            </p>
+          </div>
+          <button onClick={() => navigate('/patient/profile/edit')}
+            className="text-xs font-bold text-amber-800 underline whitespace-nowrap mt-0.5">
+            Renseigner →
+          </button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        {/* ── Colonne sélection ── */}
+        <div className="lg:col-span-7 space-y-8">
+
+          {/* Étape 1 — Service */}
+          <section className="space-y-4">
+            <div className="flex items-center gap-2.5">
+              <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-sm">1</span>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white">Choisissez le service</h2>
             </div>
-            
-            {fieldLoading.services ? (
-              <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+            {fldLoading.services ? (
+              <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            ) : services.length === 0 ? (
+              <div className="py-8 text-center bg-slate-50 rounded-2xl">
+                <p className="text-sm text-slate-400">Aucun service disponible.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {services.map((s) => (
-                  <button
-                    key={s.id}
-                    onClick={() => handleServiceSelect(s.id)}
-                    className={`p-6 rounded-3xl border-2 text-left transition-all relative overflow-hidden group ${selectedServiceId.toString() === s.id.toString() ? 'border-primary bg-primary/5 shadow-lg shadow-primary/5' : 'border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200'}`}
-                  >
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all ${selectedServiceId.toString() === s.id.toString() ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 group-hover:bg-primary group-hover:text-white'}`}>
-                      <Activity className="w-6 h-6" />
-                    </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors">{s.nom}</h3>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 uppercase font-bold tracking-widest">Spécialité</p>
-                    {selectedServiceId.toString() === s.id.toString() && (
-                      <div className="absolute top-4 right-4 w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white shadow-lg">
-                        <Check className="w-4 h-4 stroke-[3]" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {services.map(s => {
+                  const active = selectedServiceId.toString() === s.id.toString();
+                  return (
+                    <button key={s.id} onClick={() => handleServiceSelect(s.id)}
+                      className={`relative p-4 rounded-2xl border-2 text-left transition-all ${
+                        active ? 'border-primary bg-primary/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200'
+                      }`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${active ? 'bg-primary text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-400'}`}>
+                        <Activity className="w-4 h-4" />
                       </div>
-                    )}
-                  </button>
-                ))}
+                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug">{s.nom}</p>
+                      {active && (
+                        <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white stroke-[3]" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </section>
 
-          {/* STEP 2: DOCTORS (CLEAN PROFILES) */}
+          {/* Étape 2 — Médecin */}
           <AnimatePresence>
             {selectedServiceId && (
-              <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">2</div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Sélectionnez votre praticien</h2>
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-sm">2</span>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Sélectionnez un praticien</h2>
                 </div>
-                
-                {fieldLoading.doctors ? (
-                   <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                {fldLoading.doctors ? (
+                  <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
                 ) : doctors.length === 0 ? (
-                  <div className="p-10 bg-slate-50 dark:bg-slate-800/50 rounded-3xl text-center">
-                    <User className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 font-medium">Aucun médecin disponible dans ce service.</p>
+                  <div className="py-8 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
+                    <User className="w-7 h-7 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-slate-500">Aucun médecin disponible dans ce service.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {doctors.map((d) => (
-                      <button
-                        key={d.id}
-                        onClick={() => handleDoctorSelect(d.id)}
-                        className={`p-5 rounded-3xl border-2 text-left flex items-center gap-4 transition-all relative ${selectedDoctorId.toString() === d.id.toString() ? 'border-primary bg-primary/5 shadow-lg shadow-primary/5' : 'border-slate-50 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200'}`}
-                      >
-                        <Avatar name={d.last_name} src={d.photo} size="lg" className="ring-2 ring-white dark:ring-slate-800" />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-bold text-slate-900 dark:text-white truncate">Dr. {d.first_name} {d.last_name}</h4>
-                          <p className="text-xs text-primary font-bold uppercase tracking-wider">{d.specialite_nom || 'Médecin'}</p>
-                        </div>
-                        {selectedDoctorId.toString() === d.id.toString() && (
-                          <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shrink-0">
-                            <Check className="w-4 h-4 stroke-[3]" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {doctors.map(d => {
+                      const active = selectedDoctorId.toString() === d.id.toString();
+                      return (
+                        <button key={d.id} onClick={() => handleDoctorSelect(d)}
+                          className={`p-4 rounded-2xl border-2 text-left flex items-center gap-3 transition-all ${
+                            active ? 'border-primary bg-primary/5' : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-200'
+                          }`}>
+                          <Avatar name={`${d.first_name} ${d.last_name}`} src={d.photo} size="md" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">Dr. {d.first_name} {d.last_name}</p>
+                            <p className="text-xs text-primary font-semibold">{d.specialite_nom || 'Médecin'}</p>
                           </div>
-                        )}
-                      </button>
-                    ))}
+                          {active && <Check className="w-4 h-4 text-primary shrink-0 stroke-[3]" />}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </motion.section>
             )}
           </AnimatePresence>
 
-          {/* STEP 3: SLOTS (CLEAN CHIPS) */}
+          {/* Étape 3 — Calendrier */}
           <AnimatePresence>
             {selectedDoctorId && (
-              <motion.section initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pt-6 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">3</div>
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">Choisissez l'heure précise</h2>
+              <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-sm">3</span>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white">Choisissez un créneau</h2>
                 </div>
-                
-                {fieldLoading.slots ? (
-                  <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                {fldLoading.slots ? (
+                  <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
                 ) : availabilities.length === 0 ? (
-                  <div className="p-10 bg-slate-50 dark:bg-slate-800/50 rounded-3xl text-center border-2 border-dashed border-slate-200 dark:border-slate-700">
-                    <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500 font-medium">Pas de disponibilités pour le moment.</p>
+                  <div className="py-10 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+                    <p className="text-sm text-slate-500">Aucun créneau disponible pour ce médecin.</p>
                   </div>
                 ) : (
-                  <div className="space-y-8">
-                    {/* On regroupe par date */}
-                    {Object.entries(availabilities.reduce((acc, curr) => {
-                      if (!acc[curr.date]) acc[curr.date] = [];
-                      acc[curr.date].push(curr);
-                      return acc;
-                    }, {} as Record<string, Availability[]>)).map(([date, slots]) => (
-                      <div key={date} className="space-y-4">
-                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">{new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}</h4>
-                        <div className="flex flex-wrap gap-3">
-                          {slots.map((slot, i) => {
-                            const isSelected = selectedSlot?.date === slot.date && selectedSlot?.heure_debut === slot.heure_debut;
-                            return (
-                              <button
-                                key={i}
-                                onClick={() => setSelectedSlot(slot)}
-                                className={`px-6 py-3 rounded-2xl font-bold text-sm transition-all border-2 ${isSelected ? 'bg-primary text-white border-primary shadow-xl shadow-primary/20 scale-105' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent hover:bg-slate-100 dark:hover:bg-slate-700'}`}
-                              >
-                                {slot.heure_debut.slice(0, 5)}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <SlotCalendar
+                    slots={availabilities}
+                    selected={selectedSlot}
+                    onSelect={s => { setSelectedSlot(s); setError(''); }}
+                  />
                 )}
               </motion.section>
             )}
           </AnimatePresence>
         </div>
 
-        {/* ── Summary & Submit Column ── */}
-        <div className="lg:col-span-4">
-          <div className="sticky top-24 space-y-6">
-            <Card className="p-8 rounded-[2.5rem] border-none shadow-2xl bg-white dark:bg-slate-900 transition-colors">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-3">
-                <ShieldCheck className="w-6 h-6 text-primary" /> Résumé de visite
+        {/* ── Colonne résumé ── */}
+        <div className="lg:col-span-5">
+          <div className="sticky top-24">
+            <Card className="p-6 rounded-3xl border-none shadow-xl bg-white dark:bg-slate-900">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-5 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary" /> Résumé de visite
               </h3>
-              
-              <div className="space-y-6">
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center shrink-0">
-                    <Building2 className="w-5 h-5 text-primary" />
+
+              <div className="space-y-3">
+                {/* Établissement */}
+                <div className="flex gap-3 items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Building2 className="w-4 h-4 text-primary" />
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Établissement</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-snug">{hospital?.nom}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{hospital?.nom ?? '—'}</p>
                   </div>
                 </div>
 
-                <div className="flex gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center shrink-0">
-                    <Clock className="w-5 h-5 text-primary" />
+                {/* Médecin */}
+                {selectedDoctor && (
+                  <div className="flex gap-3 items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                    <Avatar name={`${selectedDoctor.first_name} ${selectedDoctor.last_name}`} size="sm" />
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Praticien</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">Dr. {selectedDoctor.first_name} {selectedDoctor.last_name}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Créneau */}
+                <div className="flex gap-3 items-start p-3 bg-slate-50 dark:bg-slate-800 rounded-xl">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4 text-primary" />
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Moment choisi</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">
-                      {selectedSlot 
-                        ? `${new Date(selectedSlot.date + 'T00:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} à ${selectedSlot.heure_debut.slice(0, 5)}`
-                        : 'En attente de choix...'}
+                    <p className={`text-sm font-bold ${selectedSlot ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                      {selectedSlot
+                        ? `${new Date(selectedSlot.date + 'T00:00:00').toLocaleDateString('fr-FR', {
+                            weekday: 'long', day: 'numeric', month: 'long',
+                          })} à ${selectedSlot.heure_debut.slice(0, 5)}`
+                        : 'Aucun créneau sélectionné'}
                     </p>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-slate-50 dark:border-slate-800 space-y-4">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Motif de consultation</label>
-                  <textarea 
-                    value={motif}
-                    onChange={(e) => setMotif(e.target.value)}
-                    placeholder="Pourquoi souhaitez-vous voir ce médecin ?"
-                    className="w-full h-32 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border-none text-sm font-medium text-slate-900 dark:text-white focus:ring-4 focus:ring-primary/5 transition-all resize-none"
-                  />
+                {/* Motif */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5">
+                    Motif <span className="text-red-400">*</span>
+                  </label>
+                  <textarea value={motif} onChange={e => { setMotif(e.target.value); setError(''); }}
+                    placeholder="Décrivez brièvement la raison de votre visite…" rows={3}
+                    className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700
+                               text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/20
+                               resize-none placeholder:text-slate-400" />
+                  {motif.length > 0 && motif.trim().length < 5 && (
+                    <p className="text-[11px] text-amber-500 mt-1 font-medium">
+                      Minimum 5 caractères requis.
+                    </p>
+                  )}
                 </div>
               </div>
 
+              {/* Erreur — texte propre (jamais de HTML) */}
               {error && (
-                <div className="mt-6 p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 rounded-2xl flex items-center gap-3 text-rose-600 dark:text-rose-400 text-xs font-bold">
-                  <AlertCircle className="w-4 h-4" /> {error}
+                <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
+                                rounded-xl flex items-start gap-2 text-red-600 dark:text-red-400 text-xs font-medium">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{error}</span>
                 </div>
               )}
 
-              <Button 
+              <Button
                 onClick={handleSubmit}
-                disabled={isSubmitting || !selectedSlot}
+                disabled={isSubmitting || !selectedSlot || !motif.trim() || motif.trim().length < 5}
                 isLoading={isSubmitting}
-                className="w-full h-16 mt-8 rounded-2xl bg-primary text-white font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                className="w-full h-12 mt-5 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
               >
-                Confirmer
+                Confirmer la réservation
               </Button>
             </Card>
 
-            <div className="p-6 bg-slate-900 dark:bg-primary/10 rounded-3xl text-white dark:text-primary space-y-2">
-               <div className="flex items-center gap-2">
-                 <BadgeCheck className="w-5 h-5" />
-                 <span className="text-xs font-bold uppercase tracking-widest">Réservation Sécurisée</span>
-               </div>
-               <p className="text-[11px] font-medium opacity-60">Vos données sont protégées et cryptées selon les normes de santé en vigueur au Bénin.</p>
+            <div className="mt-3 p-4 bg-slate-900 dark:bg-primary/10 rounded-2xl text-white flex items-start gap-3">
+              <BadgeCheck className="w-4 h-4 shrink-0 mt-0.5 opacity-70" />
+              <p className="text-xs font-medium opacity-60">
+                Données protégées selon les normes de santé en vigueur au Bénin.
+              </p>
             </div>
           </div>
         </div>
