@@ -1,47 +1,50 @@
-# E-Santé Bénin — Backend
+# E-Santé Bénin — Backend (HOPITEL)
 
 ## Administration Initiale
 
-Une fois la base de données initialisée, vous pouvez vous connecter avec le compte administrateur général par défaut.
+Une fois la base de données initialisée, vous pouvez vous connecter avec le compte administrateur général.
 
 **Identifiants par défaut :**
 
 | Champ | Valeur |
 |-------|--------|
-| **Email** | `admin@esante-benin.com` |
-| **Mot de passe** | `Esante2025!` |
+| **Email** | `admin@hopitel.com` |
+| **Mot de passe** | `HopitelAdmin2025*` |
 
 > [!IMPORTANT]
-> Il est fortement recommandé de changer ce mot de passe dès la première connexion via l'interface d'administration ou le profil.
+> En mode Soutenance, toutes les notifications sont redirigées vers l'auteur.
 
-## Initialisation des données (Seed)
+## Initialisation des données (Seed Final)
 
-Le script de seed permet d'initialiser rapidement l'environnement.
+Pour une démonstration complète et réaliste (Mémoire), utilisez le script suivant :
 
 ```bash
-# 1. Pour une installation PROPRE (Super Admin + Services de base)
-python manage.py seed --clean
-
-# 2. Pour une DÉMONSTRATION COMPLÈTE (Hôpitaux, Médecins, Patients, RDV, Analyses, Messages)
-python manage.py seed_demo --clean
+python seed_memoire_final.py
 ```
 
-## Comptes de Démonstration 
+## Comptes de Démonstration (Soutenance)
 
-Dans la configuration avec le script `seed_complet.py`, voici les identifiants générés par défaut :
+Voici les identifiants générés par le script final :
 
 | Rôle | Email | Mot de passe | Description |
 |------|-------|--------------|-------------|
-| **Admin Général** | `admin@esante.com` | `admin123` | Dashboard global et supervision |
-| **Admin Hôpital** | `cnhu@esante.com` | `admin123` | Gestion de l'hôpital CNHU-HKM |
-| **Médecin (Cardio)** | `dossou@esante.com` | `medecin123` | Dr. Jean Dossou (Rendez-vous pré-configurés) |
-| **Médecin (Pédia)** | `tossou@esante.com` | `medecin123` | Dr. Marie Tossou |
-| **Laborantin** | `lab.dossou@esante.com` | `lab123` | Paul Dossou-Labo (Laboratoire CNHU) |
-| **Patient 1** | `sidicke@esante.com` | `patient123` | Patient principal (A un historique d'Intake Patient) |
-| **Patient 2** | `tossou-patient@esante.com` | `patient123` | Second patient de test |
+| **Admin Général** | `admin@hopitel.com` | `HopitelAdmin2025*` | Dashboard global |
+| **Médecin (Cardio)** | `dr.dossou@hopitel.com` | `MedecinDossou123!` | Dr. Jean DOSSOU |
+| **Médecin (Pédia)** | `dr.tossou@hopitel.com` | `TossouPedia!99` | Dr. Marie TOSSOU |
+| **Laborantin** | `labo.agbo@hopitel.com` | `AgboLabo229#` | Marc AGBO |
+| **Patient 1** | `sidicke@hopitel.com` | `PatientSidicke01` | Sidicke TRAORÉ (NPI: `1029384756`) |
+| **Patient 2** | `koffi@hopitel.com` | `KoffiMensah_2025` | Koffi MENSAH (NPI: `2938475610`) |
+
+## Mode Soutenance (Redirection)
+
+Pour faciliter les tests, toutes les communications sont centralisées :
+- **Emails** : Redirigés vers `sidickelpc123@gmail.com`.
+- **WhatsApp** : Redirigés vers `0168765927` (`2290168765927`).
+- **NPI** : Requis pour toute prise de rendez-vous (Identification Unique Bénin).
 
 > [!TIP]
-> Connectez-vous d'abord en tant que patient (`sidicke@esante.com`) pour voir le rendez-vous. Connectez-vous ensuite avec le Dr. Dossou (`dossou@esante.com`) pour apercevoir la liste des RDV et l'Intake patient rempli !
+> Connectez-vous en tant que patient pour prendre RDV. Si le NPI manque, le système vous bloquera avec une alerte explicative.
+
 
 ## Structure du projet
 

@@ -39,7 +39,12 @@ class HopitalListSerializer(serializers.ModelSerializer):
         ]
 
     def get_services(self, obj):
-        """Retourne la liste des services proposés par l'hôpital."""
+        """Retourne la liste des services proposés par l'hôpital (via prefetch)."""
+        # Utilise la relation préchargée par prefetch_related dans la vue
+        hopital_services = getattr(obj, '_prefetched_services', None)
+        if hopital_services is not None:
+            return ServiceSerializer(hopital_services, many=True).data
+        # Fallback si pas de prefetch (appel direct)
         return ServiceSerializer(
             Service.objects.filter(service_hopitaux__hopital=obj),
             many=True,
@@ -122,6 +127,8 @@ class HopitalCreateSerializer(serializers.ModelSerializer):
 
         # Envoyer l'email avec les identifiants
         send_account_created_email(admin_user, password)
+        from accounts.utils import send_account_created_whatsapp
+        send_account_created_whatsapp(admin_user, password)
 
         # Notification à l'admin hôpital
         from notifications.utils import create_notification
@@ -263,6 +270,10 @@ class NearbyHospitalSerializer(serializers.ModelSerializer):
         ]
 
     def get_services(self, obj):
+        """Retourne la liste des services (via prefetch)."""
+        hopital_services = getattr(obj, '_prefetched_services', None)
+        if hopital_services is not None:
+            return ServiceSerializer(hopital_services, many=True).data
         return ServiceSerializer(
             Service.objects.filter(service_hopitaux__hopital=obj),
             many=True,

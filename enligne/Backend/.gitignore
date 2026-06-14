@@ -1,6 +1,5 @@
 # Environnement virtuel et fichiers sensibles
 env/
-.env
 .envrc
 .venv
 venv/
@@ -38,6 +37,10 @@ wheels/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+
+# Fichiers sensibles / secrets
+.env
+firebase-service-account.json
 
 # Fichiers statiques collectés (générés par collectstatic)
 staticfiles/

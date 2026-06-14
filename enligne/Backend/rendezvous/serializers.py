@@ -102,11 +102,15 @@ class DisponibiliteCreateSerializer(DisponibiliteSerializer):
 # ──────────────────────────────────────────────
 
 class CreneauSerializer(serializers.Serializer):
-    """Serializer pour un créneau disponible (non stocké en base)."""
+    """Serializer pour un créneau avec son statut (libre, occupé, indisponible)."""
 
     date = serializers.DateField()
     heure_debut = serializers.TimeField()
     heure_fin = serializers.TimeField()
+    statut = serializers.ChoiceField(
+        choices=['libre', 'occupe', 'indisponible'],
+        default='libre',
+    )
 
 
 # ──────────────────────────────────────────────
@@ -118,7 +122,6 @@ class RendezVousSerializer(serializers.ModelSerializer):
 
     patient_nom = serializers.CharField(source='patient.user.get_full_name', read_only=True)
     medecin_nom = serializers.CharField(source='medecin.user.get_full_name', read_only=True)
-    medecin_specialite = serializers.CharField(source='medecin.specialite', read_only=True)
     statut_display = serializers.CharField(source='get_statut_display', read_only=True)
     has_consultation = serializers.SerializerMethodField()
     consultation_id = serializers.SerializerMethodField()
@@ -127,8 +130,8 @@ class RendezVousSerializer(serializers.ModelSerializer):
     class Meta:
         model = RendezVous
         fields = [
-            'id', 'patient', 'patient_nom', 'medecin', 'medecin_nom',
-            'medecin_specialite', 'date_heure', 'duree', 'motif', 'statut',
+            'id', 'patient', 'patient_nom',            'medecin', 'medecin_nom',
+            'date_heure', 'duree', 'motif', 'statut',
             'statut_display', 'commentaire_annulation', 'cree_le', 'modifie_le',
             'has_consultation', 'consultation_id', 'pre_enregistrement',
         ]
@@ -155,9 +158,11 @@ class RendezVousCreateSerializer(serializers.Serializer):
 
     def validate_medecin(self, value):
         try:
-            Medecin.objects.get(pk=value, statut='actif', user__is_active=True)
+            medecin = Medecin.objects.get(pk=value, statut='actif', user__is_active=True)
         except Medecin.DoesNotExist:
             raise serializers.ValidationError("Médecin introuvable ou inactif.")
+        # Stocker pour éviter un second SELECT dans validate()
+        self._medecin_cache = medecin
         return value
 
     def validate_date_heure(self, value):
@@ -166,39 +171,39 @@ class RendezVousCreateSerializer(serializers.Serializer):
         return value
 
     def validate(self, attrs):
-        medecin = Medecin.objects.get(pk=attrs['medecin'])
+        from django.db.models import F, ExpressionWrapper, DateTimeField as DTField
+        
+        medecin = self._medecin_cache
         date_heure = attrs['date_heure']
         duree = medecin.duree_rdv_default
         fin_rdv = date_heure + timedelta(minutes=duree)
         patient = self.context['request'].user.patient_profile
 
-        # Vérifier que le médecin n'a pas déjà un RDV à cette heure
+        # Vérifier conflit médecin (approche simple et robuste)
         conflit_medecin = RendezVous.objects.filter(
             medecin=medecin,
-            date_heure__lt=fin_rdv,
             statut__in=['en_attente', 'confirme'],
-        ).exclude(
-            statut__in=['annule', 'refuse']
-        )
-        # Le RDV existant se termine après le début du nouveau
-        for rdv in conflit_medecin:
-            rdv_fin = rdv.date_heure + timedelta(minutes=rdv.duree)
-            if date_heure < rdv_fin and fin_rdv > rdv.date_heure:
-                raise serializers.ValidationError(
-                    {'date_heure': "Le médecin a déjà un rendez-vous à cette heure."}
-                )
+            date_heure__gte=date_heure - timedelta(hours=2),
+            date_heure__lt=fin_rdv,
+        ).exists()
 
-        # Vérifier que le patient n'a pas déjà un RDV à cette heure
+        if conflit_medecin:
+            raise serializers.ValidationError(
+                {'date_heure': "Le médecin a déjà un rendez-vous à cette heure."}
+            )
+
+        # Vérifier conflit patient
         conflit_patient = RendezVous.objects.filter(
             patient=patient,
             statut__in=['en_attente', 'confirme'],
-        )
-        for rdv in conflit_patient:
-            rdv_fin = rdv.date_heure + timedelta(minutes=rdv.duree)
-            if date_heure < rdv_fin and fin_rdv > rdv.date_heure:
-                raise serializers.ValidationError(
-                    {'date_heure': "Vous avez déjà un rendez-vous à cette heure."}
-                )
+            date_heure__gte=date_heure - timedelta(hours=2),
+            date_heure__lt=fin_rdv,
+        ).exists()
+
+        if conflit_patient:
+            raise serializers.ValidationError(
+                {'date_heure': "Vous avez déjà un rendez-vous à cette heure."}
+            )
 
         attrs['_medecin'] = medecin
         attrs['_patient'] = patient
@@ -218,6 +223,7 @@ class RendezVousCreateSerializer(serializers.Serializer):
         # Notifier le médecin
         from notifications.utils import create_notification
         from accounts.utils import send_appointment_request_email
+        from Chatbot.whatsapp_utils import send_whatsapp_message
         create_notification(
             user=rdv.medecin.user,
             type='nouveau_rdv',
@@ -234,16 +240,19 @@ class RendezVousCreateSerializer(serializers.Serializer):
         except Exception:
             pass
 
-        # Envoi du SMS Twilio au médecin
-        from accounts.twilio_utils import send_twilio_sms
+        # Envoi WhatsApp au patient (confirmation de la demande)
         try:
-            medecin_tel = rdv.medecin.user.telephone
-            if medecin_tel:
+            patient_tel = rdv.patient.user.telephone
+            if patient_tel:
+                clean_phone = "".join(filter(str.isdigit, str(patient_tel)))
                 msg = (
-                    f"E-SANTE: Nouveau RDV avec {rdv.patient.user.get_full_name()} "
-                    f"le {rdv.date_heure.strftime('%d/%m/%Y à %H:%M')}."
+                    f"📅 Demande de RDV envoyée !\n\n"
+                    f"Votre demande de rendez-vous avec Dr. {rdv.medecin.user.last_name} "
+                    f"le {rdv.date_heure.strftime('%d/%m/%Y à %H:%M')} a été transmise.\n"
+                    f"Vous recevrez une confirmation dès que le médecin aura répondu.\n"
+                    f"Lieu : {rdv.medecin.user.hopital.nom}"
                 )
-                send_twilio_sms(medecin_tel, msg)
+                send_whatsapp_message(clean_phone, msg)
         except Exception:
             pass
 

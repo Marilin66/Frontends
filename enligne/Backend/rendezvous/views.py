@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from accounts.models import Medecin
 from accounts.permissions import IsAdminGeneral, IsMedecin, IsPatient, IsMedecinOrAdminGeneral
 from notifications.utils import create_notification
+from Chatbot.whatsapp_utils import send_whatsapp_message
 from .models import Disponibilite, RendezVous, Consultation
 from .permissions import (
     IsDisponibiliteOwner, IsRendezVousMedecin, IsRendezVousParticipant,
@@ -146,7 +147,7 @@ class RendezVousListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         queryset = RendezVous.objects.select_related(
             'patient__user', 'medecin__user', 'pre_enregistrement'
-        )
+        ).prefetch_related('consultation')
 
         if user.role == 'patient':
             queryset = queryset.filter(patient__user=user)
@@ -203,7 +204,7 @@ class RendezVousListCreateView(generics.ListCreateAPIView):
 class RendezVousDetailView(generics.RetrieveAPIView):
     """Détail d'un rendez-vous."""
 
-    queryset = RendezVous.objects.select_related('patient__user', 'medecin__user')
+    queryset = RendezVous.objects.select_related('patient__user', 'medecin__user').prefetch_related('consultation')
     serializer_class = RendezVousSerializer
     permission_classes = [IsAuthenticated, IsRendezVousParticipant]
 
@@ -247,16 +248,18 @@ class RendezVousConfirmerView(APIView):
         except Exception:
             pass
 
-        # Envoi du SMS Twilio au patient
-        from accounts.twilio_utils import send_twilio_sms
+        # Envoi de la notification WhatsApp au patient
         try:
             patient_tel = rdv.patient.user.telephone
             if patient_tel:
+                clean_phone = "".join(filter(str.isdigit, str(patient_tel)))
                 msg = (
-                    f"E-SANTE: RDV confirme avec Dr. {rdv.medecin.user.last_name} "
-                    f"au {rdv.medecin.user.hopital.nom} le {rdv.date_heure.strftime('%d/%m/%Y a %H:%M')}."
+                    f"✅ RDV Confirmé !\n\n"
+                    f"Votre rendez-vous avec Dr. {rdv.medecin.user.last_name} "
+                    f"est confirmé pour le {rdv.date_heure.strftime('%d/%m/%Y à %H:%M')}.\n"
+                    f"Lieu : {rdv.medecin.user.hopital.nom}"
                 )
-                send_twilio_sms(patient_tel, msg)
+                send_whatsapp_message(clean_phone, msg)
         except Exception:
             pass
 
@@ -300,17 +303,25 @@ class RendezVousRefuserView(APIView):
             lien=f"/api/rendezvous/{rdv.pk}/",
         )
         
-        # Envoi de l'email au patient
-        from accounts.utils import send_appointment_status_email
+        # Envoi de la notification WhatsApp au patient (Refus)
         try:
-            send_appointment_status_email(rdv)
+            patient_tel = rdv.patient.user.telephone
+            if patient_tel:
+                clean_phone = "".join(filter(str.isdigit, str(patient_tel)))
+                msg = (
+                    f"❌ RDV Refusé\n\n"
+                    f"Votre rendez-vous avec Dr. {rdv.medecin.user.last_name} "
+                    f"le {rdv.date_heure.strftime('%d/%m/%Y à %H:%M')} a été refusé.\n"
+                    f"Motif : {rdv.commentaire_annulation}"
+                )
+                send_whatsapp_message(clean_phone, msg)
         except Exception:
             pass
 
         return Response({'message': 'Rendez-vous refusé.'}, status=status.HTTP_200_OK)
 
 
-class RendezVousAnnulerView(APIView):
+class Rendez_vousAnnulerView(APIView):
     """Annuler un rendez-vous confirmé (médecin uniquement)."""
 
     permission_classes = [IsAuthenticated]
@@ -336,16 +347,20 @@ class RendezVousAnnulerView(APIView):
         rdv.commentaire_annulation = serializer.validated_data['commentaire']
         rdv.save(update_fields=['statut', 'commentaire_annulation', 'modifie_le'])
 
-        create_notification(
-            user=rdv.patient.user,
-            type='rdv_annule',
-            message=(
-                f"Votre rendez-vous avec Dr. {rdv.medecin.user.last_name} "
-                f"le {rdv.date_heure.strftime('%d/%m/%Y à %H:%M')} a été annulé. "
-                f"Motif : {rdv.commentaire_annulation}"
-            ),
-            lien=f"/api/rendezvous/{rdv.pk}/",
-        )
+        # Envoi notification WhatsApp (Annulation)
+        try:
+            patient_tel = rdv.patient.user.telephone
+            if patient_tel:
+                clean_phone = "".join(filter(str.isdigit, str(patient_tel)))
+                msg = (
+                    f"⚠️ RDV Annulé\n\n"
+                    f"Votre rendez-vous avec Dr. {rdv.medecin.user.last_name} "
+                    f"le {rdv.date_heure.strftime('%d/%m/%Y à %H:%M')} a été annulé par le médecin.\n"
+                    f"Motif : {rdv.commentaire_annulation}"
+                )
+                send_whatsapp_message(clean_phone, msg)
+        except Exception:
+            pass
 
         return Response({'message': 'Rendez-vous annulé.'}, status=status.HTTP_200_OK)
 
@@ -368,6 +383,14 @@ class RendezVousTerminerView(APIView):
                 {'error': "Seul un rendez-vous confirmé peut être marqué comme terminé."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        # Vérifier que l'heure du RDV est passée
+        # Commenté pour la démo : on peut terminer un RDV à tout moment
+        # if rdv.date_heure > timezone.now():
+        #     return Response(
+        #         {'error': "Impossible de terminer un rendez-vous avant l'heure prévue."},
+        #         status=status.HTTP_400_BAD_REQUEST,
+        #     )
 
         # Marquer comme terminé
         rdv.statut = 'termine'
@@ -515,33 +538,20 @@ class PreEnregistrementView(APIView):
         except RendezVous.DoesNotExist:
             return Response({'error': 'Rendez-vous introuvable.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if request.user.role != 'patient':
+        if request.user.role != 'patient' or getattr(request.user, 'patient_profile', None) != rdv.patient:
             from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Seul un patient peut éditer cet intake.")
-
-        patient_profile = getattr(request.user, 'patient_profile', None)
-        if patient_profile is None:
-            return Response(
-                {'error': "Profil patient introuvable pour votre compte."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if patient_profile != rdv.patient:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Vous n'êtes pas le patient de ce rendez-vous.")
+            raise PermissionDenied("Seul le patient titulaire du rendez-vous peut éditer cet intake.")
 
         if rdv.statut in ('termine', 'annule', 'refuse'):
             return Response(
-                {'error': f"Édition verrouillée : le rendez-vous est {rdv.get_statut_display()}."},
+                {'error': f"Édition verrouillée car le rendez-vous est {rdv.get_statut_display()}."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         if create and hasattr(rdv, 'pre_enregistrement'):
-            # Déjà existant → on bascule en mode PUT automatiquement
-            create = False
-
+            return Response({'error': 'Déjà existant (utilisez PUT).'}, status=status.HTTP_400_BAD_REQUEST)
         if not create and not hasattr(rdv, 'pre_enregistrement'):
-            return Response({'error': 'Fiche introuvable (utilisez POST pour créer).'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'N\'existe pas (utilisez POST).'}, status=status.HTTP_404_NOT_FOUND)
 
         from .serializers import PreEnregistrementSerializer
         instance = getattr(rdv, 'pre_enregistrement', None)

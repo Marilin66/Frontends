@@ -21,8 +21,8 @@ echo ""
 echo "────────────────────────────────────────────────────"
 echo "[BUILD] Exécution des Migrations et Seeding de Test..."
 echo "────────────────────────────────────────────────────"
-python manage.py migrate --noinput
-python seed_complet.py
+# python manage.py migrate --noinput
+# python seed_preenregistrement.py
 
 echo ""
 echo "────────────────────────────────────────────────────"

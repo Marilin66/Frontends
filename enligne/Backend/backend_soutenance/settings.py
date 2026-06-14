@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Sécurité
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
-DEBUG = True
+DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
 # Hosts autorisés — inclut automatiquement le domaine Render si défini
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
@@ -79,22 +79,37 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend_soutenance.wsgi.application'
 
+import dj_database_url
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='defaultdb'),
-        'USER': config('DB_USER', default='avnadmin'),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default='pg-1ca3a3f1-sidickelpc123-2166.h.aivencloud.com'),
-        'PORT': config('DB_PORT', default='12272'),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+        )
     }
-}
+else:
+    # Base de données PostgreSQL locale
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'soutenance_data_base',
+            'USER': 'postgres',
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
 # Modèle utilisateur personnalisé
 AUTH_USER_MODEL = 'accounts.User'
+
+# Authentification personnalisée (Email ou Numéro de Téléphone)
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.EmailOrPhoneModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Validation des mots de passe
 AUTH_PASSWORD_VALIDATORS = [
@@ -155,7 +170,8 @@ EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@esante-benin.com')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@HOPITEL-benin.com')
+BREVO_API_KEY = config('BREVO_API_KEY', default='')
 
 # URL du frontend
 FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:8080')
@@ -163,9 +179,25 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:8080')
 # URL du backend (pour les liens de validation d'emails qui doivent ouvrir une page web sur le backend)
 BACKEND_URL = config('BACKEND_URL', default='http://localhost:8000')
 
+# URL du service WhatsApp (Microservice Node.js)
+WHATSAPP_SERVICE_URL = config('WHATSAPP_SERVICE_URL', default='http://localhost:3001')
+
+# ── Feature Toggles ──────────────────────────────────────────────────────
+# Pour désactiver les services externes si nécessaire (SMTP/WhatsApp)
+ENABLE_EMAILS = config('ENABLE_EMAILS', default=True, cast=bool)
+ENABLE_WHATSAPP = config('ENABLE_WHATSAPP', default=True, cast=bool)
+AUTO_ACTIVATE_USER = config('AUTO_ACTIVATE_USER', default=False, cast=bool)
+
+# ── Soutenance / Debug Mode ──────────────────────────────────────────────
+# Rediriger toutes les notifications vers une adresse/numéro unique
+SOUTENANCE_MODE = config('SOUTENANCE_MODE', default=True, cast=bool)
+SOUTENANCE_EMAIL = config('SOUTENANCE_EMAIL', default='sidickelpc123@gmail.com')
+SOUTENANCE_WHATSAPP = config('SOUTENANCE_WHATSAPP', default='2290168765927')
+
 # CORS
-# En développement : tout autoriser. En production : lister les origines.
-CORS_ALLOW_ALL_ORIGINS = True
+# En local : tout autoriser (pratique pour les tests).
+# En production : RESTREINDRE aux seules origines du frontend !
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=True, cast=bool)
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:8080',
     'http://localhost:3000',
@@ -226,7 +258,4 @@ LOGGING = {
     },
 }
 
-# Configuration Twilio (SMS)
-TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
-TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
-TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
+
