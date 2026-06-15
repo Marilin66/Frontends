@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { api, endpoints } from '@/services/api';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Card, CardContent, Button, Badge } from '@/components/ui';
-import { Search, Star, ArrowLeft, MapPin, Zap, Navigation, Loader2, AlertCircle, X, List, Map, ChevronRight } from 'lucide-react';
+import { Button, Badge } from '@/components/ui';
+import { Search, Star, MapPin, Zap, Navigation, Loader2, X, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,11 +21,6 @@ function ChangeView({ center }: { center: [number, number] }) {
   return null;
 }
 
-const itemVariants: any = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { y: 0, opacity: 1, transition: { duration: 0.5, ease: 'easeOut' } },
-};
-
 // Coordonnées par défaut : Cotonou, Bénin
 const DEFAULT_CENTER: [number, number] = [6.3533, 2.4411];
 
@@ -38,7 +33,6 @@ export default function NearbyHospitalsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle');
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
-  const [error, setError] = useState('');
   // Vue mobile : 'list' ou 'map'
   const [mobileView, setMobileView] = useState<'list' | 'map'>('list');
 
@@ -46,7 +40,6 @@ export default function NearbyHospitalsPage() {
   const fetchHospitals = useCallback(async (lat?: number, lng?: number) => {
     try {
       setIsLoading(true);
-      setError('');
       let response: any;
 
       if (lat !== undefined && lng !== undefined) {
@@ -78,7 +71,6 @@ export default function NearbyHospitalsPage() {
       }
     } catch (err) {
       console.error('Erreur chargement hôpitaux:', err);
-      setError('Impossible de charger les hôpitaux. Vérifiez votre connexion.');
     } finally {
       setIsLoading(false);
     }

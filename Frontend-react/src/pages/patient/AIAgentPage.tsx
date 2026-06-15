@@ -11,7 +11,6 @@ import {
   MessageSquare,
   Menu,
   X,
-  ChevronRight,
   AlertCircle,
   ShieldCheck,
   Loader2,
@@ -61,7 +60,7 @@ export default function AIAgentPage() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth();
 
   useEffect(() => {
     Promise.all([fetchSessions(), loadLastHistory()]);
@@ -317,7 +316,7 @@ export default function AIAgentPage() {
                       </p>
                       <p className="text-[10px] text-slate-400 font-medium mt-0.5">
                         {session.created_at || session.date
-                          ? new Date(session.created_at || session.date).toLocaleDateString('fr-FR')
+                          ? new Date((session.created_at || session.date) as string).toLocaleDateString('fr-FR')
                           : "Aujourd'hui"}
                       </p>
                     </div>
