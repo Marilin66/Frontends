@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ClipboardList,
@@ -26,7 +26,10 @@ interface IntakeFormData {
 }
 
 export default function PatientIntakePage() {
-  const { rdvId, medecinNom } = useParams<{ rdvId: string; medecinNom?: string }>();
+  const { rdvId, medecinNom: medecinNomParam } = useParams<{ rdvId: string; medecinNom?: string }>();
+  const [searchParams] = useSearchParams();
+  // Supporte les deux : path param et query string ?medecin=...
+  const medecinNom = medecinNomParam || searchParams.get('medecin') || '';
   const navigate = useNavigate();
 
   const [form, setForm] = useState<IntakeFormData>({

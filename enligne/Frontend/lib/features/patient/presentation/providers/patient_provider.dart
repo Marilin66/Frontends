@@ -72,6 +72,9 @@ class PatientRendezvousNotifier extends AsyncNotifier<List<RendezVousModel>> {
       await datasource.createRendezvous(data);
       await refresh();
       return true;
+    } on Exception catch (e) {
+      // Propager l'erreur pour que l'UI puisse afficher un message précis
+      rethrow;
     } catch (_) {
       return false;
     }

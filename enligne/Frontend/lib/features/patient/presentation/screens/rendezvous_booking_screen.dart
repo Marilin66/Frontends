@@ -325,20 +325,44 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('Motif de consultation', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: motifController,
-          decoration: InputDecoration(
-            hintText: 'Ex: Fièvre, Rappel vaccin...',
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-          maxLines: 3,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Décrivez brièvement la raison de votre visite.',
+              style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: motifController,
+              autofocus: true,
+              decoration: InputDecoration(
+                hintText: 'Ex: Fièvre, Douleur abdominale, Rappel vaccin...',
+                hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 13),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: const EdgeInsets.all(12),
+              ),
+              maxLines: 3,
+              maxLength: 500,
+            ),
+          ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Annuler'),
+          ),
           FilledButton(
             onPressed: () {
+              final motif = motifController.text.trim();
+              if (motif.length < 5) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text('Veuillez saisir un motif (min. 5 caractères)')),
+                );
+                return;
+              }
               Navigator.pop(ctx);
-              _submitBooking(medecin, creneau, motifController.text.trim());
+              _submitBooking(medecin, creneau, motif);
             },
             child: const Text('Réserver maintenant'),
           ),
@@ -350,23 +374,29 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
   void _submitBooking(MedecinSearchModel medecin, CreneauModel creneau, String motif) async {
     setState(() => _isSubmitting = true);
     try {
-      // Construction de date_heure : "YYYY-MM-DDTHH:MM:00"
-      final dateHeure = "${creneau.date}T${creneau.heureDebut}";
+      // Format : "YYYY-MM-DDTHH:MM:00"
+      final heureFormatee = creneau.heureDebut.length == 5
+          ? '${creneau.heureDebut}:00'
+          : creneau.heureDebut;
+      final dateHeure = '${creneau.date}T$heureFormatee';
 
       final ok = await ref.read(patientRendezvousProvider.notifier).createRendezvous({
         'medecin': medecin.id,
         'date_heure': dateHeure,
         'motif': motif,
       });
-      
+
       if (mounted) {
         setState(() => _isSubmitting = false);
         if (ok) {
           Helpers.showSnackBar(context, 'Rendez-vous réservé avec succès !');
-          // Naviguer vers la page des rendez-vous pour voir la confirmation
           context.go('/patient/appointments');
         } else {
-          Helpers.showSnackBar(context, 'Erreur lors de la réservation', isError: true);
+          Helpers.showSnackBar(
+            context,
+            'Erreur lors de la réservation. Vérifiez que votre NPI est renseigné dans votre profil.',
+            isError: true,
+          );
         }
       }
     } catch (e) {
