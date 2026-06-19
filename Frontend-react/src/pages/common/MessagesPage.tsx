@@ -1,10 +1,10 @@
-// @ts-nocheck
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Send, Search, User, MessageSquare, Check, CheckCheck,
   ArrowLeft, Paperclip, Mic, MicOff, X, FileText,
-  FlaskConical, Stethoscope, ShieldCheck, Wifi, WifiOff,
+  Stethoscope, FlaskConical, ShieldCheck, Wifi, WifiOff,
 } from 'lucide-react';
 import { api, endpoints } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -128,32 +128,33 @@ export default function MessagesPage() {
 
   const fetchConversations = useCallback(async () => {
     try {
-      const d: any = await api.get(endpoints.conversations);
-      setConversations(Array.isArray(d) ? d : d.results ?? []);
+      const d = await api.get(endpoints.conversations);
+      setConversations(Array.isArray(d) ? d : (d as { results?: Conversation[] }).results ?? []);
     } catch { setConversations([]); }
   }, []);
 
   const fetchContacts = useCallback(async () => {
     if (!user || isPatient) return;
     const safe = async (url: string) => {
-      try { const d: any = await api.get(url); return Array.isArray(d) ? d : d.results ?? []; }
+      try { const d = await api.get(url); return Array.isArray(d) ? d : (d as { results?: Contact[] }).results ?? []; }
       catch { return []; }
     };
-    const rawHop = user.hopital_id ?? user.hopital?.id ?? user.hopital ?? '';
+    const rawHop = ((user as any).hopital_id ?? (user as any).hopital?.id ?? (user as any).hopital ?? '') as string;
     const hopId  = rawHop ? String(rawHop) : null;
     const role   = user.role;
     let res: Contact[] = [];
 
-    if (role === 'admin_general' || role === 'super_admin') {
+    if (role === 'admin_general') {
       const list = await safe(endpoints.adminHopitaux);
-      res = list.map((u: any) => ({ id: u.user_id ?? u.id, nom: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || 'Admin', role: 'admin_hopital', hopital_nom: u.hopital_nom }));
+      res = list.map((u) => ({ id: (u as Record<string, unknown>).user_id ?? u.id, nom: `${(u as Record<string, unknown>).first_name ?? ''} ${(u as Record<string, unknown>).last_name ?? ''}`.trim() || 'Admin', role: 'admin_hopital', hopital_nom: (u as Record<string, unknown>).hopital_nom as string }));
     } else {
       const [admins, meds, labs] = await Promise.all([safe(endpoints.adminHopitaux), safe(endpoints.medecins), safe(endpoints.laborantins)]);
-      const byHop = (u: any) => !hopId || String(u.hopital_id ?? u.hopital?.id ?? u.hopital ?? '') === hopId;
+      type ApiUser = { id: number; user_id?: number; first_name?: string; last_name?: string; hopital_nom?: string; hopital_id?: number; hopital?: { id?: number } | number | string };
+      const byHop = (u: ApiUser) => !hopId || String(u.hopital_id ?? (typeof u.hopital === 'object' ? u.hopital?.id : u.hopital) ?? '') === hopId;
       res = [
-        ...admins.filter(byHop).map((u: any) => ({ id: u.user_id ?? u.id, nom: `Administration: ${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(), role: 'admin_hopital', hopital_nom: u.hopital_nom })),
-        ...meds.filter(byHop).filter((u: any) => String(u.id) !== String(user.id)).map((u: any) => ({ id: u.user_id ?? u.id, nom: `Dr. ${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(), role: 'medecin', hopital_nom: u.hopital_nom })),
-        ...labs.filter(byHop).filter((u: any) => String(u.id) !== String(user.id)).map((u: any) => ({ id: u.user_id ?? u.id, nom: `Lab. ${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(), role: 'laborantin', hopital_nom: u.hopital_nom })),
+        ...admins.filter(byHop).map((u) => ({ id: u.user_id ?? u.id, nom: `Administration: ${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(), role: 'admin_hopital', hopital_nom: u.hopital_nom })),
+        ...meds.filter(byHop).filter((u) => String(u.id) !== String(user.id)).map((u) => ({ id: u.user_id ?? u.id, nom: `Dr. ${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(), role: 'medecin', hopital_nom: u.hopital_nom })),
+        ...labs.filter(byHop).filter((u) => String(u.id) !== String(user.id)).map((u) => ({ id: u.user_id ?? u.id, nom: `Lab. ${u.first_name ?? ''} ${u.last_name ?? ''}`.trim(), role: 'laborantin', hopital_nom: u.hopital_nom })),
       ];
       if (res.length === 0) res.push({ id: 999, nom: 'Support Technique Hopitel', role: 'admin_general' });
     }
@@ -165,8 +166,8 @@ export default function MessagesPage() {
       const url = consultationId
         ? `${endpoints.messages}?consultation=${consultationId}`
         : `${endpoints.messages}?destinataire=${targetId}`;
-      const d: any = await api.get(url);
-      setMessages(Array.isArray(d) ? d : d.results ?? []);
+      const d = await api.get(url);
+      setMessages(Array.isArray(d) ? d : (d as { results?: Message[] }).results ?? []);
     } catch { /* silencieux */ }
   }, []);
 
@@ -179,7 +180,7 @@ export default function MessagesPage() {
   useMessagerieWebSocket({
     isDirect: true,
     enabled: !!user && selectedConv != null && !selectedConv.consultation_id,
-    onMessage: (wsMsg) => {
+    onMessage: (wsMsg: any) => {
       setWsConnected(true);
       const me = user?.id;
       if (selectedConv && (wsMsg.expediteur === selectedConv.destinataire_id || wsMsg.destinataire === selectedConv.destinataire_id)) {
@@ -196,7 +197,7 @@ export default function MessagesPage() {
   useMessagerieWebSocket({
     consultationId: selectedConv?.consultation_id,
     enabled: !!selectedConv?.consultation_id,
-    onMessage: (wsMsg) => {
+    onMessage: (wsMsg: any) => {
       setWsConnected(true);
       setMessages(prev => prev.some(m => m.id === wsMsg.id) ? prev : [...prev, wsMsg]);
       setConversations(prev => prev.map(c =>
@@ -236,7 +237,7 @@ export default function MessagesPage() {
       form.append('piece_jointe', pendingFile);
       setPendingFile(null);
       try {
-        const res: any = await api.post(endpoints.messages, form);
+        const res = await api.post<Message>(endpoints.messages, form);
         setMessages(prev => [...prev, res]);
         fetchConversations();
       } catch { /* silencieux */ }
@@ -284,7 +285,7 @@ export default function MessagesPage() {
         form.append('type_message', 'vocal');
         form.append('audio', blob, `voice_${Date.now()}.webm`);
         try {
-          const res: any = await api.post(endpoints.messages, form);
+          const res = await api.post<Message>(endpoints.messages, form);
           setMessages(prev => [...prev, res]);
           fetchConversations();
         } catch { /* silencieux */ }

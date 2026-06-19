@@ -1,8 +1,8 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
-import { Activity, Plus, Search, Edit2, Trash2, RefreshCw, X, Check, AlertCircle } from 'lucide-react';
+import { Activity, Plus, Search, Edit2, Trash2, RefreshCw, X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorModal, ConfirmModal } from '@/components/ui';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -117,7 +117,7 @@ export default function SuperAdminServicesPage() {
               </div>
               <div className="flex gap-3 mt-4">
                 <Button variant="outline" onClick={cancel}>Annuler</Button>
-                <Button onClick={handleSave} loading={saving} leftIcon={<Check className="w-4 h-4" />}>
+                <Button onClick={handleSave} isLoading={saving} leftIcon={<Check className="w-4 h-4" />}>
                   {mode === 'create' ? 'Créer' : 'Enregistrer'}
                 </Button>
               </div>

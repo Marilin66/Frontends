@@ -1,10 +1,10 @@
-// @ts-nocheck
+
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui';
-import { ArrowLeft, CheckCircle, AlertCircle, MessageSquare, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function VerifyCodePage() {
   const navigate = useNavigate();
@@ -80,7 +80,7 @@ export default function VerifyCodePage() {
 
     try {
       setLoading(true);
-      const response = await api.post('/accounts/verify-code/', {
+      const response = await api.post<{access?: string; refresh?: string; user?: any}>('/accounts/verify-code/', {
         email: email,
         code: fullCode,
       });
@@ -90,7 +90,7 @@ export default function VerifyCodePage() {
       setSuccess(true);
 
       // If tokens are present, perform auto-login for a seamless experience
-      if (response && response.access && response.refresh) {
+      if (response.access && response.refresh) {
         setIsAutoConnecting(true);
         await autoLogin({
           access: response.access,

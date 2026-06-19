@@ -287,7 +287,7 @@ class _CreateMedecinDialogFormState extends ConsumerState<CreateMedecinDialogFor
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _sexe,
+                initialValue: _sexe,
                 decoration: const InputDecoration(
                   labelText: 'Sexe *',
                   prefixIcon: Icon(Icons.wc_outlined),
@@ -534,7 +534,7 @@ class _EditMedecinDialogFormState extends ConsumerState<EditMedecinDialogForm> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _sexe,
+                initialValue: _sexe,
                 decoration: const InputDecoration(
                   labelText: 'Sexe *',
                   prefixIcon: Icon(Icons.wc_outlined),

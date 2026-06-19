@@ -36,9 +36,9 @@ class MessagerieRemoteDatasource {
   Future<List<MessageModel>> getMessages({int? consultationId, int? destinataireId}) async {
     try {
       final queryParams = <String, dynamic>{
-        'consultation': consultationId,
-        'destinataire': destinataireId,
-      }..removeWhere((key, value) => value == null);
+        if (consultationId != null) 'consultation': consultationId,
+        if (destinataireId != null) 'destinataire': destinataireId,
+      };
 
       final response = await _client.get(
         ApiConstants.messages,

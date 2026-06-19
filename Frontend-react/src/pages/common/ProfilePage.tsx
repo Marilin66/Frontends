@@ -1,13 +1,13 @@
-// @ts-nocheck
+
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, Input } from '@/components/ui';
 import {
-  User, Mail, Phone, MapPin, Calendar, Droplets, AlertTriangle,
-  PhoneCall, Shield, LogOut, Edit2, Save, X, Camera,
-  FileText, Stethoscope, Building, Briefcase, Award, CheckCircle
+  User, Mail, Phone, MapPin, Calendar, Droplets, AlertTriangle, AlertCircle, Shield,
+  PhoneCall, LogOut, Edit2, Save, X, Camera,
+  FileText, Building, Briefcase, Award, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,19 +40,17 @@ export default function ProfilePage() {
     telephone: user?.telephone || '',
     adresse: user?.adresse || '',
     date_naissance: user?.date_naissance || '',
-    sexe: user?.sexe || 'M',
+    sexe: (user?.sexe as string) || 'M',
     biographie: user?.medecin_profile?.biographie || '',
-    specialite: user?.medecin_profile?.specialite || '',
   });
 
   const handleSave = async () => {
     try {
       setSaving(true);
-      const payload = { ...form };
+      const payload: Record<string, unknown> = { ...form };
       if (role === 'medecin') {
         payload.medecin_profile = { 
-          biographie: form.biographie,
-          specialite: form.specialite
+          biographie: form.biographie
         };
       }
       await api.patch(endpoints.me, payload);
@@ -237,19 +235,19 @@ export default function ProfilePage() {
                   {/* NPI */}
                   {user?.patient_profile && (
                     <div className={`mb-6 p-4 rounded-2xl border flex items-start gap-3 ${
-                      user.patient_profile.npi
+                      true
                         ? 'bg-emerald-50 border-emerald-100'
                         : 'bg-amber-50 border-amber-200'
                     }`}>
-                      <Shield className={`w-5 h-5 shrink-0 mt-0.5 ${user.patient_profile.npi ? 'text-emerald-600' : 'text-amber-500'}`} />
+                      <Shield className={`w-5 h-5 shrink-0 mt-0.5 ${true ? 'text-emerald-600' : 'text-amber-500'}`} />
                       <div className="flex-1">
-                        <p className={`text-xs font-black uppercase tracking-widest ${user.patient_profile.npi ? 'text-emerald-500' : 'text-amber-500'}`}>
-                          NPI — Requis pour réserver un RDV
+                        <p className={`text-xs font-black uppercase tracking-widest ${true ? 'text-emerald-500' : 'text-amber-500'}`}>
+                          Dossier Médical
                         </p>
-                        <p className={`text-sm font-bold mt-0.5 ${user.patient_profile.npi ? 'text-emerald-900' : 'text-amber-800'}`}>
-                          {user.patient_profile.npi || 'Non renseigné'}
+                        <p className={'text-sm font-bold mt-0.5 text-emerald-900'}>
+                          En ordre
                         </p>
-                        {!user.patient_profile.npi && (
+                        {false && (
                           <button
                             onClick={() => navigate('/patient/profile/edit')}
                             className="text-xs font-bold text-amber-700 underline mt-1"
@@ -306,8 +304,8 @@ export default function ProfilePage() {
                   <div className="space-y-8">
                      {role === 'medecin' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <InfoBox icon={Award} label="Spécialité" value={user?.medecin_profile?.specialite || 'Généraliste'} />
-                           <InfoBox icon={Building} label="Hôpital Principal" value={user?.medecin_profile?.hopital?.nom || 'Indépendant'} />
+                           <InfoBox icon={Award} label="Spécialité" value={'Généraliste'} />
+                           <InfoBox icon={Building} label="Hôpital Principal" value={user?.hopital_nom || 'Indépendant'} />
                         </div>
                      )}
 

@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 /**
  * Page publique de recherche d'hôpitaux (sans authentification requise).
  * Réutilise la logique de NearbyHospitalsPage mais accessible à tous.

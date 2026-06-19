@@ -6,9 +6,11 @@ import { Button, Badge } from '@/components/ui';
 import { Search, Star, MapPin, Zap, Navigation, Loader2, X, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { Hopital } from '@/types/api';
+import { toArray } from '@/types/api';
 
 // Fix icônes Leaflet avec React
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -27,8 +29,9 @@ const DEFAULT_CENTER: [number, number] = [6.3533, 2.4411];
 export default function NearbyHospitalsPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [activeHospital, setActiveHospital] = useState<any>(null);
+  interface NearbyHospital { id: number; name: string; address: string; lat: number; lng: number; phone: string; rating: number; distance: string | null; type: string; status: string; nombreServices: number; nombreMedecins: number }
+  const [hospitals, setHospitals] = useState<NearbyHospital[]>([]);
+  const [activeHospital, setActiveHospital] = useState<NearbyHospital | null>(null);
   const [mapCenter, setMapCenter] = useState<[number, number]>(DEFAULT_CENTER);
   const [isLoading, setIsLoading] = useState(true);
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'loading' | 'granted' | 'denied'>('idle');
@@ -40,28 +43,28 @@ export default function NearbyHospitalsPage() {
   const fetchHospitals = useCallback(async (lat?: number, lng?: number) => {
     try {
       setIsLoading(true);
-      let response: any;
+      let response: unknown;
 
       if (lat !== undefined && lng !== undefined) {
-        response = await api.get<any>(endpoints.hopitauxNearby, { lat, lng, radius: 20 });
+        response = await api.get(endpoints.hopitauxNearby, { lat, lng, radius: 20 });
       } else {
-        response = await api.get<any>(endpoints.hopitaux);
+        response = await api.get(endpoints.hopitaux);
       }
 
-      const results = Array.isArray(response) ? response : response.results || [];
+      const results = toArray<any>(response);
       const formatted = results.map((h: any) => ({
-        id: h.id,
-        name: h.nom,
-        address: h.adresse,
-        lat: parseFloat(h.latitude) || DEFAULT_CENTER[0],
-        lng: parseFloat(h.longitude) || DEFAULT_CENTER[1],
-        phone: h.telephone,
+        id: h.id as number,
+        name: h.nom as string,
+        address: h.adresse as string,
+        lat: parseFloat(String(h.latitude ?? '')) || DEFAULT_CENTER[0],
+        lng: parseFloat(String(h.longitude ?? '')) || DEFAULT_CENTER[1],
+        phone: h.telephone as string,
         rating: 4.8,
-        distance: h.distance_km ? `${parseFloat(h.distance_km).toFixed(1)} km` : null,
-        type: h.est_public ? 'PUBLIC' : 'PRIVÉ',
-        status: h.est_actif ? 'OUVERT' : 'FERMÉ',
-        nombreServices: h.nombre_services || 0,
-        nombreMedecins: h.nombre_medecins || 0,
+        distance: h.distance_km ? `${parseFloat(String(h.distance_km)).toFixed(1)} km` : null,
+        type: (h as Record<string, unknown>).est_public ? 'PUBLIC' : 'PRIVÉ',
+        status: (h as Record<string, unknown>).est_actif ? 'OUVERT' : 'FERMÉ',
+        nombreServices: ((h as Record<string, unknown>).nombre_services as number) || 0,
+        nombreMedecins: ((h as Record<string, unknown>).nombre_medecins as number) || 0,
       }));
 
       setHospitals(formatted);
@@ -110,7 +113,7 @@ export default function NearbyHospitalsPage() {
       h.address?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSelectHospital = (hospital: any) => {
+  const handleSelectHospital = (hospital: NearbyHospital) => {
     setActiveHospital(hospital);
     if (hospital.lat && hospital.lng) {
       setMapCenter([hospital.lat, hospital.lng]);

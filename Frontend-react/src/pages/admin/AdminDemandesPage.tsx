@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
@@ -6,13 +6,15 @@ import { Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { Inbox, RefreshCw, Plus, CheckCircle, XCircle, Clock, Building, User, Calendar, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorModal } from '@/components/ui';
+import type { DemandeService, Service, ApiError } from '@/types/api';
+import { toArray } from '@/types/api';
 
 const PAGE_SIZE = 10;
 
 type Tab = 'en_attente' | 'valide' | 'refuse';
 
 function StatusPill({ statut }: { statut: string }) {
-  const map: Record<string, { label: string; cls: string; icon: any }> = {
+  const map: Record<string, { label: string; cls: string; icon: typeof Clock }> = {
     en_attente: { label: 'En attente', cls: 'bg-amber-50 text-amber-700 border-amber-200',   icon: Clock },
     valide:     { label: 'Validée',    cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle },
     refuse:     { label: 'Refusée',    cls: 'bg-red-50 text-red-700 border-red-200',          icon: XCircle },
@@ -27,8 +29,8 @@ function StatusPill({ statut }: { statut: string }) {
 
 export default function AdminDemandesPage() {
   const { user } = useAuth();
-  const [demandes, setDemandes] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
+  const [demandes, setDemandes] = useState<DemandeService[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('en_attente');
   const [page, setPage] = useState(1);
@@ -41,12 +43,12 @@ export default function AdminDemandesPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [d, s]: any = await Promise.all([
+      const [d, s] = await Promise.all([
         api.get(endpoints.demandesServices),
         api.get(endpoints.servicesGlobaux),
       ]);
-      setDemandes(Array.isArray(d) ? d : d.results ?? []);
-      setServices(Array.isArray(s) ? s : s.results ?? []);
+      setDemandes(toArray<DemandeService>(d));
+      setServices(toArray<Service>(s));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -64,7 +66,7 @@ export default function AdminDemandesPage() {
       setShowForm(false);
       setFormData({ nom: '', description: '', service_existant: '' });
       fetchData();
-    } catch { setErrorMsg('Erreur lors de l\'envoi de la demande.'); }
+    } catch (_err) { setErrorMsg('Erreur lors de l\'envoi de la demande.'); }
     finally { setSubmitting(false); }
   };
 
@@ -156,7 +158,7 @@ export default function AdminDemandesPage() {
                     className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all cursor-pointer bg-white"
                   >
                     <option value="">Choisir un service…</option>
-                    {services.map((s: any) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+                    {services.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
                   </select>
                 </div>
               )}

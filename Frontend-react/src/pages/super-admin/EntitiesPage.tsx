@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,21 +10,10 @@ import {
   Edit2, CheckCircle
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
+import type { Hopital, ApiError } from '@/types/api';
+import { toArray } from '@/types/api';
 
 const PAGE_SIZE = 12;
-
-interface Hopital {
-  id: number;
-  nom: string;
-  adresse: string;
-  ville: string;
-  telephone: string;
-  email: string;
-  is_active: boolean;
-  code_court?: string;
-  latitude?: number;
-  longitude?: number;
-}
 
 const EMPTY_FORM = {
   nom: '', adresse: '', ville: '', telephone: '', email: '',
@@ -51,8 +40,8 @@ export default function EntitiesPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data: any = await api.get(endpoints.hopitaux);
-      setHopitaux(Array.isArray(data) ? data : data.results ?? []);
+      const data = await api.get(endpoints.hopitaux);
+      setHopitaux(toArray<Hopital>(data));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -88,7 +77,7 @@ export default function EntitiesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const payload: any = {
+      const payload: Record<string, string | number> = {
         nom: form.nom,
         adresse: form.adresse,
         ville: form.ville,
@@ -104,8 +93,9 @@ export default function EntitiesPage() {
       }
       closeModal();
       fetchData();
-    } catch (e: any) {
-      setErrorMsg(e?.response?.data ? JSON.stringify(e.response.data) : 'Erreur lors de la sauvegarde.');
+    } catch (e) {
+      const apiErr = e as ApiError;
+      setErrorMsg(apiErr?.response?.data ? JSON.stringify(apiErr.response.data) : 'Erreur lors de la sauvegarde.');
     } finally {
       setSaving(false);
     }

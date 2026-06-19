@@ -215,7 +215,7 @@ class _SuperAdminCreateHopitalScreenState
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: _adminSexe,
+                  initialValue: _adminSexe,
                   decoration: InputDecoration(
                     labelText: 'Sexe',
                     prefixIcon: const Icon(Icons.wc, color: AppColors.superAdmin),

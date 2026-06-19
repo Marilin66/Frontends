@@ -1,14 +1,16 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { Badge, Button, PageLoader } from '@/components/ui';
 import { Search, MapPin, Building, ChevronRight, Filter, X, Stethoscope } from 'lucide-react';
+import type { Hopital, Service } from '@/types/api';
+import { toArray } from '@/types/api';
 
 export default function SearchPage() {
   const navigate = useNavigate();
-  const [hospitals, setHospitals] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
+  const [hospitals, setHospitals] = useState<{ id: number; nom: string; adresse: string; ville: string; services: Array<{ id?: number; nom?: string; service_nom?: string }>; nombre_medecins: number }[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedService, setSelectedService] = useState<number | null>(null);
@@ -17,20 +19,20 @@ export default function SearchPage() {
     Promise.all([
       api.get(endpoints.hopitaux),
       api.get(endpoints.servicesGlobaux),
-    ]).then(([h, s]: any) => {
-      const raw = Array.isArray(h) ? h : h.results || [];
-      setHospitals(raw.map((x: any) => ({
+    ]).then(([h, s]) => {
+      const raw = toArray<Hopital & { services?: Array<{ id?: number; nom?: string; service_nom?: string }>; nombre_medecins?: number }>(h);
+      setHospitals(raw.map((x) => ({
         id: x.id, nom: x.nom || '', adresse: x.adresse || '',
         ville: x.ville || '', services: Array.isArray(x.services) ? x.services : [],
         nombre_medecins: x.nombre_medecins || 0,
       })));
-      setServices(Array.isArray(s) ? s : s.results || []);
+      setServices(toArray<Service>(s));
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   const filtered = hospitals.filter(h => {
     const matchSearch = !search || h.nom.toLowerCase().includes(search.toLowerCase()) || h.ville.toLowerCase().includes(search.toLowerCase());
-    const matchService = !selectedService || h.services.some((s: any) => s.id === selectedService || s.service === selectedService);
+    const matchService = !selectedService || h.services.some((s) => s.id === selectedService || (s as { service?: number }).service === selectedService);
     return matchSearch && matchService;
   });
 
@@ -77,7 +79,7 @@ export default function SearchPage() {
             >
               Toutes
             </button>
-            {services.slice(0, 10).map((s: any) => (
+            {services.slice(0, 10).map((s) => (
               <button
                 key={s.id}
                 onClick={() => setSelectedService(selectedService === s.id ? null : s.id)}
@@ -129,7 +131,7 @@ export default function SearchPage() {
                     )}
                     {h.services.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-3">
-                        {h.services.slice(0, 3).map((s: any, i: number) => (
+                        {h.services.slice(0, 3).map((s, i) => (
                           <span key={i} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg">
                             {s.nom || s.service_nom}
                           </span>

@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, Button } from '@/components/ui';

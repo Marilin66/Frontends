@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { BookOpen, User, Calendar, FlaskConical, MessageSquare, ShieldCheck } from 'lucide-react';
 
 const steps = [

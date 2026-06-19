@@ -1,17 +1,10 @@
-// @ts-nocheck
+
 import { Link } from 'react-router-dom';
 import { 
-  Activity, 
-  Facebook, 
-  Instagram, 
-  Youtube, 
-  Twitter, 
   Download, 
   Mail, 
   MapPin, 
-  Clock,
-  ExternalLink,
-  ChevronRight
+  Clock
 } from 'lucide-react';
 
 /**
@@ -39,18 +32,18 @@ export function Footer() {
               <p className="text-xs font-black uppercase tracking-widest text-slate-500">Suivez-nous</p>
               <div className="flex items-center gap-3">
                 {[
-                  { icon: Facebook,  label: 'Facebook' },
-                  { icon: Instagram, label: 'Instagram' },
-                  { icon: Twitter,   label: 'Twitter' },
-                  { icon: Youtube,   label: 'Youtube' }
+                  { label: 'Facebook' },
+                  { label: 'Instagram' },
+                  { label: 'Twitter' },
+                  { label: 'Youtube' }
                 ].map((social, i) => (
                   <a 
                     key={i} 
                     href="#" 
-                    className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-slate-800"
+                    className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-slate-800 text-slate-400"
                     title={social.label}
                   >
-                    <social.icon className="w-5 h-5" />
+                    <span className="text-xs font-black">{social.label[0]}</span>
                   </a>
                 ))}
               </div>

@@ -1,10 +1,10 @@
-// @ts-nocheck
-import React, { useState, useRef, useEffect } from 'react';
+
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { Avatar, Badge } from '@/components/ui';
-import { Bell, Menu, Search, LogOut, User as UserIcon, Settings, ChevronDown, HelpCircle, Calendar, Stethoscope, Activity, FlaskConical, Shield, MessageSquare, Sun, Moon } from 'lucide-react';
+import { Avatar } from '@/components/ui';
+import { Bell, Menu, Search, LogOut, User as UserIcon, Settings, ChevronDown, HelpCircle, MessageSquare, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -20,12 +20,10 @@ const ROLE_BADGE: Record<string, string> = {
   patient:       'bg-blue-100 text-blue-700',
   medecin:       'bg-emerald-100 text-emerald-700',
   admin_hopital: 'bg-orange-100 text-orange-700',
-  admin_general: 'bg-orange-100 text-orange-700',
-  super_admin:   'bg-violet-100 text-violet-700',
-  laborantin:    'bg-cyan-100 text-cyan-700',
+  admin_general: 'bg-orange-100 text-orange-700',      laborantin:    'bg-cyan-100 text-cyan-700',
 };
 
-export function Header({ onMenuClick, onNotificationsClick, notificationCount = 0 }) {
+export function Header({ onMenuClick, onNotificationsClick, notificationCount = 0 }: { onMenuClick: () => void; onNotificationsClick: () => void; notificationCount?: number }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
@@ -33,7 +31,7 @@ export function Header({ onMenuClick, onNotificationsClick, notificationCount = 
   const navigate = useNavigate();
   const location = useLocation();
 
-  const role = user?.role || 'patient';
+  const role: string = user?.role || 'patient';
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -46,13 +44,13 @@ export function Header({ onMenuClick, onNotificationsClick, notificationCount = 
   useEffect(() => { setShowMenu(false); }, [location.pathname]);
 
   const getProfilePath = () => {
-    if (role === 'super_admin' || role === 'admin_general') return '/super-admin/profile';
+    if (role === 'admin_general') return '/super-admin/profile';
     const r = role.replace('_', '-');
     return `/${r}/profile`;
   };
 
   const getSettingsPath = () => {
-    if (role === 'super_admin' || role === 'admin_general') return '/super-admin/settings';
+    if (role === 'admin_general') return '/super-admin/settings';
     const r = role.replace('_', '-');
     return `/${r}/settings`;
   };
@@ -74,7 +72,7 @@ export function Header({ onMenuClick, onNotificationsClick, notificationCount = 
     const path = location.pathname;
     if (path.includes('/dashboard') || path === '/patient' || path === '/medecin' || path === '/admin-hopital' || path === '/super-admin' || path === '/laborantin') {
       if (role === 'admin_hopital') return 'Administration Hospitalière';
-      if (role === 'super_admin' || role === 'admin_general') return 'Super Supervision Globale';
+      if (role === 'admin_general') return 'Super Supervision Globale';
       if (role === 'medecin') return 'Espace Médical';
       if (role === 'laborantin') return 'Gestion Laboratoire';
       return 'Tableau de bord';

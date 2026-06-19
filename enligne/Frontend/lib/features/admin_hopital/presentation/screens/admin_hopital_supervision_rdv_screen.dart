@@ -150,7 +150,7 @@ class _AdminHopitalSupervisionRdvScreenState
                     itemCount: rdvList.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
-                      final rdv = rdvList[i] as Map<String, dynamic>;
+                      final rdv = rdvList[i];
                       final statut = rdv['statut'] as String? ?? '';
                       final statutColor =
                           _statutColors[statut] ?? AppColors.textHint;

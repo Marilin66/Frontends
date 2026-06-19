@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
@@ -6,26 +6,28 @@ import { Button, PageLoader, Badge } from '@/components/ui';
 import {
   Users, Building, Activity, RefreshCw, ChevronRight, TrendingUp, Globe, Server, FlaskConical
 } from 'lucide-react';
+import type { SuperAdminStats, DailyLogin } from '@/types/api';
 
 export default function SuperAdminDashboard() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<SuperAdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const fetchStats = () => {
     setLoading(true);
     api.get(endpoints.superAdminStats)
-      .then((res: any) => {
-        if (res && (res.total_hopitaux !== undefined || res.total_medecins !== undefined)) {
-          setStats(res);
+      .then((res) => {
+        const data = res as SuperAdminStats;
+        if (data && (data.total_hopitaux !== undefined || data.total_medecins !== undefined)) {
+          setStats(data);
         } else {
           Promise.all([
             api.get(endpoints.hopitaux).catch(() => ({ results: [], count: 0 })),
             api.get(endpoints.medecins).catch(() => ({ results: [], count: 0 })),
             api.get(endpoints.patients).catch(() => ({ results: [], count: 0 })),
             api.get(endpoints.rendezVous).catch(() => ({ results: [], count: 0 })),
-          ]).then(([hopitaux, medecins, patients, rdvs]: any) => {
-            const countOf = (d: any) => typeof d === 'number' ? d : d?.count ?? (Array.isArray(d) ? d.length : d?.results?.length ?? 0);
+          ]).then(([hopitaux, medecins, patients, rdvs]) => {
+            const countOf = (d: unknown) => typeof d === 'number' ? d : (d as { count?: number; results?: unknown[] })?.count ?? (Array.isArray(d) ? d.length : (d as { results?: unknown[] })?.results?.length ?? 0);
             setStats({
               total_hopitaux: countOf(hopitaux),
               total_medecins: countOf(medecins),
@@ -43,8 +45,8 @@ export default function SuperAdminDashboard() {
         Promise.all([
           api.get(endpoints.hopitaux).catch(() => null),
           api.get(endpoints.medecins).catch(() => null),
-        ]).then(([hopitaux, medecins]: any) => {
-          const countOf = (d: any) => d?.count ?? (Array.isArray(d) ? d.length : d?.results?.length ?? 0);
+        ]).then(([hopitaux, medecins]) => {
+          const countOf = (d: unknown) => (d as { count?: number; results?: unknown[] })?.count ?? (Array.isArray(d) ? d.length : (d as { results?: unknown[] })?.results?.length ?? 0);
           setStats({
             total_hopitaux: countOf(hopitaux),
             total_medecins: countOf(medecins),
@@ -187,10 +189,10 @@ export default function SuperAdminDashboard() {
           </div>
           
           <div className="p-8">
-            {stats?.daily_logins && (
+            {stats && (stats.daily_logins ?? []).length > 0 && (
               <div className="flex items-end gap-3 h-48 border-b border-slate-100 pb-2">
-                {stats.daily_logins.map((d: any, i: number) => {
-                  const max = Math.max(...stats.daily_logins.map((x: any) => x.count), 1);
+                {(stats!.daily_logins ?? []).map((d: DailyLogin, i: number) => {
+                  const max = Math.max(...(stats!.daily_logins ?? []).map((x: DailyLogin) => x.count), 1);
                   const pct = Math.max((d.count / max) * 100, 5);
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-3">

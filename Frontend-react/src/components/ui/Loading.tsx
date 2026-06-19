@@ -1,5 +1,5 @@
-// @ts-nocheck
-import React from 'react';
+
+
 import { Loader2 } from 'lucide-react';
 
 export function Spinner({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
@@ -9,20 +9,20 @@ export function Spinner({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 
 
 export function PageLoader() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white gap-4">
-      <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
-        <span className="text-white font-bold text-base">H</span>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-slate-950 gap-5">
+      <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-card-lg ring-1 ring-primary/20">
+        <span className="text-white font-black text-lg tracking-tighter">H</span>
       </div>
-      <div className="flex gap-1.5">
+      <div className="flex gap-2">
         {[0, 1, 2].map((i) => (
           <div
             key={i}
-            className="w-2 h-2 bg-primary rounded-full animate-bounce"
+            className="w-2 h-2 bg-primary/60 rounded-full animate-bounce"
             style={{ animationDelay: `${i * 0.15}s` }}
           />
         ))}
       </div>
-      <p className="text-sm text-slate-400">Chargement...</p>
+      <p className="text-sm font-medium text-slate-400 dark:text-slate-500 animate-pulse-soft">Chargement...</p>
     </div>
   );
 }

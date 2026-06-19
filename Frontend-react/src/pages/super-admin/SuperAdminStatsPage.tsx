@@ -1,17 +1,18 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
 import { PageLoader } from '@/components/ui';
-import { TrendingUp, Users, Building, Calendar, Activity, MessageCircle, BarChart2, Server } from 'lucide-react';
+import { Users, Building, Calendar, Activity, MessageCircle, Server } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { SuperAdminStats, DailyLogin, ActivityItem } from '@/types/api';
 
 export default function SuperAdminStatsPage() {
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<SuperAdminStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     api.get(endpoints.superAdminStats)
-      .then((res: any) => setStats(res))
+      .then((res) => setStats(res as SuperAdminStats))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -52,12 +53,12 @@ export default function SuperAdminStatsPage() {
       </div>
 
       {/* Activity chart */}
-      {stats?.daily_logins && (
+      {(stats?.daily_logins ?? []).length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <h3 className="font-semibold text-slate-900 mb-5">Connexions — 7 derniers jours</h3>
           <div className="flex items-end gap-3 h-40">
-            {stats.daily_logins.map((d: any, i: number) => {
-              const max = Math.max(...stats.daily_logins.map((x: any) => x.count), 1);
+            {(stats?.daily_logins ?? []).map((d: DailyLogin, i: number) => {
+              const max = Math.max(...(stats?.daily_logins ?? []).map((x: DailyLogin) => x.count), 1);
               const pct = (d.count / max) * 100;
               return (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2">
@@ -87,10 +88,10 @@ export default function SuperAdminStatsPage() {
           </div>
           <div className="space-y-4">
             {[
-              { label: 'CPU',         value: stats.system_performance.cpu },
-              { label: 'Mémoire RAM', value: stats.system_performance.memory },
-              { label: 'Stockage',    value: stats.system_performance.storage },
-              { label: 'Réseau',      value: stats.system_performance.network },
+              { label: 'CPU',         value: stats?.system_performance?.cpu ?? 0 },
+              { label: 'Mémoire RAM', value: stats?.system_performance?.memory ?? 0 },
+              { label: 'Stockage',    value: stats?.system_performance?.storage ?? 0 },
+              { label: 'Réseau',      value: stats?.system_performance?.cpu ?? 0 },
             ].map((m, i) => (
               <div key={i}>
                 <div className="flex justify-between mb-1.5">
@@ -110,11 +111,11 @@ export default function SuperAdminStatsPage() {
       )}
 
       {/* Recent activity */}
-      {stats?.recent_activity?.length > 0 && (
+      {(stats?.recent_activity ?? []).length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-5">
           <h3 className="font-semibold text-slate-900 mb-4">Activité récente</h3>
           <div className="space-y-1">
-            {stats.recent_activity.map((a: any, i: number) => (
+            {(stats?.recent_activity ?? []).map((a: ActivityItem, i: number) => (
               <div key={i} className="flex items-start gap-4 py-3 border-b border-slate-100 last:border-0">
                 <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${a.type === 'register' ? 'bg-emerald-500' : a.type === 'appointment' ? 'bg-blue-500' : 'bg-amber-500'}`} />
                 <div className="flex-1 min-w-0">

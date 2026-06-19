@@ -1,8 +1,8 @@
-// @ts-nocheck
+
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
-import { Activity, LogIn, UserPlus, Phone, Building2, Bot, HeartPulse, FlaskConical, Sun, Moon } from 'lucide-react';
+import { Activity, LogIn, UserPlus, Phone, Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Footer } from './Footer';
 

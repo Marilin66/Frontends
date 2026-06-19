@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 // Couleurs principales basées sur le design system Flutter
 export const colors = {
   // Couleurs principales - Bleu Ciel et Blanc dominants

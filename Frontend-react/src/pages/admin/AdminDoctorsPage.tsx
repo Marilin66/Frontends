@@ -1,17 +1,19 @@
-// @ts-nocheck
-import React, { useState, useEffect } from 'react';
+
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
-import { Avatar, Badge, Button, Input, PageLoader, Pagination, usePagination } from '@/components/ui';
-import { Plus, Mail, Phone, X, Search, Upload, Download, UserCheck, Trash2, Stethoscope, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Avatar, Badge, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
+import { Plus, X, Search, Upload, Download, Trash2, AlertCircle, CheckCircle, RefreshCw, Stethoscope, UserCheck } from 'lucide-react';
 import { ErrorModal, SuccessModal, ConfirmModal } from '@/components/ui';
 import { usePermissions } from '@/hooks/usePermissions';
+import type { Medecin, MedecinCreatePayload, Service, ApiError } from '@/types/api';
+import { toArray } from '@/types/api';
 
 const PAGE_SIZE = 15;
 
 export default function AdminDoctorsPage() {
-  const [doctors, setDoctors] = useState([]);
-  const [specialties, setSpecialties] = useState([]);
+  const [doctors, setDoctors] = useState<Medecin[]>([]);
+  const [specialties, setSpecialties] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState('');
@@ -26,9 +28,9 @@ export default function AdminDoctorsPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [d, s]: any = await Promise.all([api.get(endpoints.medecins), api.get(endpoints.servicesGlobaux)]);
-      setDoctors(Array.isArray(d) ? d : d.results || []);
-      setSpecialties(Array.isArray(s) ? s : s.results || []);
+      const [d, s] = await Promise.all([api.get(endpoints.medecins), api.get(endpoints.servicesGlobaux)]);
+      setDoctors(toArray<Medecin>(d));
+      setSpecialties(toArray<Service>(s));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -40,7 +42,7 @@ export default function AdminDoctorsPage() {
     try {
       setLoading(true);
       // Le backend attend service_ids (liste d'IDs), pas specialite (nom texte)
-      const payload: any = {
+      const payload: MedecinCreatePayload = {
         email: form.email,
         first_name: form.first_name,
         last_name: form.last_name,
@@ -58,12 +60,12 @@ export default function AdminDoctorsPage() {
       setForm({ email: '', first_name: '', last_name: '', telephone: '', specialite_id: '', numero_ordre: '', date_naissance: '1985-01-01', sexe: 'M', biographie: '' });
       fetchData();
       setSuccessMsg('Médecin créé avec succès. Un email lui a été envoyé.');
-    } catch (e: any) {
+    } catch (err) {
       // Extraire tous les messages d'erreur du backend
-      const data = e.response?.data;
+      const data = (err as ApiError).response?.data;
       if (data) {
         const msgs = Object.entries(data)
-          .map(([field, errors]: any) => {
+          .map(([field, errors]) => {
             const label = field === 'non_field_errors' ? '' : `${field} : `;
             const text = Array.isArray(errors) ? errors.join(', ') : String(errors);
             return `${label}${text}`;
@@ -93,11 +95,11 @@ export default function AdminDoctorsPage() {
       await api.post(endpoints.medecinsImport, fd);
       setSuccessMsg('Import CSV réussi !');
       fetchData();
-    } catch (err: any) { setErrorMsg(err.response?.data?.error || 'Erreur lors de l\'import.'); }
+    } catch (err) { setErrorMsg((err as ApiError).response?.data?.error as string || 'Erreur lors de l\'import.'); }
     finally { setLoading(false); e.target.value = ''; }
   };
 
-  const filtered = doctors.filter((d: any) =>
+  const filtered = doctors.filter((d) =>
     `${d.first_name} ${d.last_name} ${d.specialite}`.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -156,11 +158,12 @@ export default function AdminDoctorsPage() {
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-        {filtered.length === 0 ? (
-          <div className="py-20 text-center">
-            <Stethoscope className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-            <p className="text-slate-500 font-medium">Aucun praticien trouvé</p>
-          </div>
+        {filtered.length === 0 ? (        <div className="py-20 text-center">
+                <div className="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+                  <Stethoscope className="w-5 h-5 text-slate-300" />
+                </div>
+                <p className="text-slate-500 font-medium">Aucun praticien trouvé</p>
+              </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -174,7 +177,7 @@ export default function AdminDoctorsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {paged.map((doc: any, i: number) => (
+                {paged.map((doc, i) => (
                   <motion.tr
                     key={doc.id}
                     initial={{ opacity: 0, y: 6 }}
@@ -285,7 +288,7 @@ export default function AdminDoctorsPage() {
                       <select required value={form.specialite_id} onChange={(e) => setForm({ ...form, specialite_id: e.target.value })}
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-900 focus:border-primary focus:outline-none transition-all cursor-pointer bg-white">
                         <option value="">Choisir...</option>
-                        {specialties.map((s: any) => <option key={s.id} value={s.id}>{s.nom}</option>)}
+                        {specialties.map((s) => <option key={s.id} value={s.id}>{s.nom}</option>)}
                       </select>
                     </div>
                   </div>
@@ -310,7 +313,7 @@ export default function AdminDoctorsPage() {
                   <div className="flex gap-3 pt-2">
                     <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-10 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Annuler</button>
                     <Button type="submit" isLoading={loading} className="flex-1 h-10 rounded-xl text-sm font-semibold">
-                      <UserCheck className="w-4 h-4 mr-2" /> Créer le médecin
+                      Créer le médecin
                     </Button>
                   </div>
                 </form>

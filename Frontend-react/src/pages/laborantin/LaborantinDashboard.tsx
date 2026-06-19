@@ -1,28 +1,30 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { Badge, Button, Avatar, PageLoader } from '@/components/ui';
 import { FlaskConical, Clock, CheckCircle, ChevronRight, History, MessageCircle, FileCheck } from 'lucide-react';
+import type { DemandeAnalyse } from '@/types/api';
+import { toArray } from '@/types/api';
 
 export default function LaborantinDashboard() {
-  const [demandes, setDemandes] = useState([]);
-  const [resultats, setResultats] = useState([]);
+  const [demandes, setDemandes] = useState<DemandeAnalyse[]>([]);
+  const [resultats, setResultats] = useState<DemandeAnalyse[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       api.get(endpoints.analyses),    // demandes d'analyse du labo
       api.get(endpoints.resultats),   // résultats déjà clôturés
-    ]).then(([d, r]: any) => {
-      setDemandes(Array.isArray(d) ? d : d.results || []);
-      setResultats(Array.isArray(r) ? r : r.results || []);
+    ]).then(([d, r]) => {
+      setDemandes(toArray<DemandeAnalyse>(d));
+      setResultats(toArray<DemandeAnalyse>(r));
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
 
   if (loading) return <PageLoader />;
 
-  const pending  = demandes.filter((d: any) => d.statut !== 'cloture').length;
+  const pending  = demandes.filter((d) => d.statut !== 'cloture').length;
   const finished = resultats.length;
 
   return (
@@ -125,7 +127,7 @@ export default function LaborantinDashboard() {
 
         {demandes.length > 0 ? (
           <div className="divide-y divide-slate-50">
-            {demandes.slice(0, 5).map((d: any) => (
+            {demandes.slice(0, 5).map((d) => (
               <div key={d.id} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50 transition-colors">
                 <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center flex-shrink-0">
                   <FlaskConical className="w-5 h-5 text-cyan-600" />

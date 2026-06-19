@@ -1,13 +1,12 @@
-// @ts-nocheck
-import React, { lazy, Suspense } from 'react';
+
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AppLayout, AuthLayout } from '@/components/layout';
 import { PublicLayout } from '@/components/layout/PublicLayout';
-import { PageLoader } from '@/components/ui';
-import { AIBubble } from '@/components/ui/AIBubble';
+import { PageLoader, AIBubble } from '@/components/ui';
 
 // ── Public ──────────────────────────────────────────────────────────────────
 import PublicHomePage        from '@/pages/public/PublicHomePage';
@@ -34,7 +33,7 @@ import NotificationsPage   from '@/pages/common/NotificationsPage';
 import MessagesPage        from '@/pages/common/MessagesPage';
 import ProfilePage         from '@/pages/common/ProfilePage';
 import ChangePasswordPage  from '@/pages/common/ChangePasswordPage';
-import SecurityPage        from '@/pages/common/SecurityPage';
+
 import SettingsPage        from '@/pages/common/SettingsPage';
 import ResultsPage         from '@/pages/common/ResultsPage';
 import PatientsPage        from '@/pages/common/PatientsPage';

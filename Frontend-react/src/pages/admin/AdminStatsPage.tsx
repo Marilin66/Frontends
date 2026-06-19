@@ -1,9 +1,10 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
 import { PageLoader } from '@/components/ui';
-import { BarChart2, Users, Activity, Calendar, Clock, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Users, Activity, Calendar, RefreshCw, AlertTriangle, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { HopitalStats } from '@/types/api';
 
 export default function AdminStatsPage() {
   const [stats, setStats] = useState<any>(null);
@@ -12,8 +13,8 @@ export default function AdminStatsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data: any = await api.get(endpoints.hopitalStatistiques);
-      setStats(data?.results || data);
+      const data = await api.get(endpoints.hopitalStatistiques) as HopitalStats;
+      setStats(data);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };

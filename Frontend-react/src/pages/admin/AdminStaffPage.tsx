@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
@@ -9,6 +9,8 @@ import {
   Trash2, Search, RefreshCw, FlaskConical, AlertCircle
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
+import type { Laborantin, LaborantinCreatePayload, ApiError } from '@/types/api';
+import { toArray } from '@/types/api';
 
 const PAGE_SIZE = 10;
 
@@ -18,7 +20,7 @@ const inputCls = `w-full h-11 px-3 bg-white border border-slate-200 rounded-xl t
 const labelCls = 'block text-sm font-medium text-slate-700 mb-1.5';
 
 export default function AdminStaffPage() {
-  const [staff, setStaff] = useState<any[]>([]);
+  const [staff, setStaff] = useState<Laborantin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,8 +35,8 @@ export default function AdminStaffPage() {
   const fetchStaff = async () => {
     setIsLoading(true);
     try {
-      const data: any = await api.get(endpoints.laborantins);
-      setStaff(Array.isArray(data) ? data : data.results || []);
+      const data = await api.get(endpoints.laborantins);
+      setStaff(toArray<Laborantin>(data));
     } catch (e) { console.error(e); }
     finally { setIsLoading(false); }
   };
@@ -49,9 +51,9 @@ export default function AdminStaffPage() {
       setIsModalOpen(false);
       setFormData({ email: '', first_name: '', last_name: '', telephone: '', date_naissance: '1995-01-01', sexe: 'M', laboratoire: '' });
       fetchStaff();
-    } catch (err: any) {
-      const data = err.response?.data;
-      const msg = data ? Object.entries(data).map(([k, v]: any) =>
+    } catch (err) {
+      const data = (err as ApiError).response?.data;
+      const msg = data ? Object.entries(data).map(([k, v]) =>
         `${k === 'non_field_errors' ? '' : k + ' : '}${Array.isArray(v) ? v.join(', ') : v}`
       ).join('\n') : "Erreur lors de la création.";
       setErrorMsg(msg);
@@ -134,7 +136,7 @@ export default function AdminStaffPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {paged.map((member: any, i: number) => (
+                {paged.map((member, i) => (
                   <motion.tr
                     key={member.id}
                     initial={{ opacity: 0, y: 4 }}

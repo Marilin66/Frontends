@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 
 // ── Hospital Types ────────────────────────────────────────────────────────────
 export interface Hopital {

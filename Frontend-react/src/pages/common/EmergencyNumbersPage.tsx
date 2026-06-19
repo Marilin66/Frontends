@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 
 import { Card, CardContent, Button } from '@/components/ui';
 import { Phone, AlertTriangle, ShieldCheck, Flame, Heart, ArrowLeft } from 'lucide-react';

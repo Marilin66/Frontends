@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 type Language = 'fr' | 'en' | 'fon' | 'yoruba';

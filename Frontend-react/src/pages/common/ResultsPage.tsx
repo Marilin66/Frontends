@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Download, Search, FlaskConical, Clock, RefreshCw, Share2, User } from 'lucide-react';

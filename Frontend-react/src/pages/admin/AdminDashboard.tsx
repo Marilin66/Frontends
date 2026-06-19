@@ -1,22 +1,23 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
 import { Avatar, Badge, Button, PageLoader } from '@/components/ui';
 import {
-  Users, UserPlus, Settings, TrendingUp, ChevronRight,
-  Activity, Stethoscope, AlertCircle, MessageSquare,
-  Building, Clock, BarChart2, FlaskConical, Calendar,
-  HeartPulse
+  Users, UserPlus, ChevronRight,
+  Activity, MessageSquare,
+  FlaskConical, Calendar, BarChart3, Heart, Settings
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { Medecin, HopitalStats } from '@/types/api';
+import { toArray } from '@/types/api';
 
 export default function AdminDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<any>(null);
-  const [recentDoctors, setRecentDoctors] = useState([]);
+  const [recentDoctors, setRecentDoctors] = useState<Medecin[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -26,9 +27,9 @@ export default function AdminDashboard() {
       api.get(endpoints.hopitalStatistiques),
       api.get(endpoints.medecins),
     ])
-      .then(([data, medecinsData]: any) => {
-        setStats(data);
-        const list = Array.isArray(medecinsData) ? medecinsData : medecinsData.results ?? [];
+      .then(([data, medecinsData]) => {
+        setStats(data as HopitalStats);
+        const list = toArray<Medecin>(medecinsData);
         setRecentDoctors(list.slice(0, 5));
       })
       .catch(console.error)
@@ -66,7 +67,7 @@ export default function AdminDashboard() {
              onClick={() => navigate('/admin-hopital/stats')}
              className="rounded-xl border-slate-200 dark:border-slate-800 h-11 px-4 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-bold text-xs"
            >
-             <BarChart2 className="w-4 h-4 mr-2" />
+             <BarChart3 className="w-4 h-4 mr-2" />
              Analyses
            </Button>
            <Button 
@@ -201,7 +202,7 @@ export default function AdminDashboard() {
 
           <div className="divide-y divide-slate-50 dark:divide-slate-800">
             {recentDoctors.length > 0 ? (
-              recentDoctors.map((doc: any, i: number) => (
+              recentDoctors.map((doc, i) => (
                 <div key={doc.id ?? i} className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer" onClick={() => navigate('/admin-hopital/medecins')}>
                   <Avatar
                     name={`${doc.first_name || doc.user?.first_name || ''} ${doc.last_name || doc.user?.last_name || ''}`}
@@ -247,7 +248,7 @@ export default function AdminDashboard() {
                <div className="relative z-10">
                  <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center">
-                       <Clock className="w-5 h-5 text-slate-900" />
+                       <Calendar className="w-5 h-5 text-slate-900" />
                     </div>
                     <p className="text-xs font-bold text-amber-400 uppercase tracking-widest">Supervision RDV</p>
                  </div>
@@ -270,7 +271,7 @@ export default function AdminDashboard() {
                 { icon: Calendar,    label: 'Rendez-vous',  href: '/admin-hopital/supervision/rdv',            color: 'text-blue-600',   bg: 'bg-blue-50' },
                 { icon: MessageSquare,label: 'Consultations',href: '/admin-hopital/supervision/consultations', color: 'text-emerald-600', bg: 'bg-emerald-50' },
                 { icon: FlaskConical,label: 'Laboratoire',  href: '/admin-hopital/supervision/laboratoire',    color: 'text-cyan-600',   bg: 'bg-cyan-50' },
-                { icon: HeartPulse,  label: 'Post-Suivi',   href: '/admin-hopital/post-care',                  color: 'text-rose-600',   bg: 'bg-rose-50' },
+                { icon: Heart,  label: 'Post-Suivi',   href: '/admin-hopital/post-care',                  color: 'text-rose-600',   bg: 'bg-rose-50' },
                 { icon: Users,       label: 'Patients',     href: '/admin-hopital/patients',                   color: 'text-indigo-600', bg: 'bg-indigo-50' },
               ].map((item, i) => (
                 <Link key={i} to={item.href} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-50 dark:hover:border-slate-800 group">

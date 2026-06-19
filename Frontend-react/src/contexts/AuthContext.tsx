@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { User, AuthState, LoginCredentials, RegisterData } from '@/types';
 import { api, endpoints } from '@/services/api';
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         sessionStorage.setItem('user', JSON.stringify(user));
       }
       dispatch({ type: 'SET_USER', payload: { user, token } });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Refresh user error:', error);
     }
   };
@@ -149,16 +149,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       
       dispatch({ type: 'SET_USER', payload: { user, token: access } });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status: number; data?: Record<string, unknown> } };
       let message = 'Identifiants invalides ou erreur serveur';
-      if (!error.response) {
+      if (!err.response) {
         message = 'Le serveur démarre, veuillez patienter 30 secondes et réessayer…';
-      } else if (error.response.status === 401) {
+      } else if (err.response.status === 401) {
         message = 'Email ou mot de passe incorrect';
-      } else if (error.response.status === 404) {
+      } else if (err.response.status === 404) {
         message = 'Endpoint de connexion non trouvé (404)';
       } else {
-        message = error.response.data?.detail || error.response.data?.message || `Erreur serveur (${error.response.status})`;
+        const data = err.response.data;
+        message = (data?.detail as string) || (data?.message as string) || `Erreur serveur (${err.response.status})`;
       }
       dispatch({ type: 'SET_ERROR', payload: message });
       throw error;
@@ -173,28 +175,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await api.post<User>(endpoints.register, data);
       dispatch({ type: 'SET_LOADING', payload: false });
-    } catch (error: any) {
-      const responseData = error.response?.data;
+    } catch (error: unknown) {
+      const err = error as { response?: { status: number; data?: unknown } };
+      const responseData = err.response?.data;
       let message = 'Erreur lors de l\'inscription';
 
-      if (!error.response) {
+      if (!err.response) {
         message = 'Le serveur démarre, veuillez patienter 30 secondes et réessayer…';
       } else if (responseData) {
         if (typeof responseData === 'string') {
           message = responseData;
-        } else if (responseData.error) {
-          message = responseData.error;
-        } else if (responseData.detail) {
-          message = responseData.detail;
-        } else if (responseData.message) {
-          message = responseData.message;
-        } else {
-          // Erreurs de validation champ par champ — prendre la première
-          const firstKey = Object.keys(responseData)[0];
-          if (firstKey) {
-            const val = responseData[firstKey];
-            const valStr = Array.isArray(val) ? val[0] : String(val);
-            message = `${firstKey === 'non_field_errors' ? '' : firstKey + ' : '}${valStr}`;
+        } else if (responseData && typeof responseData === 'object') {
+          const data = responseData as Record<string, unknown>;
+          if (data.error) {
+            message = String(data.error);
+          } else if (data.detail) {
+            message = String(data.detail);
+          } else if (data.message) {
+            message = String(data.message);
+          } else {
+            const firstKey = Object.keys(data)[0];
+            if (firstKey) {
+              const val = data[firstKey];
+              const valStr = Array.isArray(val) ? String(val[0]) : String(val);
+              message = `${firstKey === 'non_field_errors' ? '' : firstKey + ' : '}${valStr}`;
+            }
           }
         }
       }
@@ -231,7 +236,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       localStorage.setItem('user', JSON.stringify(user));
       dispatch({ type: 'SET_USER', payload: { user, token: access } });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auto login error:', error);
       dispatch({ type: 'SET_LOADING', payload: false });
     }

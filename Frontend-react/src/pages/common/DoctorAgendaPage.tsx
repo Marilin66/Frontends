@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 // DoctorAgendaPage — Agenda médecin moderne
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,8 @@ import {
   Stethoscope, AlertCircle, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { RendezVous, RendezVousStatut } from '@/types/api';
+import { toArray } from '@/types/api';
 
 const JOURS = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
 
@@ -34,15 +36,15 @@ function statusLabel(s: string) {
 export default function DoctorAgendaPage() {
   const { user } = useAuth();
   const [tab, setTab] = useState<'rdv'|'dispos'>('rdv');
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [availabilities, setAvailabilities] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<RendezVous[]>([]);
+  const [availabilities, setAvailabilities] = useState<{ id: number; jour_semaine: number; jour_semaine_display?: string; heure_debut: string; heure_fin: string; type?: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number|null>(null);
 
   // Modals
   const [showAddDispo, setShowAddDispo] = useState(false);
   const [showRefuse, setShowRefuse] = useState<{id:number}|null>(null);
-  const [showIntake, setShowIntake] = useState<any>(null);
+  const [showIntake, setShowIntake] = useState<Record<string, unknown> | null>(null);
   const [refuseComment, setRefuseComment] = useState('');
   const [errorModal, setErrorModal] = useState('');
   const [confirmDeleteDispo, setConfirmDeleteDispo] = useState<number|null>(null);
@@ -60,32 +62,33 @@ export default function DoctorAgendaPage() {
         api.get(endpoints.rendezVous),
         api.get(endpoints.disponibilites),
       ]);
-      setAppointments(Array.isArray(appData) ? appData : (appData as any).results || []);
-      setAvailabilities(Array.isArray(availData) ? availData : (availData as any).results || []);
+      setAppointments(toArray<RendezVous>(appData));
+      setAvailabilities(toArray(availData) as { id: number; jour_semaine: number; jour_semaine_display?: string; heure_debut: string; heure_fin: string; type?: string }[]);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleAction = async (id: number, action: string, extra?: any) => {
+  const handleAction = async (id: number, action: string, extra?: Record<string, unknown>) => {
     setActionLoading(id);
     try {
-      const map: any = {
+      const map: Record<string, string> = {
         confirmer: endpoints.confirmerRdv(id),
         refuser:   endpoints.refuserRdv(id),
         terminer:  endpoints.terminerRdv(id),
       };
       await api.post(map[action], extra);
       fetchData();
-    } catch (e: any) {
-      const msg = e.response?.data?.error || e.response?.data?.detail || 'Erreur lors de la mise à jour.';
+    } catch (e) {
+      const err = e as { response?: { data?: { error?: string; detail?: string } } };
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Erreur lors de la mise à jour.';
       setErrorModal(msg);
     }
     finally { setActionLoading(null); }
   };
 
-  const handleAddDispo = async (e: any) => {
+  const handleAddDispo = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await api.post(endpoints.disponibilites, newDispo);
@@ -125,7 +128,7 @@ export default function DoctorAgendaPage() {
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
         {[{k:'rdv',l:'Rendez-vous'},{k:'dispos',l:'Disponibilités'}].map(t => (
-          <button key={t.k} onClick={() => setTab(t.k as any)}
+          <button key={t.k} onClick={() => setTab(t.k as 'rdv' | 'dispos')}
             className={`px-5 py-2 rounded-lg text-sm font-medium transition ${tab===t.k?'bg-white text-slate-900 shadow-sm':'text-slate-500 hover:text-slate-700'}`}>
             {t.l}
             {t.k==='rdv' && appointments.filter(a=>a.statut==='en_attente').length > 0 && (
@@ -163,9 +166,9 @@ export default function DoctorAgendaPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {filtered.map((apt: any, i: number) => {
+                {filtered.map((apt, i) => {
                   const dateStr = apt.date_heure || apt.date;
-                  const hasIntake = apt.pre_enregistrement;
+                  const hasIntake = !!(apt as any).pre_enregistrement;
                   return (
                     <motion.div key={apt.id} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}>
                       <div className="bg-white rounded-2xl border border-slate-200 hover:shadow-card-md transition-all overflow-hidden">
@@ -195,7 +198,7 @@ export default function DoctorAgendaPage() {
                               {/* Fiche pré-consultation */}
                               {hasIntake && (
                                 <button
-                                  onClick={() => setShowIntake(apt.pre_enregistrement)}
+                                  onClick={() => { const intake = (apt as any).pre_enregistrement; if (intake && typeof intake === 'object') setShowIntake(intake as Record<string, unknown>); }}
                                   className="mt-2 flex items-center gap-1.5 text-xs text-teal-600 font-medium hover:text-teal-700 transition"
                                 >
                                   <FileText className="w-3.5 h-3.5" />
@@ -231,9 +234,10 @@ export default function DoctorAgendaPage() {
                                 </>
                               )}
                               {apt.statut === 'confirme' && (
-                                <Button size="sm" onClick={() => handleAction(apt.id,'terminer')} loading={actionLoading===apt.id}>
-                                  Terminer
-                                </Button>
+                                <button onClick={() => handleAction(apt.id,'terminer')} disabled={actionLoading===apt.id}
+                    className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark transition disabled:opacity-50">
+                    {actionLoading===apt.id ? '…' : 'Terminer'}
+                  </button>
                               )}
                             </div>
                           </div>
@@ -268,7 +272,7 @@ export default function DoctorAgendaPage() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {availabilities.map((dispo: any, i: number) => (
+                {availabilities.map((dispo, i) => (
                   <motion.div key={dispo.id} initial={{opacity:0,y:6}} animate={{opacity:1,y:0}} transition={{delay:i*0.04}}>
                     <div className="bg-white rounded-2xl border border-slate-200 p-4 hover:shadow-card-md transition-all group">
                       <div className="flex items-center justify-between mb-3">
@@ -430,7 +434,7 @@ export default function DoctorAgendaPage() {
                       <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</span>
                     </div>
                     <p className="text-sm text-slate-800 bg-slate-50 rounded-xl px-4 py-3 leading-relaxed">
-                      {showIntake[key] || <span className="text-slate-400">Non renseigné</span>}
+                      {String(showIntake?.[key] ?? '') || 'Non renseigné'}
                     </p>
                   </div>
                 ))}

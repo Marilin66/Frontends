@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,7 @@ export default function EditProfilePage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<Record<string, string>>({
     // Étape 1 — Infos personnelles
     first_name: user?.first_name || '',
     last_name: user?.last_name || '',
@@ -28,13 +28,13 @@ export default function EditProfilePage() {
     date_naissance: user?.date_naissance || '',
     sexe: user?.sexe || 'M',
     // Étape 2 — Dossier médical (patient_profile)
-    groupe_sanguin: user?.patient_profile?.groupe_sanguin || '',
-    allergies: user?.patient_profile?.allergies || '',
-    npi: user?.patient_profile?.npi || '',
-    numero_secu: user?.patient_profile?.numero_secu || '',
+    groupe_sanguin: ((user as any)?.patient_profile as any)?.groupe_sanguin || '',
+    allergies: ((user as any)?.patient_profile as any)?.allergies || '',
+    npi: ((user as any)?.patient_profile as any)?.npi || '',
+    numero_secu: ((user as any)?.patient_profile as any)?.numero_secu || '',
     // Étape 3 — Contact d'urgence
-    contact_urgence_nom: user?.patient_profile?.contact_urgence_nom || '',
-    contact_urgence_tel: user?.patient_profile?.contact_urgence_tel || '',
+    contact_urgence_nom: ((user as any)?.patient_profile as any)?.contact_urgence_nom || '',
+    contact_urgence_tel: ((user as any)?.patient_profile as any)?.contact_urgence_tel || '',
   });
 
   if (isLoading) return <PageLoader />;
@@ -184,12 +184,10 @@ export default function EditProfilePage() {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Sexe</label>
                 <select
                   value={form.sexe}
-                  onChange={(e) => setForm({ ...form, sexe: e.target.value })}
-                  className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
+                  onChange={(e) => setForm({ ...form, sexe: e.target.value })}            className="w-full h-11 px-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 transition-all"
                 >
                   <option value="M">Masculin</option>
                   <option value="F">Féminin</option>
-                  <option value="Autre">Autre</option>
                 </select>
               </div>
             </div>

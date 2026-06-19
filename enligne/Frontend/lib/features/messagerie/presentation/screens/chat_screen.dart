@@ -176,14 +176,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       if (response.statusCode == 201 && response.data is Map<String, dynamic>) {
         final newMsg = MessageModel.fromJson(response.data as Map<String, dynamic>);
         final param  = MessageParam(consultationId: widget.consultationId, destinataireId: widget.destinataireId);
-        final current = ref.read(messageProvider(param)).value ?? [];
-        ref.read(messageProvider(param).notifier);
-        // Injecter directement dans le state
-        final notifier = ref.read(messageProvider(param).notifier);
-        if (!current.any((m) => m.id == newMsg.id)) {
-          // ignore: invalid_use_of_protected_member
-          notifier.state = AsyncValue.data([...current, newMsg]);
-        }
+        ref.read(messageProvider(param).notifier).addMessage(newMsg);
         _scrollToBottom();
       }
     } catch (e) {

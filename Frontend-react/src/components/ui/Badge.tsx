@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React from 'react';
 
 export type BadgeVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'outline';
@@ -28,12 +28,12 @@ export function Badge({ children, variant = 'primary', size = 'md', className = 
   };
 
   const sizes = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-1 text-xs',
+    sm: 'px-2.5 py-0.5 text-[10px]',
+    md: 'px-3 py-1 text-[11px]',
   };
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-lg font-medium ${variants[variant]} ${sizes[size]} ${className}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-lg font-bold uppercase tracking-wider ${variants[variant]} ${sizes[size]} ${className}`}>
       {showDot && <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotColors[variant]}`} />}
       {children}
     </span>

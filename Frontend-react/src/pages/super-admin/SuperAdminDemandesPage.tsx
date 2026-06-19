@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';

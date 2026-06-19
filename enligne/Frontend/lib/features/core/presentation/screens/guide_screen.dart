@@ -61,7 +61,7 @@ class GuideScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Icon(
@@ -159,7 +159,7 @@ class GuideScreen extends StatelessWidget {
                   ),
                 ),
               );
-            }).toList(),
+            }),
 
             const SizedBox(height: 24),
 
@@ -182,7 +182,7 @@ class GuideScreen extends StatelessWidget {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.primary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(

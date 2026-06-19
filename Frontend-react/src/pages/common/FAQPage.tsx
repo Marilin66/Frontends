@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { motion } from 'framer-motion';
 import { HelpCircle, ChevronDown, Search, MessageSquare, Phone, Mail } from 'lucide-react';
 import { useState } from 'react';

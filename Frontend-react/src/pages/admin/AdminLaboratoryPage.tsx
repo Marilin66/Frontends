@@ -1,21 +1,31 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { 
-  Card, Badge, Button, Avatar, PageLoader, 
-  Input 
+  Card, Badge, Button, PageLoader
 } from '@/components/ui';
 import { 
-  Search, FlaskConical, Beaker, User, Stethoscope, 
-  ChevronRight, FileCheck, Clock, AlertCircle, 
+  Search, FlaskConical, Beaker, Stethoscope, 
+  ChevronRight, Clock, AlertCircle, 
   ArrowLeft, Microscope, Activity, CheckCircle2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface AnalyseItem {
+  id: number;
+  patient_nom?: string;
+  type_analyse?: string;
+  statut: string;
+  code_analyse?: string;
+  medecin_nom?: string;
+  laborantin_nom?: string;
+  date_demande?: string;
+  created_at?: string;
+}
+
 export default function AdminLaboratoryPage() {
   const navigate = useNavigate();
-  const [analyses, setAnalyses] = useState([]);
+  const [analyses, setAnalyses] = useState<AnalyseItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -26,8 +36,8 @@ export default function AdminLaboratoryPage() {
   const fetchAnalyses = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get(endpoints.analyses);
-      setAnalyses(Array.isArray(res) ? res : res.results || []);
+      const res = await api.get<{results: AnalyseItem[]}>(endpoints.analyses);
+      setAnalyses(res.results || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -126,10 +136,9 @@ export default function AdminLaboratoryPage() {
                     <div className="flex-1 min-w-[200px]">
                        <div className="flex items-center gap-3 mb-1">
                           <h3 className="text-lg font-black text-slate-900 dark:text-white leading-tight">{a.type_analyse || 'Examen Biologique'}</h3>
-                          <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent font-bold text-[9px] uppercase tracking-tighter">#{a.code_analyse || a.id}</Badge>
+                          <Badge className="bg-slate-100 dark:bg-slate-800 text-slate-500 border-transparent font-bold text-[9px] uppercase tracking-tighter">#{a.code_analyse || String(a.id)}</Badge>
                        </div>
                        <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500">
-                          <User className="w-3.5 h-3.5" />
                           <span className="text-xs font-bold uppercase tracking-widest">{a.patient_nom}</span>
                        </div>
                     </div>
@@ -158,7 +167,7 @@ export default function AdminLaboratoryPage() {
                        `}>
                          {a.statut === 'termine' ? 'Résultat prêt' : 'Analyse en cours'}
                        </Badge>
-                       <p className="text-[10px] font-bold text-slate-400">Demande du {new Date(a.date_demande || a.created_at).toLocaleDateString()}</p>
+                       <p className="text-[10px] font-bold text-slate-400">Demande du {new Date(a.date_demande || a.created_at || '').toLocaleDateString()}</p>
                     </div>
 
                     {/* Action Arrow */}

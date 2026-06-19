@@ -1,14 +1,12 @@
-// @ts-nocheck
-import { NavLink, Link, useLocation } from 'react-router-dom';
+
+import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Home, Calendar, MessageCircle, FileText, Search, User, Users,
-  Building, Bell, Bot, Activity, Stethoscope, FlaskConical,
-  LayoutDashboard, Settings, LogOut, BarChart2, History,
-  ChevronRight, Sparkles
+  Home, Calendar, MessageCircle, FileText, Users,
+  Building, Bot, Activity, Stethoscope, FlaskConical,
+  LayoutDashboard, LogOut, History
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Avatar } from '@/components/ui';
 
 // Couleurs accent par rôle
 const ROLE_ACCENT: Record<string, { active: string; dot: string; logo: string }> = {
@@ -71,8 +69,7 @@ function NavSection({ title, items, onClose }: { title?: string; items: NavItem[
 
 export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { user, logout } = useAuth();
-  const role = user?.role || 'patient';
-  const colors = ROLE_ACCENT[role] || ROLE_ACCENT.patient;
+  const role = (user?.role || 'patient') as string;
 
   const getNavSections = () => {
     if (role === 'patient') return [

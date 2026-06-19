@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
@@ -91,7 +91,7 @@ export default function ConsultationDetailPage() {
             <Button variant="outline" onClick={() => setEditing(false)} leftIcon={<X className="w-4 h-4" />}>
               Annuler
             </Button>
-            <Button onClick={handleSave} loading={saving} leftIcon={<Save className="w-4 h-4" />}>
+            <Button onClick={handleSave} isLoading={saving} leftIcon={<Save className="w-4 h-4" />}>
               Enregistrer
             </Button>
           </div>

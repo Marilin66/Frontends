@@ -1,9 +1,9 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { Avatar, PageLoader, Pagination, usePagination } from '@/components/ui';
-import { Users, Search, RefreshCw, Phone, Mail, CheckCircle, XCircle } from 'lucide-react';
+import { Users, Search, RefreshCw, CheckCircle, XCircle, Mail, Phone } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const PAGE_SIZE = 15;
@@ -18,7 +18,7 @@ export default function AdminPatientsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data: any = await api.get(endpoints.hopitalPatients);
+      const data: any = await api.get(endpoints.patients);
       setPatients(Array.isArray(data) ? data : data.results ?? []);
     } catch (e) { console.error(e); }
     finally { setLoading(false); }

@@ -165,6 +165,14 @@ class MessageNotifier extends AsyncNotifier<List<MessageModel>> {
       return false;
     }
   }
+
+  /// Ajoute un message au state (utilisé par l'UI après envoi fichier)
+  void addMessage(MessageModel newMessage) {
+    final current = state.value ?? [];
+    if (!current.any((m) => m.id == newMessage.id)) {
+      state = AsyncValue.data([...current, newMessage]);
+    }
+  }
 }
 
 /// Compteur total de messages non lus (toutes conversations)

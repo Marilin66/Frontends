@@ -37,7 +37,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config as any;
+    const originalRequest = error.config as (InternalAxiosRequestConfig & { _retry?: boolean });
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
@@ -59,7 +59,7 @@ apiClient.interceptors.response.use(
           }
           
           if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${access}`;
+            (originalRequest.headers as Record<string, string>).Authorization = `Bearer ${access}`;
           }
           return apiClient(originalRequest);
         } catch (refreshError) {
@@ -184,6 +184,9 @@ export const endpoints = {
   chatbot: '/chatbot/message/',
   chatbotSessions: '/chatbot/sessions/',
   chatbotHistory: (id?: number) => id ? `/chatbot/history/${id}/` : '/chatbot/history/',
+
+  // Super Admin
+  superAdminStats: '/super-admin/stats/',
 };
 
 export default apiClient;

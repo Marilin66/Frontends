@@ -1,24 +1,18 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { api, endpoints } from '@/services/api';
 import { Card, Badge, Button } from '@/components/ui';
 import { 
   Heart, 
-  Zap, 
-  Moon, 
-  Stethoscope,
+  Zap,  Stethoscope,
   ArrowLeft,
-  ChevronRight,
   Sparkles,
-  ShieldCheck,
-  Activity,
-  ArrowRight,
-  BookOpen
+  ArrowRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { 
     opacity: 1, 
@@ -26,7 +20,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: { 
     y: 0, 

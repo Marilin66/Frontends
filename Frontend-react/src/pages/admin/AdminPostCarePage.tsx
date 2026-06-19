@@ -1,40 +1,44 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { 
-  Card, Badge, Button, Avatar, PageLoader, 
-  Input 
+  Card, Badge, Button, Avatar, PageLoader
 } from '@/components/ui';
 import { 
-  HeartPulse, User, Stethoscope, ChevronRight, 
+  HeartPulse, Stethoscope, ChevronRight, 
   Calendar, Clock, ArrowLeft, Search, 
-  Activity, TrendingUp, AlertCircle, CheckCircle
+  Activity, TrendingUp, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface SuiviItem {
+  id: number;
+  patient_nom: string;
+  medecin_nom: string;
+  motif: string;
+  progression: number;
+  seances_totales: number;
+  seances_faites: number;
+  statut: string;
+}
+
 export default function AdminPostCarePage() {
   const navigate = useNavigate();
-  const [suivis, setSuivis] = useState([]);
+  const [suivis, setSuivis] = useState<SuiviItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // Note: Si l'endpoint n'existe pas encore, on peut simuler ou 
-    // utiliser un endpoint de consultations avec un tag 'suivi'
     fetchSuivis();
   }, []);
 
   const fetchSuivis = async () => {
     try {
       setIsLoading(true);
-      // On tente de récupérer les consultations qui sont des suivis
-      // En attendant un endpoint dédié 'post-consultations'
-      const res = await api.get(endpoints.consultations, { type: 'suivi' });
-      setSuivis(Array.isArray(res) ? res : res.results || []);
+      const res = await api.get<{results: SuiviItem[]}>(endpoints.consultations);
+      setSuivis(res.results || []);
     } catch (e) {
       console.error(e);
-      // Mock data pour la démo si l'API échoue
       setSuivis([
         { id: 1, patient_nom: 'Moussa Diop', medecin_nom: 'Dr. Keita', motif: 'Suivi post-opératoire', progression: 60, seances_totales: 5, seances_faites: 3, statut: 'en_cours' },
         { id: 2, patient_nom: 'Aminata Touré', medecin_nom: 'Dr. Sow', motif: 'Rééducation genou', progression: 20, seances_totales: 10, seances_faites: 2, statut: 'en_cours' },

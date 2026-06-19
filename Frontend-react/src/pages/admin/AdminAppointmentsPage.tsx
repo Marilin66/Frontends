@@ -1,21 +1,20 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { 
-  Card, Badge, Button, Avatar, PageLoader, 
-  Input, Select 
+  Card, Badge, Button, Avatar, PageLoader
 } from '@/components/ui';
 import { 
-  Search, Calendar, Clock, User, Stethoscope, 
-  ChevronRight, ArrowLeft, Filter, AlertCircle,
-  MoreVertical, CheckCircle2, XCircle, Timer
+  Search, Calendar, Clock, Stethoscope, 
+  ChevronRight, ArrowLeft, AlertCircle, Timer
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { RendezVous } from '@/types';
 
 export default function AdminAppointmentsPage() {
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<RendezVous[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -27,8 +26,8 @@ export default function AdminAppointmentsPage() {
   const fetchAppointments = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get(endpoints.rendezVous);
-      setAppointments(Array.isArray(res) ? res : res.results || []);
+      const res = await api.get<{results: RendezVous[]}>(endpoints.rendezVous);
+      setAppointments(res.results || []);
     } catch (e) {
       console.error(e);
     } finally {

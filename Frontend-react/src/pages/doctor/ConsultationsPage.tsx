@@ -1,10 +1,12 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { Card, Badge, Button, PageLoader } from '@/components/ui';
 import { FileText, RefreshCw, ChevronRight, Calendar, User, Stethoscope } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { Consultation } from '@/types/api';
+import { toArray } from '@/types/api';
 
 function statusColor(statut: string) {
   const map: Record<string, string> = {
@@ -21,15 +23,15 @@ function statusLabel(statut: string) {
 
 export default function ConsultationsPage() {
   const navigate = useNavigate();
-  const [consultations, setConsultations] = useState<any[]>([]);
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data: any = await api.get(endpoints.consultations);
-      setConsultations(Array.isArray(data) ? data : data.results ?? []);
+      const data = await api.get(endpoints.consultations);
+      setConsultations(toArray<Consultation>(data));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };

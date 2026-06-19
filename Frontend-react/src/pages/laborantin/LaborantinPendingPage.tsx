@@ -1,33 +1,34 @@
-// @ts-nocheck
+
 import { useState, useEffect, useRef } from 'react';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
-import { ErrorModal, ConfirmModal, SuccessModal } from '@/components/ui';
+import { ErrorModal, SuccessModal } from '@/components/ui';
 import {
   FlaskConical, FileCheck, Clock, X, Upload,
-  CheckCircle, AlertCircle, Plus, User, Mail,
-  Phone, Search
+  CheckCircle, AlertCircle, Plus, Search, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
+import type { DemandeAnalyse, Patient } from '@/types/api';
+import { toArray } from '@/types/api';
 
 const PAGE_SIZE = 12;
 
 export default function LaborantinPendingPage() {
-  const [demandes, setDemandes] = useState([]);
+  const [demandes, setDemandes] = useState<DemandeAnalyse[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
   // Clôture
-  const [selectedDemande, setSelectedDemande] = useState<any>(null);
+  const [selectedDemande, setSelectedDemande] = useState<DemandeAnalyse | null>(null);
   const [clotureData, setClotureData] = useState({ titre: '', fichier: null as File | null });
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Création nouvelle demande
   const [showCreate, setShowCreate] = useState(false);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [createForm, setCreateForm] = useState({
     patient: '',
     patient_nom: '', patient_prenom: '', patient_email: '',
@@ -40,17 +41,17 @@ export default function LaborantinPendingPage() {
 
   const fetchData = async () => {
     try {
-      const data: any = await api.get(endpoints.demandesAnalyse);
-      const all = Array.isArray(data) ? data : data.results || [];
-      setDemandes(all.filter((d: any) => d.statut !== 'cloture'));
+      const data = await api.get(endpoints.demandesAnalyse);
+      const all = toArray<DemandeAnalyse>(data);
+      setDemandes(all.filter((d) => d.statut !== 'cloture'));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   const fetchPatients = async () => {
     try {
-      const data: any = await api.get(endpoints.laborantinPatients);
-      setPatients(Array.isArray(data) ? data : data.results || []);
+      const data = await api.get(endpoints.laborantinPatients);
+      setPatients(toArray<Patient>(data));
     } catch (e) { console.error(e); }
   };
 
@@ -64,7 +65,7 @@ export default function LaborantinPendingPage() {
     const id = e.target.value;
     setCreateForm(f => ({ ...f, patient: id }));
     if (id) {
-      const p = patients.find((p: any) => String(p.id) === id || String(p.user_id) === id);
+      const p = patients.find((p) => String(p.id) === id || String(p.user_id) === id);
       if (p) {
         setCreateForm(f => ({
           ...f,
@@ -82,7 +83,7 @@ export default function LaborantinPendingPage() {
     e.preventDefault();
     setCreating(true);
     try {
-      const payload: any = {
+      const payload: Record<string, string | number> = {
         patient_nom: createForm.patient_nom,
         patient_prenom: createForm.patient_prenom,
         patient_email: createForm.patient_email,
@@ -95,9 +96,9 @@ export default function LaborantinPendingPage() {
       setCreateForm({ patient: '', patient_nom: '', patient_prenom: '', patient_email: '', patient_telephone: '', type_analyse: '' });
       setSuccessMsg('Patient inscrit avec succès. L\'analyse est en cours.');
       fetchData();
-    } catch (e: any) {
-      const data = e.response?.data;
-      const msg = data?.patient_email?.[0] || data?.type_analyse?.[0] || data?.detail || 'Erreur lors de l\'inscription.';
+    } catch (e) {
+      const data = (e as { response?: { data?: Record<string, unknown> } }).response?.data;
+      const msg = (data?.patient_email as string[])?.[0] || (data?.type_analyse as string[])?.[0] || (data?.detail as string) || 'Erreur lors de l\'inscription.';
       setErrorMsg(msg);
     } finally { setCreating(false); }
   };
@@ -111,20 +112,20 @@ export default function LaborantinPendingPage() {
     try {
       setSaving(true);
       // L'intercepteur axios détecte automatiquement FormData et supprime Content-Type
-      const result: any = await api.post(endpoints.cloturerAnalyse(selectedDemande.id), body);
+      const result = await api.post(endpoints.cloturerAnalyse(selectedDemande.id), body) as any;
       setSelectedDemande(null);
       setClotureData({ titre: '', fichier: null });
-      const code = result?.code_acces || '';
+      const code = (result as any)?.code_acces || '';
       setSuccessMsg(`Analyse clôturée. ${code ? `Code d'accès patient : ${code}` : 'Le patient a été notifié.'}`);
       fetchData();
-    } catch (e: any) {
-      const data = e.response?.data;
-      const msg = data?.fichier?.[0] || data?.error || data?.detail || 'Erreur lors de la clôture.';
+    } catch (e) {
+      const data = (e as { response?: { data?: Record<string, unknown> } }).response?.data;
+      const msg = (data?.fichier as string[])?.[0] || (data?.error as string) || (data?.detail as string) || 'Erreur lors de la clôture.';
       setErrorMsg(msg);
     } finally { setSaving(false); }
   };
 
-  const filtered = demandes.filter((d: any) => {
+  const filtered = demandes.filter((d) => {
     const q = search.toLowerCase();
     return (
       `${d.patient_prenom} ${d.patient_nom}`.toLowerCase().includes(q) ||
@@ -180,7 +181,7 @@ export default function LaborantinPendingPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {paged.map((d: any, i: number) => (
+          {paged.map((d, i) => (
             <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
               <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
                 <div className="flex items-start justify-between mb-3">
@@ -271,7 +272,7 @@ export default function LaborantinPendingPage() {
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 bg-white"
                     >
                       <option value="">— Saisie manuelle —</option>
-                      {patients.map((p: any) => (
+                      {patients.map((p) => (
                         <option key={p.id || p.user_id} value={p.id || p.user_id}>
                           {p.first_name} {p.last_name} ({p.email})
                         </option>

@@ -1,8 +1,8 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Calendar, MessageCircle, FileText, Shield, MapPin, ArrowRight, CheckCircle, Star, Users, Building, Activity, Menu, X, Bot, ChevronRight, HeartPulse, Sun, Moon } from 'lucide-react';
+import { Heart, Calendar, FileText, Shield, MapPin, ArrowRight, Star, Users, Building, Activity, Menu, X, Bot, HeartPulse, Sun, Moon } from 'lucide-react';
 import { Badge, Button } from '@/components/ui';
 import { Footer } from '@/components/layout';
 import { useTheme } from '@/contexts/ThemeContext';

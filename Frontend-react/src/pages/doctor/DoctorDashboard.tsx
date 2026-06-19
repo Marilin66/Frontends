@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,10 +6,12 @@ import { api, endpoints } from '@/services/api';
 import { Avatar, Badge, Button, PageLoader } from '@/components/ui';
 import {
   Calendar, Users, Clock, CheckCircle, XCircle,
-  ChevronRight, Award, FileText, MessageCircle,
-  Stethoscope, RefreshCw, AlertCircle, ClipboardList, Activity, TrendingUp
+  ChevronRight,  FileText,
+  Stethoscope, RefreshCw, AlertCircle, Activity, TrendingUp
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { RendezVous, RendezVousStatut } from '@/types/api';
+import { toArray } from '@/types/api';
 
 function statusColor(s: string) {
   const m: Record<string, string> = {
@@ -33,37 +35,37 @@ function statusLabel(s: string) {
 export default function DoctorDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [appointments, setAppointments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<RendezVous[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [refuseModal, setRefuseModal] = useState<{ id: number } | null>(null);
   const [refuseComment, setRefuseComment] = useState('');
   const [errorModal, setErrorModal] = useState('');
-  const [showIntake, setShowIntake] = useState<any>(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const data: any = await api.get(endpoints.rendezVous);
-      setAppointments(Array.isArray(data) ? data : data.results || []);
+      const data = await api.get(endpoints.rendezVous);
+      setAppointments(toArray<RendezVous>(data));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleAction = async (id: number, action: string, extra?: any) => {
+  const handleAction = async (id: number, action: string, extra?: Record<string, unknown>) => {
     setActionLoading(id);
     try {
-      const map: any = {
+      const map: Record<string, string> = {
         confirmer: endpoints.confirmerRdv(id),
         refuser:   endpoints.refuserRdv(id),
         terminer:  endpoints.terminerRdv(id),
       };
       await api.post(map[action], extra);
       fetchData();
-    } catch (e: any) {
-      const msg = e.response?.data?.error || e.response?.data?.detail || 'Erreur lors de la mise à jour.';
+    } catch (e) {
+      const err = e as { response?: { data?: { error?: string; detail?: string } } };
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Erreur lors de la mise à jour.';
       setErrorModal(msg);
     }
     finally { setActionLoading(null); }
@@ -145,7 +147,7 @@ export default function DoctorDashboard() {
               </p>
             </div>
             <div className="flex-1 lg:max-w-2xl w-full space-y-3">
-              {appointments.filter(a => a.statut === 'en_attente').slice(0, 2).map((apt: any) => (
+              {appointments.filter(a => a.statut === 'en_attente').slice(0, 2).map((apt) => (
                 <div key={apt.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/10 transition-all">
                   <div className="flex items-center gap-4">
                     <Avatar name={apt.patient_nom} size="sm" className="ring-2 ring-white/10" />
@@ -205,11 +207,11 @@ export default function DoctorDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {appointments.slice(0, 8).map((apt: any) => (
+                  {appointments.slice(0, 8).map((apt) => (
                     <tr key={apt.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <Avatar name={apt.patient_nom} size="xs" />
+                          <Avatar name={apt.patient_nom} size="sm" />
                           <div className="min-w-0">
                              <p className="text-sm font-bold text-slate-900 truncate">{apt.patient_nom}</p>
                              <p className="text-[10px] text-slate-400 font-medium truncate">{apt.motif || 'Consultation'}</p>
@@ -231,13 +233,13 @@ export default function DoctorDashboard() {
                           {statusLabel(apt.statut)}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                         <button 
-                           onClick={() => navigate(`/medecin/consultations/${apt.consultation_id ?? apt.id}`)}
-                           className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-all"
-                         >
-                            <ChevronRight className="w-5 h-5" />
-                         </button>
+                      <td className="px-6 py-4 text-right">                      <button 
+                                onClick={() => navigate(`/medecin/consultations/${apt.consultation_id ?? apt.id}`)}
+                                className="text-primary hover:bg-primary/10 p-2 rounded-lg transition-all"
+                              >
+                                  <ChevronRight className="w-4 h-4" />
+                               </button>
+
                       </td>
                     </tr>
                   ))}

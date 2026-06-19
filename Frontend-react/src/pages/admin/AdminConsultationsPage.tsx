@@ -1,21 +1,33 @@
-// @ts-nocheck
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, endpoints } from '@/services/api';
 import { 
-  Card, Badge, Button, Avatar, PageLoader, 
-  Input, Select 
+  Card, Badge, Button, Avatar, PageLoader
 } from '@/components/ui';
 import { 
-  Search, Filter, Calendar, User, Stethoscope, 
-  ChevronRight, FileText, CheckCircle, Clock, 
+  Search, Calendar, Clock, User, Stethoscope, 
+  ChevronRight, FileText, CheckCircle, 
   AlertCircle, ArrowLeft, Download, Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { RendezVous } from '@/types';
+
+interface ConsultationItem {
+  id: number;
+  patient_nom?: string;
+  patient_id?: number;
+  medecin_nom?: string;
+  specialite_nom?: string;
+  statut: string;
+  date_creation?: string;
+  date?: string;
+  compte_rendu?: boolean;
+  prescription?: boolean;
+}
 
 export default function AdminConsultationsPage() {
   const navigate = useNavigate();
-  const [consultations, setConsultations] = useState([]);
+  const [consultations, setConsultations] = useState<ConsultationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
@@ -27,8 +39,8 @@ export default function AdminConsultationsPage() {
   const fetchConsultations = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get(endpoints.consultations);
-      setConsultations(Array.isArray(res) ? res : res.results || []);
+      const res = await api.get<{results: ConsultationItem[]}>(endpoints.consultations);
+      setConsultations(res.results || []);
     } catch (e) {
       console.error(e);
     } finally {
@@ -147,7 +159,7 @@ export default function AdminConsultationsPage() {
                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Date</p>
                           <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
                              <Calendar className="w-3.5 h-3.5 text-primary" />
-                             {new Date(c.date_creation || c.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                             {new Date(c.date_creation || c.date || '').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                           </div>
                        </div>
                        <div className="hidden lg:block">

@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +10,8 @@ import {
 import { Card, Badge, Button, Avatar, PageLoader } from '@/components/ui';
 import { api, endpoints } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Hopital, Service as ApiService, Medecin } from '@/types/api';
+import { toArray } from '@/types/api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -262,7 +264,7 @@ export default function AppointmentBookingPage() {
     (async () => {
       try {
         setIsLoading(true);
-        const h: any = await api.get(endpoints.hopitalDetail(parseInt(paramHospitalId)));
+        const h = await api.get<Hopital>(endpoints.hopitalDetail(parseInt(paramHospitalId)));
         setHospital(h);
         await loadServices(paramHospitalId);
         if (paramServiceId) await loadDoctors(paramHospitalId, paramServiceId);
@@ -275,9 +277,9 @@ export default function AppointmentBookingPage() {
   const loadServices = async (hId: string | number) => {
     setFldLoading(p => ({ ...p, services: true }));
     try {
-      const r: any = await api.get(endpoints.hopitalServices(parseInt(String(hId))));
-      const data   = Array.isArray(r) ? r : r.results || [];
-      setServices(data.map((s: any) => ({ id: s.service ?? s.id, nom: s.service_nom ?? s.nom })));
+      const r = await api.get(endpoints.hopitalServices(parseInt(String(hId))));
+      const data = toArray<{ service?: number; id: number; service_nom?: string; nom: string }>(r);
+      setServices(data.map((s) => ({ id: s.service ?? s.id, nom: s.service_nom ?? s.nom })));
     } catch (e) { console.error(e); }
     finally { setFldLoading(p => ({ ...p, services: false })); }
   };
@@ -285,8 +287,8 @@ export default function AppointmentBookingPage() {
   const loadDoctors = async (hId: string | number, sId: string | number) => {
     setFldLoading(p => ({ ...p, doctors: true }));
     try {
-      const r: any = await api.get(`${endpoints.medecins}?hopital=${hId}&service=${sId}`);
-      setDoctors(Array.isArray(r) ? r : r.results || []);
+      const r = await api.get(`${endpoints.medecins}?hopital=${hId}&service=${sId}`);
+      setDoctors(toArray<Doctor>(r));
     } catch (e) { console.error(e); }
     finally { setFldLoading(p => ({ ...p, doctors: false })); }
   };
@@ -294,8 +296,8 @@ export default function AppointmentBookingPage() {
   const loadSlots = async (dId: string | number) => {
     setFldLoading(p => ({ ...p, slots: true }));
     try {
-      const r: any = await api.get(endpoints.medecinCreneaux(parseInt(String(dId))));
-      setAvailabilities(Array.isArray(r) ? r : r.results || []);
+      const r = await api.get(endpoints.medecinCreneaux(parseInt(String(dId))));
+      setAvailabilities(toArray<Slot>(r));
     } catch (e) { console.error(e); }
     finally { setFldLoading(p => ({ ...p, slots: false })); }
   };
@@ -329,9 +331,10 @@ export default function AppointmentBookingPage() {
       const date_heure = `${selectedSlot.date}T${time}`;
       await api.post(endpoints.rendezVous, { medecin: selectedDoctorId, date_heure, motif: motif.trim() });
       setSuccess(true);
-    } catch (e: any) {
-      const raw    = e?.response?.data;
-      const status = e?.response?.status;
+    } catch (e) {
+      const err = e as { response?: { data?: unknown; status?: number } };
+      const raw    = err?.response?.data;
+      const status = err?.response?.status;
       setError(cleanError(raw, status));
     } finally { setIsSubmitting(false); }
   };
@@ -389,7 +392,8 @@ export default function AppointmentBookingPage() {
       </div>
 
       {/* Alerte NPI manquant */}
-      {!user?.patient_profile?.npi && (
+      {/* NPI check - via Record pour accès flexible */}
+      {!((user as any)?.patient_profile as any)?.npi && (
         <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div className="flex-1">

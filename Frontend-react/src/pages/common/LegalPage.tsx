@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { ShieldAlert, Scale, FileText, Gavel } from 'lucide-react';
 
 export default function LegalPage() {

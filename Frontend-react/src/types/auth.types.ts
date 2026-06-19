@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 // User and Authentication Types — alignés avec les modèles Django
 
 export interface User {

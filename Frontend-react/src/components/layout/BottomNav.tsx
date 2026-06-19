@@ -1,9 +1,9 @@
-// @ts-nocheck
+
 import { NavLink } from 'react-router-dom';
 import {
   Home, Search, Calendar, MessageCircle, User, Bot,
   LayoutDashboard, FlaskConical, History, Stethoscope,
-  Activity, Settings, Building, Users, BarChart2
+  Activity, Settings, Building, Users
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -37,7 +37,7 @@ export function BottomNav() {
       { path: '/admin-hopital/messagerie',     icon: MessageCircle, label: 'Messages' },
       { path: '/admin-hopital/settings',       icon: Settings,      label: 'Paramètres' },
     ];
-    if (role === 'super_admin' || role === 'admin_general') return [
+    if (role === 'admin_general') return [
       { path: '/super-admin',                  icon: LayoutDashboard, label: 'Accueil',   end: true },
       { path: '/super-admin/hopitaux',         icon: Building,        label: 'Hôpitaux' },
       { path: '/super-admin/demandes',         icon: Activity,        label: 'Demandes' },

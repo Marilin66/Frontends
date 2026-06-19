@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useAuth } from '@/contexts/AuthContext';
 
 /**

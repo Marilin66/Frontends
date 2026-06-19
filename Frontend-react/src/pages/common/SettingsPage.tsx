@@ -1,14 +1,13 @@
-// @ts-nocheck
+
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
-import { Card, Avatar, Button, Input } from '@/components/ui';
+import { Card, Avatar, Button } from '@/components/ui';
 import {
-  User, Lock, Bell, Shield, FileText, Phone, Info,
-  ChevronRight, LogOut, Edit2, Save, X, Camera,
-  Building, Mail, MapPin, Calendar, CheckCircle, AlertCircle,
-  FlaskConical, Stethoscope, ChevronLeft, UserCircle, Settings as SettingsIcon
+  Lock, Shield, FileText, Info,
+  ChevronRight, LogOut, Camera,
+  Mail, CheckCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,54 +25,11 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   
-  const [activeTab, setActiveTab] = useState('securite'); // profil, securite, aides
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState('securite');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState('');
-
-  const [form, setForm] = useState({
-    first_name: user?.first_name || '',
-    last_name: user?.last_name || '',
-    telephone: user?.telephone || '',
-    adresse: user?.adresse || '',
-    date_naissance: user?.date_naissance || '',
-    sexe: user?.sexe || 'M',
-    biographie: user?.medecin_profile?.biographie || '',
-    laboratoire: user?.laborantin_profile?.laboratoire || '',
-  });
 
   const role = user?.role || 'patient';
   const theme = ROLE_THEME[role] || ROLE_THEME.patient;
-
-  const handleSave = async () => {
-    setSaveError('');
-    try {
-      setSaving(true);
-      const payload: any = {
-        first_name: form.first_name,
-        last_name: form.last_name,
-        telephone: form.telephone,
-        adresse: form.adresse,
-        date_naissance: form.date_naissance || null,
-        sexe: form.sexe,
-      };
-      if (role === 'medecin') payload.medecin_profile = { biographie: form.biographie };
-      if (role === 'laborantin') payload.laborantin_profile = { laboratoire: form.laboratoire };
-
-      await api.patch(endpoints.me, payload);
-      await refreshUser();
-      setIsEditing(false);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (e: any) {
-      const data = e?.response?.data;
-      setSaveError(data?.telephone?.[0] || data?.detail || 'Erreur lors de la sauvegarde.');
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -227,21 +183,7 @@ export default function SettingsPage() {
   );
 }
 
-function InfoBox({ icon: Icon, label, value }: any) {
-  return (
-    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 transition-all hover:bg-white dark:hover:bg-slate-800 hover:shadow-md group">
-      <div className="flex items-center gap-3 mb-2">
-         <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-            <Icon className="w-4 h-4 text-slate-400" />
-         </div>
-         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-      </div>
-      <p className="text-sm font-bold text-slate-900 dark:text-white pl-1">{value}</p>
-    </div>
-  );
-}
-
-function SettingLink({ icon: Icon, label, description, value, status, onClick }: any) {
+function SettingLink({ icon: Icon, label, description, value, status, onClick }: { icon: React.ElementType; label: string; description: string; value?: string; status?: string; onClick?: () => void }) {
   return (
     <button 
       onClick={onClick}

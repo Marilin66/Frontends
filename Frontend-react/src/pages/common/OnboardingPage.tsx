@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui';
 import {

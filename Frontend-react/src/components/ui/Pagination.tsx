@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 interface PaginationProps {

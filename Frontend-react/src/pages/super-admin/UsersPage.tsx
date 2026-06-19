@@ -1,12 +1,12 @@
-// @ts-nocheck
-import React, { useState, useEffect } from 'react';
+
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, Badge, Avatar, PageLoader } from '@/components/ui';
 import { ErrorModal, ConfirmModal } from '@/components/ui';
 import {
   Plus, Mail, Phone, X, Users, Trash2, ShieldCheck,
-  Search, Building, RefreshCw, AlertCircle, ChevronRight
+  Search, Building, RefreshCw, AlertCircle
 } from 'lucide-react';
 import { usePermissions } from '@/hooks/usePermissions';
 

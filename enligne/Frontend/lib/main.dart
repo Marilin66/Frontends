@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import 'package:dio/dio.dart';
 
 import 'core/routing/app_router.dart';
@@ -32,22 +31,23 @@ void _pingBackend() {
   }
 }
 
+/// Riverpod provider for the theme notifier
+final themeProvider = NotifierProvider<ThemeNotifier, ThemeMode>(ThemeNotifier.new);
+
 class HopitelApp extends ConsumerWidget {
   const HopitelApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Use ref.read instead of ref.watch: the GoRouter must NOT be recreated
-    // on every authProvider change. The router already handles auth state
-    // changes internally via its refreshListenable (ValueNotifier<AuthState>).
-    // Watching here would create a new GoRouter instance on each auth change,
-    // causing duplicate Navigator keys and the _keyReservation assertion on Web.
     final router = ref.read(routerProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return MaterialApp.router(
       title: 'Hopitel',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       routerConfig: router,
     );
   }

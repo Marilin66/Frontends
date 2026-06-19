@@ -15,6 +15,9 @@ import {
   ShieldCheck,
   Loader2,
 } from 'lucide-react';
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _unused = 0;
 import { Button, Badge } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
@@ -74,8 +77,9 @@ export default function AIAgentPage() {
 
   const fetchSessions = async () => {
     try {
-      const response = await api.get<any>(endpoints.chatbotSessions);
-      const data = Array.isArray(response) ? response : (response?.results ?? response?.data ?? response?.sessions ?? []);
+      const response = await api.get(endpoints.chatbotSessions) as unknown;
+      const respObj = response as Record<string, unknown>;
+      const data = Array.isArray(response) ? response : ((respObj?.results ?? respObj?.data ?? respObj?.sessions) as Session[] ?? []);
       setSessions(data);
     } catch (err) {
       console.error('Failed to fetch sessions:', err);
@@ -86,15 +90,16 @@ export default function AIAgentPage() {
   const loadLastHistory = async () => {
     setLoadingHistory(true);
     try {
-      const response = await api.get<any>(endpoints.chatbotHistory());
+      const response = await api.get(endpoints.chatbotHistory()) as any;
       if (response?.messages?.length > 0) {
         setCurrentSessionId(response.session_id ?? null);
-        setMessages(
-          response.messages.map((m: any) => ({
-            ...m,
-            timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
-          }))
-        );
+        const msgs: Message[] = response.messages.map((m: any) => ({
+          id: m.id || Math.random().toString(),
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+          timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+        }));
+        setMessages(msgs);
       } else {
         setMessages([WELCOME]);
       }
@@ -107,14 +112,15 @@ export default function AIAgentPage() {
 
   const selectSession = async (id: number) => {
     try {
-      const response = await api.get<any>(endpoints.chatbotHistory(id));
+      const response = await api.get(endpoints.chatbotHistory(id)) as any;
       setCurrentSessionId(response.session_id ?? id);
-      setMessages(
-        (response.messages ?? []).map((m: any) => ({
-          ...m,
-          timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
-        }))
-      );
+      const msgs: Message[] = (response.messages ?? []).map((m: any) => ({
+        id: m.id || Math.random().toString(),
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: m.timestamp ? new Date(m.timestamp) : new Date(),
+      }));
+      setMessages(msgs);
       if (window.innerWidth < 1024) setSidebarOpen(false);
     } catch {
       // Ignore
@@ -123,7 +129,7 @@ export default function AIAgentPage() {
 
   const startNewChat = async () => {
     try {
-      const response = await api.post<any>(endpoints.chatbotSessions);
+      const response = await api.post<Session>(endpoints.chatbotSessions);
       setCurrentSessionId(response.id ?? null);
       setMessages([{
         id: 'new-' + Date.now(),
@@ -150,7 +156,7 @@ export default function AIAgentPage() {
     setInput('');
 
     try {
-      const data = await api.post<any>(endpoints.chatbot, {
+      const data = await api.post<{ session_id?: number; message?: { content: string }; content?: string; actions?: Action[] }>(endpoints.chatbot, {
         message: text,
         session_id: currentSessionId,
       });
@@ -216,7 +222,7 @@ export default function AIAgentPage() {
   };
 
   const handleAction = (action: Action) => {
-    const raw = action.payload ?? action.url ?? (action as any).target;
+    const raw = action.payload ?? action.url ?? (action as Action).target;
     if (!raw) return;
 
     if (action.type === 'message') {

@@ -1,5 +1,5 @@
 
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -97,13 +97,14 @@ function TimelineItem({ event, index }: { event: any, index: number }) {
   const isRDV = event.type === 'rendez_vous';
   const isPreReg = event.type === 'pre_enregistrement';
 
-  const config = {
+  const configMap: Record<string, { icon: any; color: string; bg: string; text: string; label: string }> = {
     rendez_vous: { icon: Calendar, color: 'bg-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', text: 'text-blue-600', label: 'Rendez-vous' },
     pre_enregistrement: { icon: ClipboardList, color: 'bg-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', text: 'text-amber-600', label: 'Check-in Patient' },
     consultation: { icon: MessageSquare, color: 'bg-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', text: 'text-emerald-600', label: 'Consultation Médicale' },
     demande_analyse: { icon: FlaskConical, color: 'bg-cyan-500', bg: 'bg-cyan-50 dark:bg-cyan-900/20', text: 'text-cyan-600', label: 'Demande de Labo' },
     resultat_labo: { icon: FileText, color: 'bg-indigo-500', bg: 'bg-indigo-50 dark:bg-indigo-900/20', text: 'text-indigo-600', label: 'Résultat Biologique' }
-  }[event.type] || { icon: Clock, color: 'bg-slate-500', bg: 'bg-slate-50', text: 'text-slate-600', label: 'Événement' };
+  };
+  const config = configMap[event.type as string] || { icon: Clock, color: 'bg-slate-500', bg: 'bg-slate-50', text: 'text-slate-600', label: 'Événement' };
 
   return (
     <motion.div 

@@ -1,7 +1,7 @@
-// @ts-nocheck
-import React, { useState, useEffect } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
 import { 
   Card, 
@@ -14,14 +14,12 @@ import {
   Phone, 
   Globe, 
   ArrowLeft, 
-  Activity,
   Share,
   Building,
   Stethoscope,
   Star,
   ArrowRight,
   Clock,
-  ExternalLink,
   Calendar
 } from 'lucide-react';
 
@@ -45,7 +43,7 @@ interface Hospital {
   logo: string;
 }
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { 
     opacity: 1, 
@@ -53,7 +51,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: { 
     y: 0, 

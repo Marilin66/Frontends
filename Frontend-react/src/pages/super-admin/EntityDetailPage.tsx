@@ -1,16 +1,18 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, endpoints } from '@/services/api';
 import { Card, Button, Badge, PageLoader } from '@/components/ui';
 import { ErrorModal, ConfirmModal } from '@/components/ui';
+import type { Hopital, Medecin, Service, DemandeService, Laborantin } from '@/types/api';
+import { toArray } from '@/types/api';
 import {
   ArrowLeft, Building, Users, Activity, Inbox,
   Mail, Phone, MapPin, Edit2, Save, X,
   CheckCircle, XCircle, ToggleLeft, ToggleRight,
-  Plus, MoreVertical, RefreshCw, Stethoscope,
-  UserPlus, Trash2, Check
+  Stethoscope,
+  Trash2
 } from 'lucide-react';
 
 type Tab = 'medecins' | 'services' | 'demandes' | 'laborantins';
@@ -20,22 +22,23 @@ export default function EntityDetailPage() {
   const navigate = useNavigate();
   const hopId = Number(id);
 
-  const [hopital, setHopital] = useState<any>(null);
-  const [medecins, setMedecins] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [demandes, setDemandes] = useState<any[]>([]);
-  const [laborantins, setLaborantins] = useState<any[]>([]);
+  const [hopital, setHopital] = useState<Hopital | null>(null);
+  const [medecins, setMedecins] = useState<Medecin[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+  const [demandes, setDemandes] = useState<DemandeService[]>([]);
+  const [laborantins, setLaborantins] = useState<Laborantin[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('medecins');
 
   // Edit mode
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState<any>({});
+  const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   // Action states
   const [processing, setProcessing] = useState<number | null>(null);
   const [toggling, setToggling] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [errorMsg, setErrorMsg] = useState('');
   const [confirmDemande, setConfirmDemande] = useState<{ id: number; valider: boolean } | null>(null);
   const [confirmDeactivate, setConfirmDeactivate] = useState<{ id: number; nom: string } | null>(null);
@@ -50,12 +53,12 @@ export default function EntityDetailPage() {
         api.get(endpoints.demandesServices),
         api.get(`${endpoints.laborantins}?hopital=${hopId}`),
       ]);
-      setHopital(h);
-      setMedecins(Array.isArray(m) ? m : (m as any).results ?? []);
-      setServices(Array.isArray(s) ? s : (s as any).results ?? []);
-      const allD = Array.isArray(d) ? d : (d as any).results ?? [];
-      setDemandes(allD.filter((x: any) => x.hopital === hopId));
-      setLaborantins(Array.isArray(l) ? l : (l as any).results ?? []);
+      setHopital(h as any);
+      setMedecins(toArray<Medecin>(m));
+      setServices(toArray<Service>(s));
+      const allD = toArray<DemandeService>(d);
+      setDemandes(allD.filter((x) => x.hopital === hopId));
+      setLaborantins(toArray<Laborantin>(l));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -80,7 +83,7 @@ export default function EntityDetailPage() {
   const saveEdit = async () => {
     setSaving(true);
     try {
-      const payload: any = {
+      const payload: Record<string, string | number> = {
         nom: editForm.nom, adresse: editForm.adresse,
         ville: editForm.ville, telephone: editForm.telephone,
         email: editForm.email,
@@ -99,6 +102,7 @@ export default function EntityDetailPage() {
   const handleToggle = async () => {
     setToggling(true);
     try {
+      if (!hopital) return;
       await api.patch(`${endpoints.hopitaux}${hopId}/`, { is_active: !hopital.is_active });
       fetchData();
     } catch { setErrorMsg('Erreur lors du changement de statut.'); }
@@ -137,7 +141,9 @@ export default function EntityDetailPage() {
     </div>
   );
 
-  const tabs: { key: Tab; label: string; count: number; icon: any }[] = [
+  const h = hopital!;
+
+  const tabs: { key: Tab; label: string; count: number; icon: typeof Stethoscope }[] = [
     { key: 'medecins',    label: 'Médecins',    count: medecins.length,    icon: Stethoscope },
     { key: 'services',    label: 'Services',    count: services.length,    icon: Activity },
     { key: 'demandes',    label: 'Demandes',    count: demandes.filter(d => d.statut === 'en_attente').length, icon: Inbox },
@@ -156,21 +162,21 @@ export default function EntityDetailPage() {
           <ArrowLeft className="w-4 h-4 text-slate-600" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-bold text-slate-900 truncate">{hopital.nom}</h1>
-          <p className="text-sm text-slate-500">{hopital.ville}</p>
+          <h1 className="text-xl font-bold text-slate-900 truncate">{h.nom}</h1>
+          <p className="text-sm text-slate-500">{h.ville}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleToggle}
             disabled={toggling}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition disabled:opacity-50 ${
-              hopital.is_active
+              h.is_active
                 ? 'border-green-200 text-green-700 hover:bg-green-50'
                 : 'border-slate-200 text-slate-500 hover:bg-slate-50'
             }`}
           >
-            {hopital.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-            {toggling ? '…' : hopital.is_active ? 'Actif' : 'Inactif'}
+            {h.is_active ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+            {toggling ? '…' : h.is_active ? 'Actif' : 'Inactif'}
           </button>
           {!editing ? (
             <Button onClick={startEdit} leftIcon={<Edit2 className="w-4 h-4" />} variant="outline">
@@ -181,7 +187,7 @@ export default function EntityDetailPage() {
               <Button variant="outline" onClick={() => setEditing(false)} leftIcon={<X className="w-4 h-4" />}>
                 Annuler
               </Button>
-              <Button onClick={saveEdit} loading={saving} leftIcon={<Save className="w-4 h-4" />}>
+              <Button onClick={saveEdit} isLoading={saving} leftIcon={<Save className="w-4 h-4" />}>
                 Enregistrer
               </Button>
             </div>
@@ -213,7 +219,7 @@ export default function EntityDetailPage() {
                     step={type === 'number' ? 'any' : undefined}
                     required={required}
                     value={editForm[key] ?? ''}
-                    onChange={e => setEditForm((f: any) => ({ ...f, [key]: e.target.value }))}
+                    onChange={e => setEditForm((f) => ({ ...f, [key]: e.target.value }))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
                   />
                 </div>
@@ -224,10 +230,10 @@ export default function EntityDetailPage() {
           /* ── Affichage infos ── */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { icon: Building, label: 'Nom',       value: hopital.nom,       color: 'text-primary',   bg: 'bg-primary/10' },
-              { icon: MapPin,   label: 'Adresse',   value: `${hopital.adresse ?? '—'}, ${hopital.ville ?? '—'}`, color: 'text-rose-600', bg: 'bg-rose-50' },
-              { icon: Mail,     label: 'Email',     value: hopital.email,     color: 'text-blue-600',  bg: 'bg-blue-50' },
-              { icon: Phone,    label: 'Téléphone', value: hopital.telephone, color: 'text-green-600', bg: 'bg-green-50' },
+              { icon: Building, label: 'Nom',       value: h.nom,       color: 'text-primary',   bg: 'bg-primary/10' },
+              { icon: MapPin,   label: 'Adresse',   value: `${h.adresse ?? '—'}, ${h.ville ?? '—'}`, color: 'text-rose-600', bg: 'bg-rose-50' },
+              { icon: Mail,     label: 'Email',     value: h.email,     color: 'text-blue-600',  bg: 'bg-blue-50' },
+              { icon: Phone,    label: 'Téléphone', value: h.telephone, color: 'text-green-600', bg: 'bg-green-50' },
             ].map(({ icon: Icon, label, value, color, bg }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className={`w-9 h-9 ${bg} rounded-xl flex items-center justify-center shrink-0`}>
@@ -239,14 +245,14 @@ export default function EntityDetailPage() {
                 </div>
               </div>
             ))}
-            {hopital.code_court && (
+            {h.code_court && (
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center shrink-0">
                   <Building className="w-4 h-4 text-violet-600" />
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">Code court</p>
-                  <p className="text-sm font-semibold text-slate-900 font-mono">{hopital.code_court}</p>
+                  <p className="text-sm font-semibold text-slate-900 font-mono">{h.code_court}</p>
                 </div>
               </div>
             )}
@@ -285,7 +291,7 @@ export default function EntityDetailPage() {
               <_Empty icon={Stethoscope} message="Aucun médecin dans cet hôpital" />
             ) : (
               <div className="space-y-2">
-                {medecins.map((m: any, i: number) => (
+                {medecins.map((m, i) => (
                   <Card key={m.id ?? i} padding="sm">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0 font-bold text-blue-600 text-sm">
@@ -322,7 +328,7 @@ export default function EntityDetailPage() {
               <_Empty icon={Activity} message="Aucun service dans cet hôpital" />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {services.map((s: any, i: number) => (
+                {services.map((s, i) => (
                   <Card key={s.id ?? i} padding="md">
                     <div className="flex items-start gap-3">
                       <div className="w-9 h-9 bg-violet-50 rounded-xl flex items-center justify-center shrink-0">
@@ -349,7 +355,7 @@ export default function EntityDetailPage() {
               <_Empty icon={Inbox} message="Aucune demande pour cet hôpital" />
             ) : (
               <div className="space-y-3">
-                {demandes.map((d: any, i: number) => (
+                {demandes.map((d, i) => (
                   <Card key={d.id ?? i} padding="md">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-3">
@@ -401,7 +407,7 @@ export default function EntityDetailPage() {
               <_Empty icon={Users} message="Aucun laborantin dans cet hôpital" />
             ) : (
               <div className="space-y-2">
-                {laborantins.map((l: any, i: number) => (
+                {laborantins.map((l, i) => (
                   <Card key={l.id ?? i} padding="sm">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center shrink-0 font-bold text-teal-600 text-sm">
@@ -449,7 +455,7 @@ export default function EntityDetailPage() {
 }
 
 // ── Helper component ─────────────────────────────────────────────────────────
-function _Empty({ icon: Icon, message }: { icon: any; message: string }) {
+function _Empty({ icon: Icon, message }: { icon: typeof Stethoscope; message: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mb-4">

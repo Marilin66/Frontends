@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import React from 'react';
 import { Card, Button } from '@/components/ui';
 import { ShieldCheck, FileText, Lock, Eye, AlertCircle, CheckCircle } from 'lucide-react';

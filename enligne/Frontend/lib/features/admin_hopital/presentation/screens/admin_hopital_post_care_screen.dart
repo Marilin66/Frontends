@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hopitel_app/core/theme/app_colors.dart';
 import 'package:hopitel_app/core/widgets/universal_back_button.dart';
-import 'package:hopitel_app/core/utils/helpers.dart';
-
 // ── Mock models for post-care follow-ups ───────────────────────────────
 
 class PostCareFollowUp {
@@ -179,7 +177,7 @@ class AdminHopitalPostCareScreen extends ConsumerWidget {
                 )
               else
                 ...followUps.map((followUp) =>
-                    _buildFollowUpCard(context, followUp)).toList(),
+                    _buildFollowUpCard(context, followUp)),
 
               const SizedBox(height: 24),
             ],
@@ -342,7 +340,7 @@ class AdminHopitalPostCareScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

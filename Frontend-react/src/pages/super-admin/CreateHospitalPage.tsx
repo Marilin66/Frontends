@@ -1,11 +1,12 @@
 ﻿
-// @ts-nocheck
+
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { api, endpoints } from '@/services/api';
+import type { ApiError } from '@/types/api';
 import { Button } from '@/components/ui';
 import {
   ArrowLeft, ArrowRight, Building, Phone, Mail, MapPin,
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 
 // Fix icône Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
   iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
@@ -68,7 +69,14 @@ const STEPS = [
 ];
 
 // ── Composants utilitaires ────────────────────────────────────────────────────
-function Field({ label, required = false, error, children, hint }: any) {
+interface FieldProps {
+  label: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
+  hint?: string;
+}
+function Field({ label, required = false, error, children, hint }: FieldProps) {
   return (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-slate-700">
@@ -81,7 +89,16 @@ function Field({ label, required = false, error, children, hint }: any) {
   );
 }
 
-function TInput({ value, onChange, placeholder, type = 'text', icon: Icon, error, disabled }: any) {
+interface TInputProps {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  type?: string;
+  icon?: typeof Building;
+  error?: string;
+  disabled?: boolean;
+}
+function TInput({ value, onChange, placeholder, type = 'text', icon: Icon, error, disabled }: TInputProps) {
   return (
     <div className="relative">
       {Icon && <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Icon className="w-4 h-4 text-slate-400" /></div>}
@@ -95,7 +112,13 @@ function TInput({ value, onChange, placeholder, type = 'text', icon: Icon, error
   );
 }
 
-function RecapRow({ icon: Icon, label, value, color = 'text-slate-400' }: any) {
+interface RecapRowProps {
+  icon: typeof Building;
+  label: string;
+  value?: string;
+  color?: string;
+}
+function RecapRow({ icon: Icon, label, value, color = 'text-slate-400' }: RecapRowProps) {
   if (!value) return null;
   return (
     <div className="flex items-start gap-3 py-2.5 border-b border-slate-50 last:border-0">
@@ -193,7 +216,7 @@ export default function CreateHospitalPage() {
     setGlobalError('');
     setSaving(true);
     try {
-      const payload: any = {
+      const payload: Record<string, string | number> = {
         nom: form.nom.trim(),
         adresse: form.adresse.trim(),
         ville: form.ville.trim(),
@@ -215,11 +238,12 @@ export default function CreateHospitalPage() {
 
       await api.post(endpoints.hopitaux, payload);
       navigate('/super-admin/hopitaux', { state: { created: true } });
-    } catch (err: any) {
-      const data = err?.response?.data;
-      const status = err?.response?.status;
+    } catch (err) {
+      const apiErr = err as ApiError;
+      const data = apiErr?.response?.data;
+      const status = apiErr?.response?.status;
 
-      if (!err?.response) {
+      if (!apiErr?.response) {
         setGlobalError('Impossible de joindre le serveur. Vérifiez votre connexion.');
         return;
       }
@@ -352,12 +376,12 @@ export default function CreateHospitalPage() {
               {step === 1 && (
                 <div className="space-y-5">
                   <Field label="Nom de l'hôpital" required error={errors.nom}>
-                    <TInput value={form.nom} onChange={(e: any) => set('nom', e.target.value)}
+                    <TInput value={form.nom} onChange={(e) => set('nom', e.target.value)}
                       placeholder="Ex: Centre Hospitalier Universitaire de Cotonou" icon={Building} error={errors.nom} />
                   </Field>
                   <Field label="Code court" error={errors.code_court}
                     hint="Code unique 4-6 lettres pour les codes d'accès résultats (ex: CHUC). Généré automatiquement si vide.">
-                    <TInput value={form.code_court} onChange={(e: any) => set('code_court', e.target.value.toUpperCase())}
+                    <TInput value={form.code_court} onChange={(e) => set('code_court', e.target.value.toUpperCase())}
                       placeholder="Ex: CHUC" icon={Hash} error={errors.code_court} />
                   </Field>
                   <Field label="Description" error={errors.description} hint="Optionnel">
@@ -372,11 +396,11 @@ export default function CreateHospitalPage() {
               {step === 2 && (
                 <div className="space-y-5">
                   <Field label="Adresse complète" required error={errors.adresse}>
-                    <TInput value={form.adresse} onChange={(e: any) => set('adresse', e.target.value)}
+                    <TInput value={form.adresse} onChange={(e) => set('adresse', e.target.value)}
                       placeholder="Ex: Quartier Akpakpa, Rue des Hôpitaux" icon={MapPin} error={errors.adresse} />
                   </Field>
                   <Field label="Ville" required error={errors.ville}>
-                    <TInput value={form.ville} onChange={(e: any) => set('ville', e.target.value)}
+                    <TInput value={form.ville} onChange={(e) => set('ville', e.target.value)}
                       placeholder="Ex: Cotonou, Porto-Novo, Parakou…" icon={Building2} error={errors.ville} />
                   </Field>
                   <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-4">
@@ -386,7 +410,7 @@ export default function CreateHospitalPage() {
                     </div>
                     <div className="flex gap-2 p-1 bg-white rounded-xl border border-slate-200">
                       {[{ v: 'manual', l: 'Saisie manuelle', icon: Keyboard }, { v: 'map', l: 'Choisir sur la carte', icon: Map }].map(({ v, l, icon: Icon }) => (
-                        <button key={v} type="button" onClick={() => setGpsMode(v as any)}
+                        <button key={v} type="button" onClick={() => setGpsMode(v as 'manual' | 'map')}
                           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold transition-all ${gpsMode === v ? 'bg-violet-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}>
                           <Icon className="w-3.5 h-3.5" /> {l}
                         </button>
@@ -395,10 +419,10 @@ export default function CreateHospitalPage() {
                     {gpsMode === 'manual' && (
                       <div className="grid grid-cols-2 gap-4">
                         <Field label="Latitude" error={errors.latitude} hint="Ex: 6.3654">
-                          <TInput value={form.latitude} onChange={(e: any) => set('latitude', e.target.value)} placeholder="6.3654" type="number" error={errors.latitude} />
+                          <TInput value={form.latitude} onChange={(e) => set('latitude', e.target.value)} placeholder="6.3654" type="number" error={errors.latitude} />
                         </Field>
                         <Field label="Longitude" error={errors.longitude} hint="Ex: 2.4183">
-                          <TInput value={form.longitude} onChange={(e: any) => set('longitude', e.target.value)} placeholder="2.4183" type="number" error={errors.longitude} />
+                          <TInput value={form.longitude} onChange={(e) => set('longitude', e.target.value)} placeholder="2.4183" type="number" error={errors.longitude} />
                         </Field>
                       </div>
                     )}
@@ -451,15 +475,15 @@ export default function CreateHospitalPage() {
               {step === 3 && (
                 <div className="space-y-5">
                   <Field label="Téléphone" required error={errors.telephone} hint="Numéro principal de l'établissement">
-                    <TInput value={form.telephone} onChange={(e: any) => set('telephone', e.target.value)}
+                    <TInput value={form.telephone} onChange={(e) => set('telephone', e.target.value)}
                       placeholder="Ex: +229 21 30 01 00" icon={Phone} type="tel" error={errors.telephone} />
                   </Field>
                   <Field label="Email de contact" required error={errors.email} hint="Adresse email officielle">
-                    <TInput value={form.email} onChange={(e: any) => set('email', e.target.value)}
+                    <TInput value={form.email} onChange={(e) => set('email', e.target.value)}
                       placeholder="Ex: contact@chu-cotonou.bj" icon={Mail} type="email" error={errors.email} />
                   </Field>
                   <Field label="Site web" error={errors.site_web} hint="Optionnel — doit commencer par https://">
-                    <TInput value={form.site_web} onChange={(e: any) => set('site_web', e.target.value)}
+                    <TInput value={form.site_web} onChange={(e) => set('site_web', e.target.value)}
                       placeholder="https://www.chu-cotonou.bj" icon={Globe} type="url" error={errors.site_web} />
                   </Field>
                 </div>
@@ -477,26 +501,26 @@ export default function CreateHospitalPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label="Prénom" required error={errors.admin_first_name}>
-                      <TInput value={form.admin_first_name} onChange={(e: any) => set('admin_first_name', e.target.value)}
+                      <TInput value={form.admin_first_name} onChange={(e) => set('admin_first_name', e.target.value)}
                         placeholder="Jean" icon={User} error={errors.admin_first_name} />
                     </Field>
                     <Field label="Nom" required error={errors.admin_last_name}>
-                      <TInput value={form.admin_last_name} onChange={(e: any) => set('admin_last_name', e.target.value)}
+                      <TInput value={form.admin_last_name} onChange={(e) => set('admin_last_name', e.target.value)}
                         placeholder="Kpomagan" icon={User} error={errors.admin_last_name} />
                     </Field>
                   </div>
                   <Field label="Email de l'administrateur" required error={errors.admin_email}
                     hint="Cet email recevra les identifiants de connexion">
-                    <TInput value={form.admin_email} onChange={(e: any) => set('admin_email', e.target.value)}
+                    <TInput value={form.admin_email} onChange={(e) => set('admin_email', e.target.value)}
                       placeholder="admin@hopital.bj" icon={Mail} type="email" error={errors.admin_email} />
                   </Field>
                   <Field label="Téléphone" required error={errors.admin_telephone}>
-                    <TInput value={form.admin_telephone} onChange={(e: any) => set('admin_telephone', e.target.value)}
+                    <TInput value={form.admin_telephone} onChange={(e) => set('admin_telephone', e.target.value)}
                       placeholder="0197000000" icon={Phone} type="tel" error={errors.admin_telephone} />
                   </Field>
                   <div className="grid grid-cols-2 gap-4">
                     <Field label="Date de naissance" required error={errors.admin_date_naissance}>
-                      <TInput value={form.admin_date_naissance} onChange={(e: any) => set('admin_date_naissance', e.target.value)}
+                      <TInput value={form.admin_date_naissance} onChange={(e) => set('admin_date_naissance', e.target.value)}
                         type="date" icon={Calendar} error={errors.admin_date_naissance} />
                     </Field>
                     <Field label="Sexe" required>

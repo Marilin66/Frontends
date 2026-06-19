@@ -1,8 +1,10 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { api, endpoints } from '@/services/api';
+import type { RendezVous } from '@/types/api';
+import { toArray } from '@/types/api';
 import { Avatar, Badge, Button, PageLoader } from '@/components/ui';
 import {
   Calendar, FileText, Plus, ChevronRight, Bot,

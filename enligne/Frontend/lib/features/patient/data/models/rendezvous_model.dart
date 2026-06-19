@@ -186,6 +186,7 @@ class RendezVousModel {
       hasConsultation: hasConsultation ?? this.hasConsultation,
       consultationId: consultationId ?? this.consultationId,
       preEnregistrement: preEnregistrement ?? this.preEnregistrement,
+      medecinSpecialite: medecinSpecialite ?? this.medecinSpecialite,
     );
   }
 }

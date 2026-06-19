@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { api, endpoints } from '@/services/api';
 import { Button, Badge, Card } from '@/components/ui';
+import type { ApiError } from '@/types/api';
 
 interface IntakeFormData {
   symptomes_principaux: string;
@@ -63,10 +64,10 @@ export default function PatientIntakePage() {
         });
         setIsEditMode(true);
       }
-    } catch (err: any) {
-      const status = err?.response?.status;
+    } catch (err) {
+      const status = (err as ApiError).response?.status;
       if (status !== 404) {
-         console.warn('Erreur chargement intake:', err?.response?.data);
+         console.warn('Erreur chargement intake:', (err as ApiError).response?.data);
       }
     } finally {
       setIsLoading(false);
@@ -95,9 +96,10 @@ export default function PatientIntakePage() {
       }
       setSaved(true);
       setTimeout(() => navigate(-1), 1800);
-    } catch (err: any) {
-      const data = err?.response?.data;
-      setError(data?.detail || 'Erreur lors de la sauvegarde.');
+    } catch (err) {
+      const data = (err as ApiError).response?.data;
+      const detail = data && typeof data === 'object' && 'detail' in data ? (data as Record<string, unknown>).detail : undefined;
+      setError((detail as string) || 'Erreur lors de la sauvegarde.');
     } finally {
       setIsSaving(false);
     }
