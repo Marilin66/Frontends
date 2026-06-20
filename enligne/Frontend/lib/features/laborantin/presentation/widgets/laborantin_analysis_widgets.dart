@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -147,7 +147,7 @@ class _CloturerAnalyseBottomSheetState extends ConsumerState<CloturerAnalyseBott
   bool _isLoading = false;
 
   Future<void> _pickFile() async {
-    final res = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf'], withData: kIsWeb);
+    final res = await FilePicker.platform.pickFiles(type: FileType.any, withData: kIsWeb);
     if (res != null) setState(() => _selectedFile = res.files.first);
   }
 
@@ -169,21 +169,28 @@ class _CloturerAnalyseBottomSheetState extends ConsumerState<CloturerAnalyseBott
     }
     setState(() => _isLoading = true);
 
-    final multipart = kIsWeb 
-      ? MultipartFile.fromBytes(_selectedFile!.bytes!, filename: _selectedFile!.name)
-      : await MultipartFile.fromFile(_selectedFile!.path!, filename: _selectedFile!.name);
+    try {
+      final multipart = kIsWeb 
+        ? MultipartFile.fromBytes(_selectedFile!.bytes!, filename: _selectedFile!.name)
+        : await MultipartFile.fromFile(_selectedFile!.path!, filename: _selectedFile!.name);
 
-    final formData = FormData.fromMap({'fichier': multipart, 'titre': widget.demande.typeAnalyse});
+      final formData = FormData.fromMap({'fichier': multipart, 'titre': widget.demande.typeAnalyse});
 
-    final result = await ref.read(laborantinPendingAnalysesProvider.notifier).cloturerAnalyse(widget.demande.id, formData);
+      final result = await ref.read(laborantinPendingAnalysesProvider.notifier).cloturerAnalyse(widget.demande.id, formData);
 
-    if (mounted) {
-      setState(() => _isLoading = false);
-      if (result != null) {
-        Navigator.pop(context);
-        _showSuccessDialog(result['code_acces']);
-      } else {
-        Helpers.showSnackBar(context, 'Erreur lors de la clôture.', isError: true);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (result != null) {
+          Navigator.pop(context);
+          _showSuccessDialog(result['code_acces']);
+        } else {
+          Helpers.showSnackBar(context, 'Erreur lors de la clôture.', isError: true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        Helpers.showSnackBar(context, 'Erreur technique: $e', isError: true);
       }
     }
   }
