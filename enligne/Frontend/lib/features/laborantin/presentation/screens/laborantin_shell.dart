@@ -19,24 +19,25 @@ class LaborantinShell extends ConsumerWidget {
   }
 
   void _onTap(int index, BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
     switch (index) {
       case -1:
-        context.push('/notifications');
+        if (location != '/notifications') context.push('/notifications');
         break;
       case 0:
-        context.go('/laborantin');
+        if (location != '/laborantin') context.go('/laborantin');
         break;
       case 1:
-        context.go('/laborantin/pending');
+        if (location != '/laborantin/pending') context.go('/laborantin/pending');
         break;
       case 2:
-        context.go('/laborantin/finished');
+        if (location != '/laborantin/finished') context.go('/laborantin/finished');
         break;
       case 3:
-        context.go('/laborantin/messagerie');
+        if (location != '/laborantin/messagerie') context.go('/laborantin/messagerie');
         break;
       case 4:
-        context.go('/laborantin/profile');
+        if (location != '/laborantin/profile') context.go('/laborantin/profile');
         break;
     }
   }

@@ -32,18 +32,19 @@ class SuperAdminShell extends ConsumerWidget {
   }
 
   void _onTap(int index, BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
     switch (index) {
       case -1:
-        context.push('/notifications');
+        if (location != '/notifications') context.push('/notifications');
         break;
-      case 0: context.go('/super-admin');             break;
-      case 1: context.go('/super-admin/hopitaux');    break;
-      case 2: context.go('/super-admin/users');       break;
-      case 3: context.go('/super-admin/messagerie');  break;
-      case 4: context.go('/super-admin/settings');    break;
-      case 5: context.go('/super-admin/services');    break;
-      case 6: context.go('/super-admin/demandes');    break;
-      case 7: context.go('/super-admin/stats');       break;
+      case 0: if (location != '/super-admin') context.go('/super-admin'); break;
+      case 1: if (location != '/super-admin/hopitaux') context.go('/super-admin/hopitaux'); break;
+      case 2: if (location != '/super-admin/users') context.go('/super-admin/users'); break;
+      case 3: if (location != '/super-admin/messagerie') context.go('/super-admin/messagerie'); break;
+      case 4: if (location != '/super-admin/settings') context.go('/super-admin/settings'); break;
+      case 5: if (location != '/super-admin/services') context.go('/super-admin/services'); break;
+      case 6: if (location != '/super-admin/demandes') context.go('/super-admin/demandes'); break;
+      case 7: if (location != '/super-admin/stats') context.go('/super-admin/stats'); break;
     }
   }
 

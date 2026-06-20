@@ -69,8 +69,9 @@ class _GlobalAIBubbleState extends ConsumerState<GlobalAIBubble> {
                 heroTag: 'global_ai_bubble_btn',
                 onPressed: () {
                   final router = ref.read(routerProvider);
-                  // Push the chatbot route
-                  router.push('/chatbot');
+                  // Push the chatbot route with current location as extra
+                  final currentLocation = GoRouterState.of(context).matchedLocation;
+                  router.push('/chatbot', extra: currentLocation);
                 },
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

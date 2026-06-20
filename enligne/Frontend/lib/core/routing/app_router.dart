@@ -261,7 +261,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/chatbot',
         pageBuilder: (context, state) => _buildPageWithFadeTransition(
           state: state,
-          child: const PatientChatbotScreen(),
+          child: PatientChatbotScreen(fromLocation: state.extra as String?),
         ),
       ),
       GoRoute(

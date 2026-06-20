@@ -11,7 +11,8 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/chatbot_provider.dart';
 
 class PatientChatbotScreen extends ConsumerStatefulWidget {
-  const PatientChatbotScreen({super.key});
+  final String? fromLocation;
+  const PatientChatbotScreen({super.key, this.fromLocation});
 
   @override
   ConsumerState<PatientChatbotScreen> createState() => _PatientChatbotScreenState();
@@ -181,7 +182,11 @@ class _PatientChatbotScreenState extends ConsumerState<PatientChatbotScreen> {
           ),
         );
       } else {
-        context.go(payload);
+        if (widget.fromLocation != null && widget.fromLocation == payload) {
+          context.pop();
+        } else {
+          context.go(payload);
+        }
       }
     } else if (action.type == 'text') {
        _controller.text = action.label;

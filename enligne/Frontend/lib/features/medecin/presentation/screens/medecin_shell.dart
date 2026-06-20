@@ -30,24 +30,25 @@ class MedecinShell extends ConsumerWidget {
   }
 
   void _onTap(int index, BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
     switch (index) {
       case -1:
-        context.push('/notifications');
+        if (location != '/notifications') context.push('/notifications');
         break;
       case 0:
-        context.go('/medecin');
+        if (location != '/medecin') context.go('/medecin');
         break;
       case 1:
-        context.go('/medecin/agenda');
+        if (location != '/medecin/agenda') context.go('/medecin/agenda');
         break;
       case 2:
-        context.go('/medecin/patients');
+        if (location != '/medecin/patients') context.go('/medecin/patients');
         break;
       case 3:
-        context.go('/medecin/messagerie');
+        if (location != '/medecin/messagerie') context.go('/medecin/messagerie');
         break;
       case 4:
-        context.go('/medecin/profile');
+        if (location != '/medecin/profile') context.go('/medecin/profile');
         break;
     }
   }

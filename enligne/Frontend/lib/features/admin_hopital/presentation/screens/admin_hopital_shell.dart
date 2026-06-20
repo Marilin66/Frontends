@@ -35,19 +35,20 @@ class AdminHopitalShell extends ConsumerWidget {
   }
 
   void _onTap(int index, BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
     switch (index) {
       case -1:
-        context.push('/notifications');
+        if (location != '/notifications') context.push('/notifications');
         break;
-      case 0: context.go('/admin-hopital');             break;
-      case 1: context.go('/admin-hopital/medecins');    break;
-      case 2: context.go('/admin-hopital/patients');    break;
-      case 3: context.go('/admin-hopital/messages');    break;
-      case 4: context.go('/admin-hopital/settings');    break;
-      case 5: context.go('/admin-hopital/laborantins'); break;
-      case 6: context.go('/admin-hopital/services');    break;
-      case 7: context.go('/admin-hopital/demandes');    break;
-      case 8: context.go('/admin-hopital/stats');       break;
+      case 0: if (location != '/admin-hopital') context.go('/admin-hopital'); break;
+      case 1: if (location != '/admin-hopital/medecins') context.go('/admin-hopital/medecins'); break;
+      case 2: if (location != '/admin-hopital/patients') context.go('/admin-hopital/patients'); break;
+      case 3: if (location != '/admin-hopital/messages') context.go('/admin-hopital/messages'); break;
+      case 4: if (location != '/admin-hopital/settings') context.go('/admin-hopital/settings'); break;
+      case 5: if (location != '/admin-hopital/laborantins') context.go('/admin-hopital/laborantins'); break;
+      case 6: if (location != '/admin-hopital/services') context.go('/admin-hopital/services'); break;
+      case 7: if (location != '/admin-hopital/demandes') context.go('/admin-hopital/demandes'); break;
+      case 8: if (location != '/admin-hopital/stats') context.go('/admin-hopital/stats'); break;
     }
   }
 

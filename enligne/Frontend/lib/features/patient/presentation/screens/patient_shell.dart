@@ -31,24 +31,25 @@ class PatientShell extends ConsumerWidget {
   }
 
   void _onTap(int index, BuildContext context) {
+    final location = GoRouterState.of(context).matchedLocation;
     switch (index) {
       case -1:
-        context.push('/notifications');
+        if (location != '/notifications') context.push('/notifications');
         break;
       case 0:
-        context.go('/patient');
+        if (location != '/patient') context.go('/patient');
         break;
       case 1:
-        context.go('/patient/search');
+        if (location != '/patient/search') context.go('/patient/search');
         break;
       case 2:
-        context.go('/patient/appointments');
+        if (location != '/patient/appointments') context.go('/patient/appointments');
         break;
       case 3:
-        context.go('/patient/messagerie');
+        if (location != '/patient/messagerie') context.go('/patient/messagerie');
         break;
       case 4:
-        context.go('/patient/profile');
+        if (location != '/patient/profile') context.go('/patient/profile');
         break;
     }
   }
