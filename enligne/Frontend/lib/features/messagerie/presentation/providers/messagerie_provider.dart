@@ -77,6 +77,7 @@ final messageProvider =
 class MessageNotifier extends AsyncNotifier<List<MessageModel>> {
   final MessageParam arg;
   StreamSubscription? _subscription;
+  Timer? _pollingTimer;
 
   MessageNotifier(this.arg);
 
@@ -109,8 +110,24 @@ class MessageNotifier extends AsyncNotifier<List<MessageModel>> {
       }
     });
 
+    // Fallback polling (toutes les 3 secondes) au cas où le WebSocket échoue sur mobile
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
+      try {
+        final newMsgs = await datasource.getMessages(
+          consultationId: arg.consultationId,
+          destinataireId: arg.destinataireId,
+        );
+        final current = state.value ?? [];
+        if (newMsgs.length > current.length) {
+          state = AsyncValue.data(newMsgs);
+        }
+      } catch (_) {}
+    });
+
     ref.onDispose(() {
       _subscription?.cancel();
+      _pollingTimer?.cancel();
       wsService.disconnect();
     });
 

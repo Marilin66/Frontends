@@ -153,8 +153,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Future<void> _pickAndSendFile() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'jpg', 'jpeg', 'png', 'gif'],
+      type: FileType.any,
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
