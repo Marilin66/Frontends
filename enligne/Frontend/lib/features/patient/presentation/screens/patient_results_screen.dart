@@ -269,9 +269,11 @@ class PatientResultsScreen extends ConsumerWidget {
                                 child: FilledButton.icon(
                                   onPressed: () async {
                                     if (resultat.fichier.isEmpty) return;
-                                    final baseUrl = (kIsWeb ? ApiConstants.baseUrlWeb : ApiConstants.baseUrl).replaceAll('/api', '');
-                                    final url = resultat.fichier.startsWith('http') ? resultat.fichier : '$baseUrl${resultat.fichier}';
-                                    final uri = Uri.parse(url);
+                                    // Utilise l'endpoint sécurisé /api/resultats/:id/telecharger/
+                                    // qui sert le fichier via Django (pas via media Render)
+                                    final apiBase = kIsWeb ? ApiConstants.baseUrlWeb : ApiConstants.baseUrl;
+                                    final downloadUrl = '${apiBase}resultats/${resultat.id}/telecharger/';
+                                    final uri = Uri.parse(downloadUrl);
                                     if (await canLaunchUrl(uri)) {
                                       await launchUrl(uri, mode: LaunchMode.externalApplication);
                                     }

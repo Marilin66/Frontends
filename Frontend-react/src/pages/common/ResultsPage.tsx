@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Download, Search, FlaskConical, Clock, RefreshCw, Share2, User } from 'lucide-react';
+import { FileText, Download, Search, FlaskConical, Clock, RefreshCw, Share2, User, Loader2 } from 'lucide-react';
 import { PageLoader, Pagination, usePagination } from '@/components/ui';
 import { api, endpoints } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,11 +10,35 @@ import { usePermissions } from '@/hooks/usePermissions';
 
 const PAGE_SIZE = 12;
 
+/** Télécharge le PDF via l'endpoint sécurisé du backend (auth requise) */
+async function downloadResultat(id: number, titre: string) {
+  const base = (import.meta.env.VITE_API_URL as string) || 'https://backend-x5yj.onrender.com/api';
+  const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token') || '';
+  const url = `${base}${endpoints.resultatTelecharger(id)}`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) throw new Error(`Erreur ${response.status}`);
+
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = objectUrl;
+  a.download = `${titre || 'resultat'}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(objectUrl);
+}
+
 export default function ResultsPage() {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
+  const [downloading, setDownloading] = useState<number | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -143,10 +167,19 @@ export default function ResultsPage() {
                 <div className="flex gap-3 pt-3 border-t border-slate-100">
                   {r.fichier && canTelechargerResultat && (
                     <button
-                      onClick={() => window.open(r.fichier, '_blank')}
-                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition"
+                      onClick={async () => {
+                        setDownloading(r.id);
+                        try { await downloadResultat(r.id, r.titre); }
+                        catch { window.open(r.fichier, '_blank'); } // fallback
+                        finally { setDownloading(null); }
+                      }}
+                      disabled={downloading === r.id}
+                      className="flex-1 flex items-center justify-center gap-2 h-9 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition disabled:opacity-60"
                     >
-                      <Download className="w-3.5 h-3.5" /> Télécharger
+                      {downloading === r.id
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Download className="w-3.5 h-3.5" />}
+                      {downloading === r.id ? 'Téléchargement...' : 'Télécharger'}
                     </button>
                   )}
                   {canPartagerResultat && (

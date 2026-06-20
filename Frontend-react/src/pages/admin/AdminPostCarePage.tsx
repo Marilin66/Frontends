@@ -35,8 +35,8 @@ export default function AdminPostCarePage() {
   const fetchSuivis = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get<{results: SuiviItem[]}>(endpoints.consultations);
-      setSuivis(res.results || []);
+      const res: any = await api.get(endpoints.consultations);
+      setSuivis(Array.isArray(res) ? res : res.results || []);
     } catch (e) {
       console.error(e);
       setSuivis([

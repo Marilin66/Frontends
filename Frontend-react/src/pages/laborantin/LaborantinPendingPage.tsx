@@ -1,11 +1,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { api, endpoints } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, Button, PageLoader, Pagination, usePagination } from '@/components/ui';
 import { ErrorModal, SuccessModal } from '@/components/ui';
 import {
   FlaskConical, FileCheck, Clock, X, Upload,
-  CheckCircle, AlertCircle, Plus, Search, Mail
+  CheckCircle, AlertCircle, Plus, Search, Mail, Lock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -38,6 +39,7 @@ export default function LaborantinPendingPage() {
 
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const { user } = useAuth();
 
   const fetchData = async () => {
     try {
@@ -111,7 +113,6 @@ export default function LaborantinPendingPage() {
     if (clotureData.titre.trim()) body.append('titre', clotureData.titre.trim());
     try {
       setSaving(true);
-      // L'intercepteur axios détecte automatiquement FormData et supprime Content-Type
       const result = await api.post(endpoints.cloturerAnalyse(selectedDemande.id), body) as any;
       setSelectedDemande(null);
       setClotureData({ titre: '', fichier: null });
@@ -119,8 +120,28 @@ export default function LaborantinPendingPage() {
       setSuccessMsg(`Analyse clôturée. ${code ? `Code d'accès patient : ${code}` : 'Le patient a été notifié.'}`);
       fetchData();
     } catch (e) {
-      const data = (e as { response?: { data?: Record<string, unknown> } }).response?.data;
-      const msg = (data?.fichier as string[])?.[0] || (data?.error as string) || (data?.detail as string) || 'Erreur lors de la clôture.';
+      const raw = (e as any)?.response?.data;
+      const status = (e as any)?.response?.status;
+
+      let msg = 'Erreur lors de la clôture.';
+
+      if (raw) {
+        if (typeof raw === 'string' && (raw.includes('<html') || raw.includes('<!doctype'))) {
+          msg = `Erreur serveur ${status || 500}. Vérifiez que vous êtes bien le laborantin responsable de cette demande.`;
+        } else if (typeof raw === 'object') {
+          msg = raw.error || raw.detail || raw.fichier?.[0] || raw.non_field_errors?.[0] ||
+                Object.values(raw).flat().join(' ') || msg;
+        } else {
+          msg = String(raw);
+        }
+      }
+
+      if (status === 403) msg = 'Non autorisé — vous ne pouvez clôturer que les analyses que vous avez créées.';
+      if (status === 404) msg = 'Demande d\'analyse introuvable.';
+      if (status === 400 && !msg.includes('clôturée') && msg === 'Erreur lors de la clôture.') {
+        msg = 'Format de fichier invalide. Seuls les PDF sont acceptés (max 10 Mo).';
+      }
+
       setErrorMsg(msg);
     } finally { setSaving(false); }
   };
@@ -181,22 +202,34 @@ export default function LaborantinPendingPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {paged.map((d, i) => (
+          {paged.map((d, i) => {
+            // Vérifie si le labo connecté est bien celui qui a créé cette demande
+            // Le backend bloque la clôture si laborantin != user connecté
+            const isOwner = !d.laborantin || String(d.laborantin) === String(user?.id);
+
+            return (
             <motion.div key={d.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 hover:shadow-md transition-all">
+              <div className={`bg-white rounded-2xl border p-5 hover:shadow-md transition-all ${isOwner ? 'border-slate-200' : 'border-slate-100 opacity-80'}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center">
-                      <FlaskConical className="w-5 h-5 text-cyan-600" />
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isOwner ? 'bg-cyan-50' : 'bg-slate-50'}`}>
+                      <FlaskConical className={`w-5 h-5 ${isOwner ? 'text-cyan-600' : 'text-slate-400'}`} />
                     </div>
                     <div>
                       <p className="font-semibold text-slate-900">{d.patient_prenom} {d.patient_nom}</p>
                       <p className="text-xs text-slate-500">{d.type_analyse}</p>
                     </div>
                   </div>
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
-                    En cours
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {!isOwner && (
+                      <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">
+                        <Lock className="w-2.5 h-2.5" /> Autre labo
+                      </span>
+                    )}
+                    <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                      En cours
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-4 text-xs text-slate-400 mb-4">
@@ -205,26 +238,43 @@ export default function LaborantinPendingPage() {
                     {d.date_inscription ? new Date(d.date_inscription).toLocaleDateString('fr-FR') : '—'}
                   </span>
                   {d.patient_email && (
-                    <span className="flex items-center gap-1">
-                      <Mail className="w-3 h-3" />
-                      {d.patient_email}
+                    <span className="flex items-center gap-1 truncate max-w-[180px]">
+                      <Mail className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{d.patient_email}</span>
                     </span>
                   )}
                 </div>
 
                 {canCloturerAnalyse && (
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={() => { setSelectedDemande(d); setClotureData({ titre: d.type_analyse || '', fichier: null }); }}
-                    leftIcon={<FileCheck className="w-4 h-4" />}
-                  >
-                    Clôturer l'analyse
-                  </Button>
+                  <div className="flex gap-2">
+                    {d.patient_email && (
+                      <a
+                        href={`mailto:${d.patient_email}`}
+                        className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl border border-slate-200 text-slate-600 text-xs font-semibold hover:bg-slate-50 transition"
+                      >
+                        <Mail className="w-3.5 h-3.5" /> Email
+                      </a>
+                    )}
+                    {isOwner ? (
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => { setSelectedDemande(d); setClotureData({ titre: d.type_analyse || '', fichier: null }); }}
+                        leftIcon={<FileCheck className="w-4 h-4" />}
+                      >
+                        Clôturer
+                      </Button>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center gap-1.5 h-9 rounded-xl bg-slate-50 text-slate-400 text-xs font-medium cursor-not-allowed border border-slate-200">
+                        <Lock className="w-3.5 h-3.5" /> Non assigné
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </motion.div>
-          ))}
+            );
+          })}
         </div>
       )}
 

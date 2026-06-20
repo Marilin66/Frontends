@@ -193,9 +193,13 @@ class _PatientResultCodeScreenState extends ConsumerState<PatientResultCodeScree
                         child: ElevatedButton.icon(
                           onPressed: () async {
                             final fichier = _result!['fichier'].toString();
-                            final baseUrl = (kIsWeb ? ApiConstants.baseUrlWeb : ApiConstants.baseUrl)
-                                .replaceAll('/api', '');
-                            final url = fichier.startsWith('http') ? fichier : '$baseUrl$fichier';
+                            // Construire l'URL absolue correctement
+                            // fichier peut être relatif (/media/...) ou absolu
+                            final apiBase = (kIsWeb ? ApiConstants.baseUrlWeb : ApiConstants.baseUrl)
+                                .replaceAll('/api/', '').replaceAll('/api', '');
+                            final url = fichier.startsWith('http')
+                                ? fichier
+                                : '$apiBase$fichier';
                             final uri = Uri.parse(url);
                             if (await canLaunchUrl(uri)) {
                               await launchUrl(uri, mode: LaunchMode.externalApplication);

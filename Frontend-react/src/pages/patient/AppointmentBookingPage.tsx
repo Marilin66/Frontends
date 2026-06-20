@@ -335,7 +335,19 @@ export default function AppointmentBookingPage() {
       const err = e as { response?: { data?: unknown; status?: number } };
       const raw    = err?.response?.data;
       const status = err?.response?.status;
-      setError(cleanError(raw, status));
+      const msg = cleanError(raw, status);
+      setError(msg);
+
+      // Si le créneau est maintenant pris (conflit), recharger les créneaux
+      // pour que le patient voie les vrais disponibilités actuelles
+      const isConflict = msg.toLowerCase().includes('médecin a déjà') ||
+                         msg.toLowerCase().includes('déjà un rendez-vous') ||
+                         msg.toLowerCase().includes('conflit') ||
+                         status === 400;
+      if (isConflict && selectedDoctorId) {
+        setSelectedSlot(null);
+        loadSlots(selectedDoctorId);
+      }
     } finally { setIsSubmitting(false); }
   };
 

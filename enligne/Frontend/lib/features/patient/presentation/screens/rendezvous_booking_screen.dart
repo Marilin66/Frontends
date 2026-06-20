@@ -374,7 +374,6 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
   void _submitBooking(MedecinSearchModel medecin, CreneauModel creneau, String motif) async {
     setState(() => _isSubmitting = true);
     try {
-      // Format : "YYYY-MM-DDTHH:MM:00"
       final heureFormatee = creneau.heureDebut.length == 5
           ? '${creneau.heureDebut}:00'
           : creneau.heureDebut;
@@ -394,15 +393,30 @@ class _RendezvousBookingScreenState extends ConsumerState<RendezvousBookingScree
         } else {
           Helpers.showSnackBar(
             context,
-            'Erreur lors de la réservation. Vérifiez que votre NPI est renseigné dans votre profil.',
+            'Ce créneau n\'est plus disponible. La liste a été mise à jour.',
             isError: true,
           );
+          // Recharger les créneaux pour afficher la réalité
+          setState(() {
+            _selectedCreneau = null;
+          });
+          ref.invalidate(medecinCreneauxProvider(
+            Tuple3(medecin.id, DateFormat('yyyy-MM-dd').format(_selectedDate),
+              DateFormat('yyyy-MM-dd').format(_selectedDate.add(const Duration(days: 2)))),
+          ));
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        Helpers.showSnackBar(context, 'Erreur: $e', isError: true);
+        final msg = e.toString().contains('NPI')
+            ? 'Veuillez renseigner votre NPI dans votre profil avant de réserver.'
+            : e.toString().contains('déjà un rendez-vous') || e.toString().contains('médecin a déjà')
+                ? 'Ce créneau vient d\'être pris. Veuillez choisir un autre.'
+                : 'Erreur lors de la réservation. Réessayez.';
+        Helpers.showSnackBar(context, msg, isError: true);
+        // Recharger les créneaux dans tous les cas d'erreur
+        setState(() => _selectedCreneau = null);
       }
     }
   }

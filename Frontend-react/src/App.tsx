@@ -217,6 +217,7 @@ function AppRoutes() {
           <Route path="pending"     element={<RoleRoute allowedRoles={['laborantin']}><LaborantinPendingPage /></RoleRoute>} />
           <Route path="finished"    element={<RoleRoute allowedRoles={['laborantin']}><LaborantinFinishedPage /></RoleRoute>} />
           <Route path="messagerie"  element={<RoleRoute allowedRoles={['laborantin']}><MessagesPage /></RoleRoute>} />
+          <Route path="result-code" element={<RoleRoute allowedRoles={['laborantin']}><TrackResultsPage /></RoleRoute>} />
           <Route path="profile"     element={<RoleRoute allowedRoles={['laborantin']}><ProfilePage /></RoleRoute>} />
           <Route path="settings"    element={<RoleRoute allowedRoles={['laborantin']}><SettingsPage /></RoleRoute>} />
           <Route path="settings/change-password" element={<RoleRoute allowedRoles={['laborantin']}><ChangePasswordPage /></RoleRoute>} />

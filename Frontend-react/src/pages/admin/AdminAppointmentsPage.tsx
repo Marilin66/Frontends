@@ -26,8 +26,8 @@ export default function AdminAppointmentsPage() {
   const fetchAppointments = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get<{results: RendezVous[]}>(endpoints.rendezVous);
-      setAppointments(res.results || []);
+      const res: any = await api.get(endpoints.rendezVous);
+      setAppointments(Array.isArray(res) ? res : res.results || []);
     } catch (e) {
       console.error(e);
     } finally {

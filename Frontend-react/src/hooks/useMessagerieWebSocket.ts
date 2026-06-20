@@ -38,7 +38,7 @@ const WS_BASE_URL = (() => {
   const isLocal =
     window.location.hostname === 'localhost' ||
     window.location.hostname === '127.0.0.1';
-  return isLocal ? 'ws://localhost:8000' : 'wss://backend-soutenance-1et0.onrender.com';
+  return isLocal ? 'ws://localhost:8000' : 'wss://backend-x5yj.onrender.com';
 })();
 
 function getToken(): string | null {

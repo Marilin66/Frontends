@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home, Calendar, MessageCircle, FileText, Users,
   Building, Bot, Activity, Stethoscope, FlaskConical,
-  LayoutDashboard, LogOut, History
+  LayoutDashboard, LogOut, History, Heart, BarChart2, ClipboardList
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -126,7 +126,16 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           { path: '/admin-hopital/patients',    icon: Users,         label: 'Patients' },
         ]
       },
-
+      {
+        title: 'Supervision',
+        items: [
+          { path: '/admin-hopital/rendez-vous',   icon: Calendar,      label: 'Rendez-vous' },
+          { path: '/admin-hopital/consultations', icon: ClipboardList, label: 'Consultations' },
+          { path: '/admin-hopital/laboratoire',   icon: FlaskConical,  label: 'Laboratoire' },
+          { path: '/admin-hopital/post-suivi',    icon: Heart,         label: 'Post-Suivi' },
+          { path: '/admin-hopital/stats',         icon: BarChart2,     label: 'Statistiques' },
+        ]
+      },
     ];
 
     if (role === 'super_admin' || role === 'admin_general') return [

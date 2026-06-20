@@ -36,8 +36,8 @@ export default function AdminLaboratoryPage() {
   const fetchAnalyses = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get<{results: AnalyseItem[]}>(endpoints.analyses);
-      setAnalyses(res.results || []);
+      const res: any = await api.get(endpoints.analyses);
+      setAnalyses(Array.isArray(res) ? res : res.results || []);
     } catch (e) {
       console.error(e);
     } finally {

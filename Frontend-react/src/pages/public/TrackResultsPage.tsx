@@ -2,19 +2,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, 
-  FileText, 
-  Calendar, 
-  Building, 
-  User, 
-  Download, 
-  AlertCircle, 
-  ChevronRight,
-  ShieldCheck,
-  QrCode
+  Search, FileText, Calendar, Building, User, 
+  Download, AlertCircle, ShieldCheck, QrCode, Loader2
 } from 'lucide-react';
 import { Card, Button, Input, Badge } from '@/components/ui';
 import { api, endpoints } from '@/services/api';
+
+const API_BASE = (import.meta.env.VITE_API_URL as string || 'https://backend-x5yj.onrender.com/api')
+  .replace(/\/api\/?$/, '');
 
 interface Result {
   id: number;
@@ -22,13 +17,38 @@ interface Result {
   date_analyse: string;
   laboratoire: string;
   patient_display_nom: string;
-  hopital_nom: string;
+  hopital_nom?: string;
   fichier: string | null;
+  code_acces?: string;
+}
+
+/** Télécharge un PDF public (accès via code — sans authentification) */
+async function downloadPublicPdf(fichier: string, titre: string) {
+  // fichier peut être une URL absolue ou relative (/media/...)
+  const url = fichier.startsWith('http') ? fichier : `${API_BASE}${fichier}`;
+  
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error();
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = `${titre || 'resultat'}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+  } catch {
+    // Fallback : ouvrir dans un nouvel onglet
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
 }
 
 export default function TrackResultsPage() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,7 +62,7 @@ export default function TrackResultsPage() {
 
     try {
       // Utilisation du point de terminaison public du backend
-      const response = await api.get<Result>(endpoints.getResultatByCode(code.trim().toUpperCase()));
+      const response = await api.get<Result>(endpoints.getResultatByCode(code.trim()));
       setResult(response);
     } catch (err: any) {
       setError(err.response?.data?.error || "Code d'accès invalide ou expiré.");
@@ -76,16 +96,15 @@ export default function TrackResultsPage() {
           <form onSubmit={handleTrack} className="space-y-10 relative z-10">
             <div className="space-y-4">
               <label className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2 px-2">
-                Code de vérification (6-10 caractères)
+                Code d'accès fourni par le laboratoire
               </label>
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1 group">
                   <Input 
                     value={code}
-                    onChange={(e) => setCode(e.target.value.toUpperCase())}
-                    placeholder="EX: BK92X1"
-                    maxLength={10}
-                    className="h-16 px-8 text-2xl font-bold tracking-[0.3em] text-slate-900 uppercase border-2 border-slate-100 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl placeholder:text-slate-200 outline-none"
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="Saisissez votre code d'accès"
+                    className="h-16 px-8 text-xl font-bold tracking-[0.15em] text-slate-900 border-2 border-slate-100 focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all rounded-2xl placeholder:text-slate-200 outline-none"
                   />
                   <div className="absolute right-6 top-1/2 -translate-y-1/2">
                     <QrCode className={`w-6 h-6 ${loading ? 'animate-spin text-primary' : 'text-slate-200 group-focus-within:text-primary transition-colors'}`} />
@@ -93,13 +112,16 @@ export default function TrackResultsPage() {
                 </div>
                 <Button 
                   type="submit" 
-                  disabled={!code || loading}
+                  disabled={!code.trim() || loading}
                   className="h-16 px-10 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-xl shadow-slate-900/10 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                   <Search className="w-5 h-5" />
                   <span>Vérifier</span>
                 </Button>
               </div>
+              <p className="text-xs text-slate-400 px-2">
+                Le code est reçu par email ou visible dans votre espace patient après clôture de l'analyse.
+              </p>
             </div>
 
             <AnimatePresence mode="wait">
@@ -173,15 +195,21 @@ export default function TrackResultsPage() {
                   </div>
 
                   {result.fichier ? (
-                    <a 
-                      href={result.fichier} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="w-full h-16 bg-primary text-white rounded-2xl flex items-center justify-center gap-4 font-bold shadow-xl shadow-primary/20 hover:bg-primary-dark transition-all group"
+                    <button
+                      onClick={async () => {
+                        if (!result.fichier) return;
+                        setDownloading(true);
+                        try { await downloadPublicPdf(result.fichier, result.titre); }
+                        finally { setDownloading(false); }
+                      }}
+                      disabled={downloading}
+                      className="w-full h-16 bg-primary text-white rounded-2xl flex items-center justify-center gap-4 font-bold shadow-xl shadow-primary/20 hover:bg-primary/90 transition-all group disabled:opacity-70"
                     >
-                      <Download className="w-6 h-6 group-hover:-translate-y-1 transition-transform" />
-                      <span>Télécharger le rapport officiel (PDF)</span>
-                    </a>
+                      {downloading
+                        ? <><Loader2 className="w-6 h-6 animate-spin" /><span>Téléchargement en cours...</span></>
+                        : <><Download className="w-6 h-6 group-hover:-translate-y-1 transition-transform" /><span>Télécharger le rapport officiel (PDF)</span></>
+                      }
+                    </button>
                   ) : (
                     <div className="p-5 bg-amber-50 border border-amber-100 rounded-2xl flex items-center gap-4 text-amber-700">
                       <AlertCircle className="w-6 h-6 flex-shrink-0" />

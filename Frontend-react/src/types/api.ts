@@ -290,6 +290,10 @@ export interface FieldErrorMap {
 export interface DemandeAnalyse {
   id: number;
   statut: string;
+  laborantin?: number;        // ID du laborantin responsable
+  laborantin_nom?: string;
+  hopital?: number;
+  patient?: number;
   patient_prenom?: string;
   patient_nom?: string;
   patient_email?: string;
@@ -297,6 +301,7 @@ export interface DemandeAnalyse {
   type_analyse?: string;
   date_inscription?: string;
   date_cloture?: string;
+  resultat?: number;
   resultat_code?: string;
   code_acces?: string;
 }

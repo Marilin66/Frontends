@@ -39,10 +39,10 @@ export default function AdminDashboard() {
   if (isLoading) return <PageLoader />;
 
   const statCards = [
-        { label: 'Rendez-vous',      value: stats?.rendezvous?.total ?? 0,    icon: Calendar,      color: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100',   href: '/admin-hopital/supervision/rdv' },
-    { label: 'Consultations',    value: stats?.consultations?.total ?? 0, icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', href: '/admin-hopital/supervision/consultations' },
-    { label: 'Demandes Labo',    value: stats?.laboratoire?.total_demandes ?? 0, icon: FlaskConical, color: 'text-cyan-600', bg: 'bg-cyan-50', border: 'border-cyan-100', href: '/admin-hopital/supervision/laboratoire' },
-    { label: 'Services actifs',  value: stats?.total_services ?? 0,       icon: Activity,    color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', href: '/admin-hopital/services' },
+    { label: 'Rendez-vous',    value: stats?.rendezvous?.total ?? 0,          icon: Calendar,      color: 'text-blue-600',   bg: 'bg-blue-50',   border: 'border-blue-100',   href: '/admin-hopital/rendez-vous' },
+    { label: 'Consultations',  value: stats?.consultations?.total ?? 0,       icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', href: '/admin-hopital/consultations' },
+    { label: 'Demandes Labo',  value: stats?.laboratoire?.total_demandes ?? 0, icon: FlaskConical, color: 'text-cyan-600',   bg: 'bg-cyan-50',   border: 'border-cyan-100',   href: '/admin-hopital/laboratoire' },
+    { label: 'Services actifs', value: stats?.total_services ?? 0,             icon: Activity,     color: 'text-violet-600', bg: 'bg-violet-50', border: 'border-violet-100', href: '/admin-hopital/services' },
   ];
 
   return (
@@ -268,11 +268,11 @@ export default function AdminDashboard() {
             <h3 className="text-base font-bold text-slate-900 dark:text-white mb-6">Supervision Directe</h3>
             <div className="space-y-1">
               {[
-                { icon: Calendar,    label: 'Rendez-vous',  href: '/admin-hopital/supervision/rdv',            color: 'text-blue-600',   bg: 'bg-blue-50' },
-                { icon: MessageSquare,label: 'Consultations',href: '/admin-hopital/supervision/consultations', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-                { icon: FlaskConical,label: 'Laboratoire',  href: '/admin-hopital/supervision/laboratoire',    color: 'text-cyan-600',   bg: 'bg-cyan-50' },
-                { icon: Heart,  label: 'Post-Suivi',   href: '/admin-hopital/post-care',                  color: 'text-rose-600',   bg: 'bg-rose-50' },
-                { icon: Users,       label: 'Patients',     href: '/admin-hopital/patients',                   color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                { icon: Calendar,     label: 'Rendez-vous',  href: '/admin-hopital/rendez-vous',  color: 'text-blue-600',   bg: 'bg-blue-50' },
+                { icon: MessageSquare,label: 'Consultations',href: '/admin-hopital/consultations', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                { icon: FlaskConical, label: 'Laboratoire',  href: '/admin-hopital/laboratoire',  color: 'text-cyan-600',   bg: 'bg-cyan-50' },
+                { icon: Heart,        label: 'Post-Suivi',   href: '/admin-hopital/post-suivi',   color: 'text-rose-600',   bg: 'bg-rose-50' },
+                { icon: Users,        label: 'Patients',     href: '/admin-hopital/patients',     color: 'text-indigo-600', bg: 'bg-indigo-50' },
               ].map((item, i) => (
                 <Link key={i} to={item.href} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all border border-transparent hover:border-slate-50 dark:hover:border-slate-800 group">
                   <div className={`w-9 h-9 ${item.bg} dark:bg-slate-800 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}>

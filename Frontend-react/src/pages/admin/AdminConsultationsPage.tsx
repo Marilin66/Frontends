@@ -39,8 +39,8 @@ export default function AdminConsultationsPage() {
   const fetchConsultations = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get<{results: ConsultationItem[]}>(endpoints.consultations);
-      setConsultations(res.results || []);
+      const res: any = await api.get(endpoints.consultations);
+      setConsultations(Array.isArray(res) ? res : res.results || []);
     } catch (e) {
       console.error(e);
     } finally {

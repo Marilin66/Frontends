@@ -141,7 +141,7 @@ export default function AdminDoctorsPage() {
               </label>
             )}
             {canImportMedecins && (
-              <a href={`${import.meta.env.VITE_API_URL || 'https://backend-soutenance-1et0.onrender.com/api'}${endpoints.medecinsImportTemplate}`} target="_blank" rel="noopener noreferrer">
+              <a href={`${import.meta.env.VITE_API_URL || 'https://backend-x5yj.onrender.com/api'}${endpoints.medecinsImportTemplate}`} target="_blank" rel="noopener noreferrer">
                 <div className="inline-flex items-center gap-2 h-10 px-4 text-sm font-semibold border border-slate-200 bg-white text-slate-700 rounded-xl hover:bg-slate-50 transition cursor-pointer">
                   <Download className="w-4 h-4" /> Modèle
                 </div>
