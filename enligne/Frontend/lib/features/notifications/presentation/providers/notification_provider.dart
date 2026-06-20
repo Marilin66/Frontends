@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/network/dio_client.dart';
@@ -20,10 +21,31 @@ final notificationProvider =
 );
 
 class NotificationNotifier extends AsyncNotifier<List<NotificationModel>> {
+  Timer? _pollingTimer;
+
   @override
   Future<List<NotificationModel>> build() async {
     final datasource = ref.read(notificationDatasourceProvider);
-    return await datasource.getNotifications();
+    final initialData = await datasource.getNotifications();
+
+    // Polling en arrière-plan (toutes les 10 secondes) pour le temps réel
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) async {
+      try {
+        final newData = await datasource.getNotifications();
+        final current = state.value ?? [];
+        // Si on détecte de nouvelles notifications (soit par la taille, soit si on veut on peut faire une comparaison plus poussée)
+        if (newData.length != current.length || newData.where((n) => !n.lu).length != current.where((n) => !n.lu).length) {
+          state = AsyncValue.data(newData);
+        }
+      } catch (_) {}
+    });
+
+    ref.onDispose(() {
+      _pollingTimer?.cancel();
+    });
+
+    return initialData;
   }
 
   /// Rafraîchir la liste des notifications
