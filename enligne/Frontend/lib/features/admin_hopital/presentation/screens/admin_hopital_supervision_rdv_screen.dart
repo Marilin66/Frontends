@@ -82,7 +82,7 @@ class _AdminHopitalSupervisionRdvScreenState
                           )),
                       selected: isSelected,
                       onSelected: (_) => setState(
-                          () => _selectedStatut = s['value'] as String?),
+                          () => _selectedStatut = s['value']),
                       backgroundColor: AppColors.background,
                       selectedColor: AppColors.adminHopital,
                       checkmarkColor: Colors.white,
@@ -148,7 +148,7 @@ class _AdminHopitalSupervisionRdvScreenState
                   return ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: rdvList.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, sep) => const SizedBox(height: 10),
                     itemBuilder: (context, i) {
                       final rdv = rdvList[i];
                       final statut = rdv['statut'] as String? ?? '';

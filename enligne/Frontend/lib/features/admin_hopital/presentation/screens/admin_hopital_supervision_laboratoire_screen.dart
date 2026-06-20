@@ -72,7 +72,7 @@ class AdminHopitalSupervisionLaboratoireScreen extends ConsumerWidget {
             return ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: analyses.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, sep) => const SizedBox(height: 10),
               itemBuilder: (context, i) {
                 final analyse = analyses[i] as Map<String, dynamic>;
                 final dateStr = analyse['date_inscription'] as String? ?? '';

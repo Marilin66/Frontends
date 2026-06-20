@@ -1,7 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hopitel_app/core/theme/app_colors.dart';
-import 'package:hopitel_app/core/constants/app_constants.dart';
 
 /// Public landing page for unauthenticated users
 /// Showcases platform features, statistics, and navigation options
@@ -135,7 +134,7 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -158,7 +157,7 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(30),
             ),
             child: Icon(
@@ -281,7 +280,7 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: feature.color.withOpacity(0.1),
+                          color: feature.color.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -408,7 +407,7 @@ class _PublicHomeScreenState extends State<PublicHomeScreen> {
                     width: 50,
                     height: 50,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(

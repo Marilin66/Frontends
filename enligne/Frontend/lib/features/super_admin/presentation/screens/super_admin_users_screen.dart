@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -271,7 +271,7 @@ class SuperAdminUsersContent extends ConsumerWidget {
                     error: (e, _) => Text('Erreur hôpitaux: $e'),
                     data: (hopitaux) => DropdownButtonFormField<int>(
                       decoration: const InputDecoration(labelText: 'Hôpital *'),
-                      value: selectedHopitalId,
+                      initialValue: selectedHopitalId,
                       items: hopitaux
                           .map((h) => DropdownMenuItem(value: h.id, child: Text(h.nom)))
                           .toList(),

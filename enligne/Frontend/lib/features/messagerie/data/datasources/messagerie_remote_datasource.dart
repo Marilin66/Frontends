@@ -36,8 +36,8 @@ class MessagerieRemoteDatasource {
   Future<List<MessageModel>> getMessages({int? consultationId, int? destinataireId}) async {
     try {
       final queryParams = <String, dynamic>{
-        if (consultationId != null) 'consultation': consultationId,
-        if (destinataireId != null) 'destinataire': destinataireId,
+        'consultation': ?consultationId,
+        'destinataire': ?destinataireId,
       };
 
       final response = await _client.get(
@@ -71,8 +71,8 @@ class MessagerieRemoteDatasource {
       final response = await _client.post(
         ApiConstants.messages,
         data: {
-          if (consultationId != null) 'consultation': consultationId,
-          if (destinataireId != null) 'destinataire': destinataireId,
+          'consultation': ?consultationId,
+          'destinataire': ?destinataireId,
           'contenu': contenu,
         },
       );
@@ -92,8 +92,8 @@ class MessagerieRemoteDatasource {
   }) async {
     try {
       final formData = FormData.fromMap({
-        if (consultationId != null) 'consultation': consultationId,
-        if (destinataireId != null) 'destinataire': destinataireId,
+        'consultation': ?consultationId,
+        'destinataire': ?destinataireId,
         'type_message': 'vocal',
         'contenu': '🎙 Message vocal',
         'audio': await MultipartFile.fromFile(audioPath, filename: 'voice_message.m4a'),

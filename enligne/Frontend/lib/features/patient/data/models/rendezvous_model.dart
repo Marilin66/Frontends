@@ -12,6 +12,8 @@
 // REST en objets Dart exploitables par l'application.
 // ==========================================================================
 
+const Object _sentinel = Object();
+
 class RendezVousModel {
   /// Identifiant unique du rendez-vous dans la base de données
   final int id;
@@ -167,7 +169,9 @@ class RendezVousModel {
     String? creeLe,
     String? modifieLe,
     bool? hasConsultation,
+    Object? consultationId = _sentinel,
     Map<String, dynamic>? preEnregistrement,
+    String? medecinSpecialite,
   }) {
     return RendezVousModel(
       id: id ?? this.id,
@@ -184,7 +188,7 @@ class RendezVousModel {
       creeLe: creeLe ?? this.creeLe,
       modifieLe: modifieLe ?? this.modifieLe,
       hasConsultation: hasConsultation ?? this.hasConsultation,
-      consultationId: consultationId ?? this.consultationId,
+      consultationId: identical(consultationId, _sentinel) ? this.consultationId : consultationId as int?,
       preEnregistrement: preEnregistrement ?? this.preEnregistrement,
       medecinSpecialite: medecinSpecialite ?? this.medecinSpecialite,
     );

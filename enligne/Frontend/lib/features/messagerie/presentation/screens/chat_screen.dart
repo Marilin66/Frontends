@@ -622,7 +622,7 @@ class _MessageBubble extends StatelessWidget {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(message.pieceJointe!, width: 200, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.broken_image_outlined)),
+                  errorBuilder: (_, err, stack) => const Icon(Icons.broken_image_outlined)),
             ),
           );
         }
