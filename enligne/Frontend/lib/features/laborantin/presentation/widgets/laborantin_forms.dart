@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -147,8 +147,18 @@ class _LaborantinManualInscriptionSheetState extends ConsumerState<LaborantinMan
     return TextFormField(
       controller: controller,
       keyboardType: type,
-      decoration: InputDecoration(labelText: label, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-      validator: (v) => req && (v == null || v.isEmpty) ? 'Requis' : null,
+      decoration: InputDecoration(
+        label: Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: label),
+              if (req) const TextSpan(text: ' *', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      validator: (v) => req && (v == null || v.isEmpty) ? 'Ce champ est requis' : null,
     );
   }
 
